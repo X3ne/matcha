@@ -94,3 +94,27 @@ impl CookieConfig {
         Ok(cfg)
     }
 }
+
+#[derive(Debug, Default, Clone, Deserialize, PartialEq, Eq)]
+pub struct SmtpConfig {
+    pub email_from_name: String,
+    pub email_from_email: String,
+    pub host: String,
+    pub port: u16,
+    pub user: String,
+    pub password: String,
+}
+
+impl SmtpConfig {
+    pub fn from_env() -> Result<Self, config::ConfigError> {
+        load_env();
+
+        let config = config::Config::builder()
+            .add_source(config::Environment::with_prefix("smtp").try_parsing(true))
+            .build()?;
+
+        let cfg: SmtpConfig = config.try_deserialize()?;
+
+        Ok(cfg)
+    }
+}

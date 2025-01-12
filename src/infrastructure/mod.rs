@@ -1,6 +1,7 @@
 pub mod config;
 pub mod databases;
 pub mod error;
+pub mod mailing;
 pub mod models;
 pub mod repositories;
 pub mod server;

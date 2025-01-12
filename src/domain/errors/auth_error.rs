@@ -18,6 +18,8 @@ pub enum AuthError {
     PasswordRequired,
     #[error("Error hashing password")]
     PasswordHashError,
+    #[error("Error sending mail")]
+    MailError,
 }
 
 impl ApiErrorImpl for AuthError {
@@ -30,6 +32,7 @@ impl ApiErrorImpl for AuthError {
             AuthError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, "database_error"),
             AuthError::PasswordRequired => (StatusCode::BAD_REQUEST, "password_required"),
             AuthError::PasswordHashError => (StatusCode::INTERNAL_SERVER_ERROR, "hash_error"),
+            AuthError::MailError => (StatusCode::INTERNAL_SERVER_ERROR, "mail_error"),
         }
     }
 }

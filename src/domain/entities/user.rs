@@ -10,6 +10,7 @@ pub struct User {
     pub first_name: String,
     pub password: Option<String>,
     pub is_active: bool,
+    pub activation_token: Option<String>,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }
@@ -24,6 +25,7 @@ impl From<UserSqlx> for User {
             first_name: user.first_name,
             password: user.password,
             is_active: user.is_active,
+            activation_token: user.activation_token,
             created_at: user.created_at,
             updated_at: user.updated_at,
         }

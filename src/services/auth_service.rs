@@ -14,6 +14,7 @@ use crate::domain::repositories::oauth_account_repo::OAuthAccountRepository;
 use crate::domain::repositories::oauth_provider_repo::OAuthProviderRepository;
 use crate::domain::repositories::user_repo::UserRepository;
 use crate::domain::services::auth_service::AuthService;
+use crate::infrastructure::mailing::sender::Sender;
 use crate::infrastructure::models::oauth::OAuthAccountInsert;
 use crate::infrastructure::models::user::UserInsert;
 use crate::infrastructure::repositories::oauth_account_repo::PgOAuthAccountRepository;
@@ -24,11 +25,16 @@ use crate::infrastructure::repositories::user_repo::PgUserRepository;
 pub struct AuthServiceImpl {
     pub pool: Arc<PgPool>,
     pub oauth2_client: Arc<OAuth2Client>,
+    pub mail_sender: Arc<Sender>,
 }
 
 impl AuthServiceImpl {
-    pub fn new(pool: Arc<PgPool>, oauth2_client: Arc<OAuth2Client>) -> Self {
-        AuthServiceImpl { pool, oauth2_client }
+    pub fn new(pool: Arc<PgPool>, oauth2_client: Arc<OAuth2Client>, mail_sender: Arc<Sender>) -> Self {
+        AuthServiceImpl {
+            pool,
+            oauth2_client,
+            mail_sender,
+        }
     }
 }
 
@@ -57,6 +63,11 @@ impl AuthService for AuthServiceImpl {
         user.password = Some(password_hash);
 
         let user = PgUserRepository::insert(&mut *tx, user).await?;
+
+        self.mail_sender.send_confirmation_mail(&user).await.map_err(|e| {
+            tracing::error!("Error sending confirmation mail: {:?}", e);
+            AuthError::MailError
+        })?;
 
         tx.commit().await?;
 
@@ -156,17 +167,20 @@ impl AuthService for AuthServiceImpl {
                         )
                         .await?;
 
-                        // Send error to client to ask for validation
-                        tx.commit().await?;
-                        Err(AuthError::AccountNotActivated)
+                        Ok(new_user)
                     }
-                    _ => Err(error.into()),
+                    _ => return Err(AuthError::DatabaseError),
                 };
             }
         };
 
-        tx.commit().await?;
+        self.mail_sender.send_confirmation_mail(&user).await.map_err(|e| {
+            tracing::error!("Error sending confirmation mail: {:?}", e);
+            AuthError::MailError
+        })?;
 
-        Ok(user)
+        // Send error to client to ask for validation
+        tx.commit().await?;
+        Err(AuthError::AccountNotActivated)
     }
 }
