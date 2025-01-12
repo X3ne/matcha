@@ -41,7 +41,7 @@ pub async fn complete_onboarding(
             gender: onboarding.gender,
             sexual_orientation: onboarding.sexual_orientation,
             location: Point::new(0.0, 0.0), // TODO: send location or use ip to get location
-            tags: onboarding.tags.unwrap_or_default(),
+            tag_ids: onboarding.tag_ids,
         })
         .await?;
 

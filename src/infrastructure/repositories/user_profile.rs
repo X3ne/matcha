@@ -39,6 +39,22 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         .execute(&mut *conn)
         .await?;
 
+        for tag_id in &profile.tag_ids {
+            let join_id = SNOWFLAKE_GENERATOR.generate();
+
+            sqlx::query!(
+                r#"
+                INSERT INTO join_user_profile_tag (id, user_profile_id, profile_tag_id)
+                VALUES ($1, $2, $3)
+                "#,
+                join_id.as_i64(),
+                id.as_i64(),
+                tag_id.as_i64()
+            )
+            .execute(&mut *conn)
+            .await?;
+        }
+
         Ok(())
     }
 

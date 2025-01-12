@@ -1,10 +1,12 @@
-use crate::domain::entities::user_profile::UserProfile;
-use crate::shared::types::snowflake::Snowflake;
-use crate::shared::types::tag::Tag;
-use crate::shared::types::user_profile::{Gender, Orientation};
 use apistos::ApiComponent;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::domain::entities::user_profile::UserProfile;
+use crate::shared::types::location::Location;
+use crate::shared::types::snowflake::Snowflake;
+use crate::shared::types::tag::Tag;
+use crate::shared::types::user_profile::{Gender, Orientation};
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent)]
 #[serde(rename(deserialize = "CompleteOnboarding"))]
@@ -13,7 +15,9 @@ pub struct CompleteOnboardingDto {
     pub age: i32,
     pub gender: Gender,
     pub sexual_orientation: Orientation,
-    pub tags: Option<Vec<Tag>>, // TODO: Change to Vec<Tag> when tags are implemented
+    pub location: Option<Location>,
+    #[serde(default)]
+    pub tag_ids: Vec<Snowflake>,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent)]

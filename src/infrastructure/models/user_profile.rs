@@ -88,7 +88,7 @@ pub struct UserProfileInsert {
     pub gender: Gender,
     pub sexual_orientation: Orientation,
     pub location: Point,
-    pub tags: Vec<Tag>,
+    pub tag_ids: Vec<Snowflake>,
 }
 
 #[derive(Debug)]
