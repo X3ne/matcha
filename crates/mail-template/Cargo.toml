@@ -1,0 +1,20 @@
+[package]
+name = "mail-template"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+schemars = { package = "apistos-schemars", version = "0.8" }
+apistos = { version = "0.3.6", features = [
+    "redoc",
+    "swagger-ui",
+    "query",
+    "scalar",
+    "extras",
+    "multipart"
+] }
+serde = "1.0.215"
+tera = "1.20.0"
+mail-template-macro = { path = "./mail-template-macro" }
+serde_json = "1.0.128"
+thiserror = "1.0.63"
