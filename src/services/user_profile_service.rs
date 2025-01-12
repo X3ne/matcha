@@ -24,9 +24,11 @@ impl UserProfileServiceImpl {
 #[async_trait]
 impl UserProfileService for UserProfileServiceImpl {
     async fn create(&self, profile: &UserProfileInsert) -> Result<(), UserError> {
-        let mut conn = self.pool.acquire().await?;
+        let mut tx = self.pool.begin().await?;
 
-        PgUserProfileRepository::insert(&mut *conn, profile).await?;
+        PgUserProfileRepository::insert(&mut *tx, profile).await?;
+
+        tx.commit().await?;
 
         Ok(())
     }
