@@ -19,6 +19,7 @@ pub struct UserProfileSqlx {
     pub gender: Gender,
     pub sexual_orientation: Orientation,
     pub location: wkb::Decode<geo_types::Geometry<f64>>,
+    pub rating: i32,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }
@@ -34,6 +35,7 @@ pub struct RawProfileWithTag {
     pub gender: Gender,
     pub sexual_orientation: Orientation,
     pub location: wkb::Decode<geo_types::Geometry<f64>>,
+    pub rating: i32,
     pub tag_id: Option<Snowflake>,
     pub tag_name: Option<String>,
     pub created_at: chrono::NaiveDateTime,
@@ -68,6 +70,7 @@ impl TryInto<UserProfile> for Vec<RawProfileWithTag> {
             gender: first_row.gender.clone(),
             sexual_orientation: first_row.sexual_orientation.clone(),
             location: first_row.location.geometry.clone().unwrap(), // TODO: Fix unsafe unwrap
+            rating: first_row.rating,
             tags,
             created_at: first_row.created_at,
             updated_at: first_row.updated_at,
@@ -97,6 +100,7 @@ pub struct UserProfileUpdate {
     pub gender: Option<Gender>,
     pub sexual_orientation: Option<Orientation>,
     pub location: Option<Point>,
+    pub rating: Option<i32>,
 }
 
 #[derive(FromRow, Debug)]
