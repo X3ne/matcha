@@ -77,26 +77,24 @@ impl Sender {
         (html_path, subject_path, text_path)
     }
 
+    fn get_template_content(&self, template_path: PathBuf) -> Result<String, Error> {
+        let content = fs::read_to_string(&template_path).map_err(|e| {
+            tracing::error!("Failed to read template: {:?}", e);
+            Error::TemplateLoadError
+        })?;
+
+        Ok(content)
+    }
+
     pub async fn send_confirmation_mail(&self, user: &User) -> Result<(), Error> {
         let (html_path, subject_path, text_path) = self.get_template_paths("account_confirmation");
 
-        let html = fs::read_to_string(&html_path).map_err(|e| {
-            tracing::error!("Failed to read HTML template: {:?}", e);
-            Error::TemplateLoadError
-        })?;
-
-        let subject = fs::read_to_string(&subject_path).map_err(|e| {
-            tracing::error!("Failed to read subject template: {:?}", e);
-            Error::TemplateLoadError
-        })?;
-
-        let txt = fs::read_to_string(&text_path).map_err(|e| {
-            tracing::error!("Failed to read text template: {:?}", e);
-            Error::TemplateLoadError
-        })?;
+        let html = self.get_template_content(html_path)?;
+        let subject = self.get_template_content(subject_path)?;
+        let txt = self.get_template_content(text_path)?;
 
         let confirmation_url = format!(
-            "http://localhost:3000/auth/activation?token={}",
+            "http://localhost:3000/auth/activation?token={}", // TODO: make this configurable
             user.activation_token.clone().unwrap()
         ); // TODO: make activation token NOT NULL
 
