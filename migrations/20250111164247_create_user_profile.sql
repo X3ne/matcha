@@ -13,7 +13,7 @@ CREATE TABLE profile_tag
 CREATE TABLE user_profile
 (
     id                 BIGINT PRIMARY KEY    NOT NULL UNIQUE,
-    user_id            BIGINT                NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
+    user_id            BIGINT                NOT NULL UNIQUE REFERENCES "user" (id) ON DELETE CASCADE,
     name               VARCHAR(255)          NOT NULL,
     avatar_hash        VARCHAR(255),
     bio                TEXT,
