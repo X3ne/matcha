@@ -44,3 +44,9 @@ pub struct OAuthCallbackQueryDto {
 pub struct OAuthResponseDto {
     pub url: String,
 }
+
+#[derive(Deserialize, Debug, ApiComponent, JsonSchema)]
+#[serde(rename(deserialize = "ActivateAccount"))]
+pub struct ActivateAccountDto {
+    pub token: String,
+}

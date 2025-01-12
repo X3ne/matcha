@@ -103,6 +103,26 @@ impl UserRepository<Postgres> for PgUserRepository {
         Ok(user.into())
     }
 
+    async fn activate<'a, A>(conn: A, token: String) -> Result<(), Error>
+    where
+        A: Acquire<'a, Database=Postgres> + Send
+    {
+        let mut conn = conn.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE "user"
+            SET is_active = true
+            WHERE activation_token = $1
+            "#,
+            token
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
     async fn delete<'a, A>(conn: A, id: Snowflake) -> Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,

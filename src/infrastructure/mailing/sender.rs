@@ -95,7 +95,7 @@ impl Sender {
         let txt = self.get_template_content(text_path)?;
 
         let confirmation_url = format!(
-            "http://localhost:3000/auth/activation?token={}", // TODO: make this configurable
+            "http://localhost:3000/v1/auth/activate?token={}", // TODO: make this configurable
             user.activation_token.clone().unwrap()
         ); // TODO: make activation token NOT NULL
 

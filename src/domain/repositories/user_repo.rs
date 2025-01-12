@@ -40,6 +40,10 @@ pub trait UserRepository<Db>: Send + Sync {
     where
         A: Acquire<'a, Database = Db> + Send;
 
+    async fn activate<'a, A>(conn: A, token: String) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
     async fn delete<'a, A>(conn: A, id: Snowflake) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;

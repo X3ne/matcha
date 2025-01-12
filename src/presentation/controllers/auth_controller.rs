@@ -8,7 +8,9 @@ use oauth2::client::providers::ProviderKind;
 use crate::domain::services::auth_service::AuthService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user::UserInsert;
-use crate::presentation::dto::auth_dto::{LoginDto, OAuthCallbackQueryDto, OAuthResponseDto, RegisterUserDto};
+use crate::presentation::dto::auth_dto::{
+    ActivateAccountDto, LoginDto, OAuthCallbackQueryDto, OAuthResponseDto, RegisterUserDto,
+};
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 // **
@@ -68,6 +70,22 @@ pub async fn callback_42(
 
     let _ = session.inner().insert("user_id", user.id.to_string());
     session.inner().renew();
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "auth",
+    operation_id = "activate_account",
+    summary = "Activate the user account"
+)]
+pub async fn activate_account(
+    auth_service: web::Data<Arc<dyn AuthService>>,
+    query: web::Query<ActivateAccountDto>, // TODO: add redirect_url to redirect the user after activation
+) -> Result<NoContent, ApiError> {
+    let token = query.into_inner().token;
+
+    auth_service.activate_account(token).await?;
 
     Ok(NoContent)
 }

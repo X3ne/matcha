@@ -20,6 +20,7 @@ use crate::infrastructure::models::user::UserInsert;
 use crate::infrastructure::repositories::oauth_account_repo::PgOAuthAccountRepository;
 use crate::infrastructure::repositories::oauth_provider_repo::PgOAuthProviderRepository;
 use crate::infrastructure::repositories::user_repo::PgUserRepository;
+use crate::shared::types::snowflake::Snowflake;
 
 #[derive(Clone)]
 pub struct AuthServiceImpl {
@@ -182,5 +183,15 @@ impl AuthService for AuthServiceImpl {
         // Send error to client to ask for validation
         tx.commit().await?;
         Err(AuthError::AccountNotActivated)
+    }
+
+    async fn activate_account(&self, token: String) -> Result<(), AuthError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserRepository::activate(&mut *tx, token).await?;
+
+        tx.commit().await?;
+
+        Ok(())
     }
 }
