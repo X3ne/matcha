@@ -14,6 +14,10 @@ pub enum AuthError {
     OAuth2Error(#[from] oauth2::error::OAuth2Error),
     #[error("Database error")]
     DatabaseError,
+    #[error("Password is required")]
+    PasswordRequired,
+    #[error("Error hashing password")]
+    PasswordHashError,
 }
 
 impl ApiErrorImpl for AuthError {
@@ -22,8 +26,10 @@ impl ApiErrorImpl for AuthError {
             AuthError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized"),
             AuthError::AccountNotActivated => (StatusCode::UNAUTHORIZED, "account_not_activated"),
             AuthError::InvalidCredentials => (StatusCode::UNAUTHORIZED, "invalid_credentials"),
-            AuthError::OAuth2Error(err) => (StatusCode::INTERNAL_SERVER_ERROR, "oauth2_error"),
+            AuthError::OAuth2Error(..) => (StatusCode::INTERNAL_SERVER_ERROR, "oauth2_error"),
             AuthError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, "database_error"),
+            AuthError::PasswordRequired => (StatusCode::BAD_REQUEST, "password_required"),
+            AuthError::PasswordHashError => (StatusCode::INTERNAL_SERVER_ERROR, "hash_error"),
         }
     }
 }

@@ -1,7 +1,7 @@
 use apistos::web;
 use apistos::web::{resource, scope};
 
-use crate::presentation::controllers::auth_controller::{callback_42, login_42, logout};
+use crate::presentation::controllers::auth_controller::{callback_42, login, login_42, logout, register};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -13,6 +13,11 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                         .service(resource("/callback").route(web::get().to(callback_42))),
                 ),
             )
-            .service(scope("").service(resource("/logout").route(web::post().to(logout)))),
+            .service(
+                scope("")
+                    .service(resource("/register").route(web::post().to(register)))
+                    .service(resource("/login").route(web::post().to(login)))
+                    .service(resource("/logout").route(web::post().to(logout))),
+            ),
     );
 }

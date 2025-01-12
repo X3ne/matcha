@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sqlx::{Acquire, Postgres, Result};
+use sqlx::{Acquire, Error, Postgres, Result};
 
 use crate::domain::entities::user::User;
 use crate::domain::repositories::user_repo::UserRepository;
@@ -75,6 +75,27 @@ impl UserRepository<Postgres> for PgUserRepository {
             WHERE email = $1
             "#,
             email
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+
+        Ok(user.into())
+    }
+
+    async fn get_by_username<'a, A>(conn: A, username: &str) -> Result<User, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let user = sqlx::query_as!(
+            UserSqlx,
+            r#"
+            SELECT *
+            FROM "user"
+            WHERE username = $1
+            "#,
+            username
         )
         .fetch_one(&mut *conn)
         .await?;

@@ -36,6 +36,10 @@ pub trait UserRepository<Db>: Send + Sync {
     where
         A: Acquire<'a, Database = Db> + Send;
 
+    async fn get_by_username<'a, A>(conn: A, username: &str) -> sqlx::Result<User, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
     async fn delete<'a, A>(conn: A, id: Snowflake) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;

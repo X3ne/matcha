@@ -1,6 +1,6 @@
 back:
   ☐ add local provider for user authentication
-  ☐ add onboarding flow to create user profile
+  ✔ add onboarding flow to create user profile @done(25-01-12 16:25)
   ☐ send mail to validate account creation
   ☐ password reset flow
   ☐ add validation on dtos

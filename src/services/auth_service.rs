@@ -1,10 +1,12 @@
-use std::sync::Arc;
-
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use async_trait::async_trait;
 use oauth2::client::providers::ft::FtProvider;
 use oauth2::client::providers::ProviderKind;
 use oauth2::client::{CsrfToken, OAuth2Client, Url};
 use sqlx::PgPool;
+use std::sync::Arc;
 
 use crate::domain::entities::user::User;
 use crate::domain::errors::auth_error::AuthError;
@@ -32,8 +34,64 @@ impl AuthServiceImpl {
 
 #[async_trait]
 impl AuthService for AuthServiceImpl {
-    async fn login(&self, email: &str, password: &str) -> Result<(), AuthError> {
-        todo!()
+    async fn register(&self, user: &mut UserInsert) -> Result<User, AuthError> {
+        let password = match &user.password {
+            Some(password) => password,
+            None => return Err(AuthError::PasswordRequired),
+        };
+
+        let mut tx = self.pool.begin().await?;
+
+        let salt = SaltString::generate(&mut OsRng);
+
+        let argon2 = Argon2::default();
+
+        let password_hash = argon2
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|e| {
+                tracing::error!("Error hashing password: {:?}", e);
+                AuthError::PasswordHashError
+            })?
+            .to_string();
+
+        user.password = Some(password_hash);
+
+        let user = PgUserRepository::insert(&mut *tx, user).await?;
+
+        tx.commit().await?;
+
+        Ok(user)
+    }
+
+    async fn login(&self, username: &str, password: &str) -> Result<User, AuthError> {
+        let mut tx = self.pool.begin().await?;
+
+        let user = PgUserRepository::get_by_username(&mut *tx, username).await?;
+
+        if !user.is_active {
+            return Err(AuthError::AccountNotActivated);
+        }
+
+        let argon2 = Argon2::default();
+
+        let stored_password_hash = match &user.password {
+            Some(hash) => hash,
+            None => return Err(AuthError::InvalidCredentials),
+        };
+
+        let parsed_hash = PasswordHash::new(stored_password_hash).map_err(|e| {
+            tracing::error!("Error parsing password hash: {:?}", e);
+            AuthError::PasswordHashError
+        })?;
+
+        argon2.verify_password(password.as_bytes(), &parsed_hash).map_err(|e| {
+            tracing::warn!("Password verification failed: {:?}", e);
+            AuthError::InvalidCredentials
+        })?;
+
+        tx.commit().await?;
+
+        Ok(user)
     }
 
     async fn generate_oauth_url(&self, provider: ProviderKind) -> Result<(Url, CsrfToken), AuthError> {
@@ -110,13 +168,5 @@ impl AuthService for AuthServiceImpl {
         tx.commit().await?;
 
         Ok(user)
-    }
-
-    async fn register(&self, email: &str, password: &str) -> Result<(), AuthError> {
-        todo!()
-    }
-
-    async fn logout(&self, email: &str) -> Result<(), AuthError> {
-        todo!()
     }
 }
