@@ -1,14 +1,15 @@
-use crate::config::SmtpConfig;
-use crate::domain::constants::TEMPLATE_DIR;
-use crate::domain::entities::user::User;
-use crate::infrastructure::mailing::error::Error;
-use crate::infrastructure::mailing::mails::Mail;
 use lettre::message::{header, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use mail_template::render_email;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use crate::config::SmtpConfig;
+use crate::domain::constants::TEMPLATE_DIR;
+use crate::domain::entities::user::User;
+use crate::infrastructure::mailing::error::Error;
+use crate::infrastructure::mailing::mails::Mail;
 
 pub struct Sender {
     smtp_cfg: SmtpConfig,
