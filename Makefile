@@ -20,13 +20,16 @@ build:
 	cargo build $(release)
 
 dev:
-	RUST_LOG=$(rust_log) cargo watch -x "run -- $(prog) $(ARGS)"
+	RUST_LOG=$(rust_log) cargo watch --ignore 'app/*' -x "run -- $(prog) $(ARGS)"
 
 test:
 	cargo test
 
 sync_test:
 	cargo test -- --test-threads 1
+
+spec_gen:
+	npx swagger-typescript-api -p http://127.0.0.1:3000/openapi.json -o ./app/src/api -n spec.ts
 
 db_run:
 	docker-compose up -d
