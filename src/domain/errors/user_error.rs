@@ -17,7 +17,8 @@ impl ApiErrorImpl for UserError {
 }
 
 impl From<sqlx::Error> for UserError {
-    fn from(_: sqlx::Error) -> Self {
+    fn from(e: sqlx::Error) -> Self {
+        tracing::error!("Database error: {}", e);
         UserError::DatabaseError
     }
 }

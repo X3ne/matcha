@@ -1,8 +1,9 @@
+use async_trait::async_trait;
+use sqlx::Acquire;
+
 use crate::domain::entities::oauth_provider::OAuthProvider;
 use crate::infrastructure::models::oauth::{OAuthProviderInsert, OAuthProviderUpdate};
 use crate::shared::types::snowflake::Snowflake;
-use async_trait::async_trait;
-use sqlx::Acquire;
 
 #[async_trait]
 pub trait OAuthProviderRepository<Db> {

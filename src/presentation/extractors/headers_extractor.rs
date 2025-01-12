@@ -1,9 +1,10 @@
-use crate::infrastructure::error::ApiError;
 use actix_web::dev::Payload;
 use actix_web::{FromRequest, HttpRequest};
 use apistos::ApiHeader;
 use futures::future::{ready, Ready};
 use schemars::JsonSchema;
+
+use crate::infrastructure::error::ApiError;
 
 #[derive(Debug, Clone, JsonSchema, ApiHeader)]
 #[openapi_header(name = "X-Platform", description = "The client platform")]

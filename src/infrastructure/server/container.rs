@@ -1,16 +1,22 @@
-use crate::config::OAuth2Config;
-use crate::domain::services::auth_service::AuthService;
-use crate::domain::services::user_service::UserService;
-use crate::infrastructure::databases::postgresql::connection::connect;
-use crate::services::auth_service::AuthServiceImpl;
-use crate::services::user_service::UserServiceImpl;
-use oauth2::client::providers::ft::FtProvider;
-use oauth2::client::OAuth2ClientBuilder;
 use std::sync::Arc;
 
+use oauth2::client::providers::ft::FtProvider;
+use oauth2::client::OAuth2ClientBuilder;
+
+use crate::config::OAuth2Config;
+use crate::domain::services::auth_service::AuthService;
+use crate::domain::services::user_profile_service::UserProfileService;
+use crate::domain::services::user_service::UserService;
+use crate::infrastructure::databases::postgresql::connection::connect;
+use crate::infrastructure::databases::postgresql::init::create_default_providers;
+use crate::services::auth_service::AuthServiceImpl;
+use crate::services::user_profile_service::UserProfileServiceImpl;
+use crate::services::user_service::UserServiceImpl;
+
 pub struct Container {
-    pub user_service: Arc<dyn UserService>,
     pub auth_service: Arc<dyn AuthService>,
+    pub user_service: Arc<dyn UserService>,
+    pub user_profile_service: Arc<dyn UserProfileService>,
     pub pool: Arc<sqlx::PgPool>,
 }
 
@@ -18,6 +24,10 @@ impl Container {
     pub async fn new(database_url: &str) -> Self {
         let pool = connect(database_url).await.expect("Failed to connect to database");
         let pool = Arc::new(pool);
+
+        create_default_providers(&pool)
+            .await
+            .expect("Failed to create default providers");
 
         let oauth_config = OAuth2Config::from_env().expect("Failed to load oauth2 configuration");
 
@@ -30,18 +40,23 @@ impl Container {
             .build();
         let oauth_client = Arc::new(oauth_client);
 
-        let user_service = Arc::new(UserServiceImpl {
-            pool: Arc::clone(&pool),
-        });
-
         let auth_service = Arc::new(AuthServiceImpl {
             pool: Arc::clone(&pool),
             oauth2_client: Arc::clone(&oauth_client),
         });
 
+        let user_service = Arc::new(UserServiceImpl {
+            pool: Arc::clone(&pool),
+        });
+
+        let user_profile_service = Arc::new(UserProfileServiceImpl {
+            pool: Arc::clone(&pool),
+        });
+
         Container {
-            user_service,
             auth_service,
+            user_service,
+            user_profile_service,
             pool,
         }
     }

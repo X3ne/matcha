@@ -1,8 +1,9 @@
-use crate::infrastructure::error::ApiError;
-use crate::shared::types::peer_infos::PeerInfos;
 use actix_web::dev::Payload;
 use actix_web::{FromRequest, HttpRequest};
 use futures::future::{ready, Ready};
+
+use crate::infrastructure::error::ApiError;
+use crate::shared::types::peer_infos::PeerInfos;
 
 impl FromRequest for PeerInfos {
     type Error = ApiError;

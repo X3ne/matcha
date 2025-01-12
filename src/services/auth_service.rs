@@ -1,5 +1,11 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
+use oauth2::client::providers::ft::FtProvider;
+use oauth2::client::providers::ProviderKind;
+use oauth2::client::{CsrfToken, OAuth2Client, Url};
+use sqlx::PgPool;
+
 use crate::domain::entities::user::User;
 use crate::domain::errors::auth_error::AuthError;
 use crate::domain::repositories::oauth_account_repo::OAuthAccountRepository;
@@ -11,11 +17,6 @@ use crate::infrastructure::models::user::UserInsert;
 use crate::infrastructure::repositories::oauth_account_repo::PgOAuthAccountRepository;
 use crate::infrastructure::repositories::oauth_provider_repo::PgOAuthProviderRepository;
 use crate::infrastructure::repositories::user_repo::PgUserRepository;
-use async_trait::async_trait;
-use oauth2::client::providers::ft::FtProvider;
-use oauth2::client::providers::ProviderKind;
-use oauth2::client::{CsrfToken, OAuth2Client, Url};
-use sqlx::PgPool;
 
 #[derive(Clone)]
 pub struct AuthServiceImpl {
@@ -67,7 +68,7 @@ impl AuthService for AuthServiceImpl {
             }
             Err(error) => {
                 // Handle RowNotFound error by creating a new account
-                match error {
+                return match error {
                     sqlx::Error::RowNotFound => {
                         let new_user = PgUserRepository::insert(
                             &mut *tx,
@@ -97,10 +98,12 @@ impl AuthService for AuthServiceImpl {
                         )
                         .await?;
 
-                        new_user
+                        // Send error to client to ask for validation
+                        tx.commit().await?;
+                        Err(AuthError::AccountNotActivated)
                     }
-                    _ => return Err(error.into()),
-                }
+                    _ => Err(error.into()),
+                };
             }
         };
 

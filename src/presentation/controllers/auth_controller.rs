@@ -1,14 +1,15 @@
-use crate::infrastructure::error::ApiError;
-use crate::presentation::dto::auth_dto::{OAuthCallbackQuery, OAuthResponse};
 use std::sync::Arc;
 
-use crate::domain::services::auth_service::AuthService;
-use crate::presentation::extractors::auth_extractor::Session;
-use crate::shared::types::peer_infos::PeerInfos;
 use actix_web::web;
 use apistos::actix::NoContent;
 use apistos::api_operation;
 use oauth2::client::providers::ProviderKind;
+
+use crate::domain::services::auth_service::AuthService;
+use crate::infrastructure::error::ApiError;
+use crate::presentation::dto::auth_dto::{OAuthCallbackQuery, OAuthResponse};
+use crate::presentation::extractors::auth_extractor::Session;
+use crate::shared::types::peer_infos::PeerInfos;
 // **
 // * TODO:
 // * - Implement pkce

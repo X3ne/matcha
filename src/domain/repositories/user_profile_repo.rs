@@ -2,18 +2,18 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use sqlx::Acquire;
 
-use crate::domain::entities::user::User;
+use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::repositories::repository::{QueryParams, DEFAULT_LIMIT, DEFAULT_OFFSET};
-use crate::infrastructure::models::user::UserInsert;
+use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
 use crate::shared::types::snowflake::Snowflake;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct UserQueryParams {
+pub struct UserProfileQueryParams {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
 }
 
-impl QueryParams for UserQueryParams {
+impl QueryParams for UserProfileQueryParams {
     fn limit(&self) -> i64 {
         self.limit.or(DEFAULT_LIMIT).unwrap_or_default()
     }
@@ -23,20 +23,24 @@ impl QueryParams for UserQueryParams {
 }
 
 #[async_trait]
-pub trait UserRepository<Db>: Send + Sync {
-    async fn insert<'a, A>(conn: A, user: &UserInsert) -> sqlx::Result<User, sqlx::Error>
+pub trait UserProfileRepository<Db>: Send + Sync {
+    async fn insert<'a, A>(conn: A, profile: &UserProfileInsert) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
 
-    async fn get_by_id<'a, A>(conn: A, id: Snowflake) -> sqlx::Result<User, sqlx::Error>
+    async fn get_by_id<'a, A>(conn: A, id: Snowflake) -> sqlx::Result<UserProfile, sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
 
-    async fn get_by_email<'a, A>(conn: A, email: &str) -> sqlx::Result<User, sqlx::Error>
+    async fn get_by_user_id<'a, A>(conn: A, user_id: Snowflake) -> sqlx::Result<UserProfile, sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
 
-    async fn delete<'a, A>(conn: A, id: Snowflake) -> sqlx::Result<(), sqlx::Error>
+    async fn update<'a, A>(
+        conn: A,
+        id: Snowflake,
+        profile: UserProfileUpdate,
+    ) -> sqlx::Result<UserProfile, sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
 }

@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
+use sqlx::PgPool;
+
 use crate::domain::entities::user::User;
 use crate::domain::errors::user_error::UserError;
 use crate::domain::repositories::user_repo::UserRepository;
 use crate::domain::services::user_service::UserService;
 use crate::infrastructure::repositories::user_repo::PgUserRepository;
 use crate::shared::types::snowflake::Snowflake;
-use async_trait::async_trait;
-use sqlx::PgPool;
 
 #[derive(Clone)]
 pub struct UserServiceImpl {

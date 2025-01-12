@@ -76,6 +76,7 @@ pub fn init_server(
             .app_data(web::Data::new(cfg.clone()))
             .app_data(web::Data::new(container.auth_service.clone()))
             .app_data(web::Data::new(container.user_service.clone()))
+            .app_data(web::Data::new(container.user_profile_service.clone()))
             .app_data(
                 web::FormConfig::default().error_handler(|err, _req| ApiError::BadRequest(err.to_string()).into()),
             )

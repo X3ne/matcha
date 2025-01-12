@@ -3,9 +3,8 @@ use std::fmt::Debug;
 
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use apistos::ApiErrorComponent;
-use regex::Regex;
-
 use oauth2::error::OAuth2Error;
+use regex::Regex;
 
 use crate::domain::errors::auth_error::AuthError;
 use crate::domain::errors::user_error::UserError;

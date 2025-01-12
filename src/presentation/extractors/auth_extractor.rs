@@ -1,7 +1,7 @@
-use crate::domain::entities::user::User;
-use crate::domain::errors::auth_error::AuthError;
-use crate::domain::services::user_service::UserService;
-use crate::infrastructure::error::ApiError;
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::Arc;
+
 use actix_session::{Session as ActixSession, SessionExt};
 use actix_web::dev::Payload;
 use actix_web::{web, FromRequest, HttpRequest};
@@ -11,9 +11,11 @@ use schemars::_serde_json::Value;
 use schemars::gen::SchemaGenerator;
 use schemars::schema::{InstanceType, Metadata, Schema, SchemaObject, SingleOrVec};
 use schemars::JsonSchema;
-use std::future::Future;
-use std::pin::Pin;
-use std::sync::Arc;
+
+use crate::domain::entities::user::User;
+use crate::domain::errors::auth_error::AuthError;
+use crate::domain::services::user_service::UserService;
+use crate::infrastructure::error::ApiError;
 
 #[derive(ApiCookie)]
 #[openapi_cookie(name = "session", description = "Session cookie", required = true)]

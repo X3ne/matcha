@@ -1,3 +1,8 @@
 back:
   ☐ add local provider for user authentication
   ☐ add onboarding flow to create user profile
+  ☐ send mail to validate account creation
+  ☐ password reset flow
+  ☐ add validation on dtos
+  ☐ rework error responses
+  ☐ add UserProfile field to calculate distance from user

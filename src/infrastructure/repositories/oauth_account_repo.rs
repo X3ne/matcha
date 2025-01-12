@@ -1,7 +1,6 @@
 use async_trait::async_trait;
-use sqlx::{Acquire, Executor, Postgres};
-
 use oauth2::client::providers::ProviderKind;
+use sqlx::{Acquire, Postgres};
 
 use crate::domain::entities::oauth_account::OAuthAccount;
 use crate::domain::repositories::oauth_account_repo::OAuthAccountRepository;

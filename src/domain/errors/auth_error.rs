@@ -29,7 +29,8 @@ impl ApiErrorImpl for AuthError {
 }
 
 impl From<sqlx::Error> for AuthError {
-    fn from(_: sqlx::Error) -> Self {
+    fn from(e: sqlx::Error) -> Self {
+        tracing::error!("Database error: {}", e);
         AuthError::DatabaseError
     }
 }

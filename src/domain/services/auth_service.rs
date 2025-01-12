@@ -1,8 +1,9 @@
-use crate::domain::entities::user::User;
-use crate::domain::errors::auth_error::AuthError;
 use async_trait::async_trait;
 use oauth2::client::providers::ProviderKind;
 use oauth2::client::{CsrfToken, Url};
+
+use crate::domain::entities::user::User;
+use crate::domain::errors::auth_error::AuthError;
 
 #[async_trait]
 pub trait AuthService: 'static + Sync + Send {

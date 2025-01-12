@@ -1,10 +1,10 @@
 use async_trait::async_trait;
+use oauth2::client::providers::ProviderKind;
 use sqlx::Acquire;
 
 use crate::domain::entities::oauth_account::OAuthAccount;
 use crate::infrastructure::models::oauth::{OAuthAccountInsert, OAuthAccountUpdate};
 use crate::shared::types::snowflake::Snowflake;
-use oauth2::client::providers::ProviderKind;
 
 #[async_trait]
 pub trait OAuthAccountRepository<Db>: Send + Sync {
