@@ -44,7 +44,15 @@ impl UserProfileService for UserProfileServiceImpl {
     async fn get_by_user_id(&self, user_id: Snowflake) -> Result<UserProfile, UserError> {
         let mut conn = self.pool.acquire().await?;
 
-        let profile = PgUserProfileRepository::get_by_user_id(&mut *conn, user_id).await?;
+        let profile = PgUserProfileRepository::get_by_user_id(&mut *conn, user_id)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error getting user profile by user id: {:?}", e);
+                match e {
+                    sqlx::Error::RowNotFound => UserError::NoProfile,
+                    _ => UserError::DatabaseError,
+                }
+            })?;
 
         Ok(profile)
     }
