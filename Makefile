@@ -1,6 +1,7 @@
 prog := matcha-back
 
 debug ?= 0
+features :=
 
 $(info debug is $(debug))
 
@@ -20,7 +21,7 @@ build:
 	cargo build $(release)
 
 dev:
-	RUST_LOG=$(rust_log) cargo watch --ignore 'app/*' -x "run -- $(prog) $(ARGS)"
+	RUST_LOG=$(rust_log) cargo watch --ignore 'app/*' -x "run $(if $(features),--features $(features)) -- $(prog) $(ARGS)"
 
 test:
 	cargo test

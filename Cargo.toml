@@ -36,11 +36,15 @@ hex = "0.4.3"
 geo-types = "0.7.14"
 geozero = { version = "0.14.0", features = ["with-postgis-sqlx", "with-postgis-postgres", "with-wkb", "with-geo"] }
 argon2 = "0.5.3"
-mail-template = { path = "crates/mail-template", version = "*" }
-lettre = { version = "0.11.11", features = ["tokio1-native-tls"] }
+mail-template = { path = "crates/mail-template", version = "*", optional = true }
+lettre = { version = "0.11.11", features = ["tokio1-native-tls"], optional = true }
 
 [workspace]
 members = ["crates/mail-template", "crates/oauth2"]
+
+[features]
+default = []
+mailing = ["mail-template", "lettre"]
 
 [profile.release]
 opt-level = 3
