@@ -3,6 +3,14 @@ back:
   ✔ add onboarding flow to create user profile @done(25-01-12 16:25)
   ✔ send mail to validate account creation @done(25-01-12 20:00)
   ☐ password reset flow
-  ☐ add validation on dtos
+  ☐ add validation on dtos (reject common passwords)
   ☐ rework error responses
   ☐ add UserProfile field to calculate distance from user
+  ☐ disable dev emails
+  ☐ mock db
+
+bonuses:
+  ✔ oauth2 @done(25-01-13 16:24)
+  ☐ e2e encryption chat
+  ☐ vocal messages
+  ☐ map

@@ -14,6 +14,7 @@ use crate::domain::repositories::oauth_account_repo::OAuthAccountRepository;
 use crate::domain::repositories::oauth_provider_repo::OAuthProviderRepository;
 use crate::domain::repositories::user_repo::UserRepository;
 use crate::domain::services::auth_service::AuthService;
+#[cfg(feature = "mailing")]
 use crate::infrastructure::mailing::sender::Sender;
 use crate::infrastructure::models::oauth::OAuthAccountInsert;
 use crate::infrastructure::models::user::UserInsert;
@@ -26,14 +27,20 @@ use crate::shared::types::snowflake::Snowflake;
 pub struct AuthServiceImpl {
     pub pool: Arc<PgPool>,
     pub oauth2_client: Arc<OAuth2Client>,
+    #[cfg(feature = "mailing")]
     pub mail_sender: Arc<Sender>,
 }
 
 impl AuthServiceImpl {
-    pub fn new(pool: Arc<PgPool>, oauth2_client: Arc<OAuth2Client>, mail_sender: Arc<Sender>) -> Self {
+    pub fn new(
+        pool: Arc<PgPool>,
+        oauth2_client: Arc<OAuth2Client>,
+        #[cfg(feature = "mailing")] mail_sender: Arc<Sender>,
+    ) -> Self {
         AuthServiceImpl {
             pool,
             oauth2_client,
+            #[cfg(feature = "mailing")]
             mail_sender,
         }
     }
@@ -65,6 +72,7 @@ impl AuthService for AuthServiceImpl {
 
         let user = PgUserRepository::insert(&mut *tx, user).await?;
 
+        #[cfg(feature = "mailing")]
         self.mail_sender.send_confirmation_mail(&user).await.map_err(|e| {
             tracing::error!("Error sending confirmation mail: {:?}", e);
             AuthError::MailError
@@ -175,6 +183,7 @@ impl AuthService for AuthServiceImpl {
             }
         };
 
+        #[cfg(feature = "mailing")]
         self.mail_sender.send_confirmation_mail(&user).await.map_err(|e| {
             tracing::error!("Error sending confirmation mail: {:?}", e);
             AuthError::MailError

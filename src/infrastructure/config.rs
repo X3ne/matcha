@@ -95,6 +95,7 @@ impl CookieConfig {
     }
 }
 
+#[cfg(feature = "mailing")]
 #[derive(Debug, Default, Clone, Deserialize, PartialEq, Eq)]
 pub struct SmtpConfig {
     pub email_from_name: String,
@@ -105,6 +106,7 @@ pub struct SmtpConfig {
     pub password: String,
 }
 
+#[cfg(feature = "mailing")]
 impl SmtpConfig {
     pub fn from_env() -> Result<Self, config::ConfigError> {
         load_env();
