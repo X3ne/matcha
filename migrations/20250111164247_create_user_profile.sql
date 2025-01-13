@@ -1,5 +1,15 @@
 -- this enable the postgis extension
-CREATE EXTENSION postgis;
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (SELECT 1
+                       FROM pg_extension
+                       WHERE extname = 'postgis') THEN
+            CREATE EXTENSION postgis;
+        END IF;
+    END;
+$$;
+
 
 CREATE TYPE gender AS ENUM ('male', 'female');
 CREATE TYPE sexual_orientation AS ENUM ('male', 'female', 'bisexual');
