@@ -1,11 +1,12 @@
 import api from '@/api'
+import { Layout } from '@/components/layout/layout' // Updated import path
 import { Toaster } from '@/components/ui/toaster'
 import { useUser } from '@/hooks/useUser'
 import { useQuery } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
-  createRootRoute,
   Outlet,
+  createRootRoute,
   useLocation,
   useNavigate
 } from '@tanstack/react-router'
@@ -64,13 +65,13 @@ function Root() {
   // }, [user, isUserLoading, location, isError, navigation])
 
   return (
-    <>
+    <Layout>
       <div className="w-screen min-h-dvh">
         <Outlet />
       </div>
       <TanStackRouterDevtools />
       <ReactQueryDevtools initialIsOpen={false} />
       <Toaster />
-    </>
+    </Layout>
   )
 }
