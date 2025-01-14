@@ -4,7 +4,7 @@ use sqlx::{Acquire, Error, Postgres, Result};
 use crate::domain::entities::user::User;
 use crate::domain::repositories::user_repo::UserRepository;
 use crate::infrastructure::models::user::{UserInsert, UserSqlx};
-use crate::shared::types::snowflake::{Snowflake, SNOWFLAKE_GENERATOR};
+use crate::shared::types::snowflake::Snowflake;
 use crate::shared::utils::generate_random_secure_string;
 
 pub struct PgUserRepository;
@@ -17,7 +17,7 @@ impl UserRepository<Postgres> for PgUserRepository {
     {
         let mut conn = conn.acquire().await?;
 
-        let id = SNOWFLAKE_GENERATOR.generate();
+        let id = Snowflake::new();
 
         let result = sqlx::query_as!(
             UserSqlx,
@@ -105,7 +105,7 @@ impl UserRepository<Postgres> for PgUserRepository {
 
     async fn activate<'a, A>(conn: A, token: String) -> Result<(), Error>
     where
-        A: Acquire<'a, Database=Postgres> + Send
+        A: Acquire<'a, Database = Postgres> + Send,
     {
         let mut conn = conn.acquire().await?;
 

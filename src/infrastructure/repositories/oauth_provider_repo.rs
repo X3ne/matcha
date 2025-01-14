@@ -4,7 +4,7 @@ use sqlx::{Acquire, Executor, Postgres};
 use crate::domain::entities::oauth_provider::OAuthProvider;
 use crate::domain::repositories::oauth_provider_repo::OAuthProviderRepository;
 use crate::infrastructure::models::oauth::{OAuthProviderInsert, OAuthProviderSqlx, OAuthProviderUpdate};
-use crate::shared::types::snowflake::{Snowflake, SNOWFLAKE_GENERATOR};
+use crate::shared::types::snowflake::Snowflake;
 
 pub struct PgOAuthProviderRepository;
 
@@ -16,7 +16,7 @@ impl OAuthProviderRepository<Postgres> for PgOAuthProviderRepository {
     {
         let mut conn = conn.acquire().await?;
 
-        let id = SNOWFLAKE_GENERATOR.generate();
+        let id = Snowflake::new();
 
         let provider = sqlx::query_as!(
             OAuthProviderSqlx,

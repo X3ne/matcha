@@ -7,8 +7,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use snowflake::SnowflakeIdGenerator;
 use std::sync::{Arc, Mutex};
 
-// TODO: Maybe this is not the best way to implement this
-pub static SNOWFLAKE_GENERATOR: Lazy<SnowflakeGenerator> = Lazy::new(|| SnowflakeGenerator::new(1, 1));
+static SNOWFLAKE_GENERATOR: Lazy<SnowflakeGenerator> = Lazy::new(|| SnowflakeGenerator::new(1, 1));
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, Validate)]
 #[garde(transparent)]
@@ -16,8 +15,8 @@ pub static SNOWFLAKE_GENERATOR: Lazy<SnowflakeGenerator> = Lazy::new(|| Snowflak
 pub struct Snowflake(#[garde(range(equal = 19))] pub i64);
 
 impl Snowflake {
-    pub fn new(value: i64) -> Self {
-        Snowflake(value)
+    pub fn new() -> Self {
+        SNOWFLAKE_GENERATOR.generate()
     }
 
     pub fn as_i64(&self) -> i64 {

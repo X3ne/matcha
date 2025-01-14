@@ -5,7 +5,7 @@ use sqlx::{Acquire, Error, Postgres};
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::repositories::user_profile_repo::UserProfileRepository;
 use crate::infrastructure::models::user_profile::{RawProfileWithTag, UserProfileInsert, UserProfileUpdate};
-use crate::shared::types::snowflake::{Snowflake, SNOWFLAKE_GENERATOR};
+use crate::shared::types::snowflake::Snowflake;
 
 pub struct PgUserProfileRepository;
 
@@ -17,7 +17,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
     {
         let mut conn = conn.acquire().await?;
 
-        let id = SNOWFLAKE_GENERATOR.generate();
+        let id = Snowflake::new();
 
         let geom: geo_types::Geometry<f64> = profile.location.into();
 
@@ -40,7 +40,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         .await?;
 
         for tag_id in &profile.tag_ids {
-            let join_id = SNOWFLAKE_GENERATOR.generate();
+            let join_id = Snowflake::new();
 
             sqlx::query!(
                 r#"

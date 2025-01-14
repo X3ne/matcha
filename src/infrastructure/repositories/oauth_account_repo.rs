@@ -5,7 +5,7 @@ use sqlx::{Acquire, Postgres};
 use crate::domain::entities::oauth_account::OAuthAccount;
 use crate::domain::repositories::oauth_account_repo::OAuthAccountRepository;
 use crate::infrastructure::models::oauth::{OAuthAccountInsert, OAuthAccountSqlx, OAuthAccountUpdate};
-use crate::shared::types::snowflake::{Snowflake, SNOWFLAKE_GENERATOR};
+use crate::shared::types::snowflake::Snowflake;
 
 pub struct PgOAuthAccountRepository;
 
@@ -17,7 +17,7 @@ impl OAuthAccountRepository<Postgres> for PgOAuthAccountRepository {
     {
         let mut conn = conn.acquire().await?;
 
-        let id = SNOWFLAKE_GENERATOR.generate();
+        let id = Snowflake::new();
 
         let account = sqlx::query_as!(
             OAuthAccountSqlx,
