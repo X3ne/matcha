@@ -13,6 +13,7 @@ use crate::presentation::dto::auth_dto::{
 };
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
+use crate::shared::utils::ValidatePasswordContext;
 // **
 // * TODO:
 // * - Implement pkce
@@ -26,7 +27,12 @@ pub async fn register(
     body: web::Json<RegisterUserDto>,
 ) -> Result<NoContent, ApiError> {
     let user = body.into_inner();
-    user.validate()?;
+    user.validate_with(&ValidatePasswordContext {
+        username: user.username.clone(),
+        last_name: user.last_name.clone(),
+        first_name: user.first_name.clone(),
+        email: user.email.clone(),
+    })?;
 
     auth_service.register(&mut user.into()).await?;
 
