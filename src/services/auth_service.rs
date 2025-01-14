@@ -86,6 +86,8 @@ impl AuthService for AuthServiceImpl {
     async fn login(&self, username: &str, password: &str) -> Result<User, AuthError> {
         let mut tx = self.pool.begin().await?;
 
+        tracing::info!("Logging in user: {}", username);
+
         let user = PgUserRepository::get_by_username(&mut *tx, username).await?;
 
         if !user.is_active {

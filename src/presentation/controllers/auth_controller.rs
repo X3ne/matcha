@@ -3,11 +3,11 @@ use std::sync::Arc;
 use actix_web::web;
 use apistos::actix::NoContent;
 use apistos::api_operation;
+use garde::Validate;
 use oauth2::client::providers::ProviderKind;
 
 use crate::domain::services::auth_service::AuthService;
 use crate::infrastructure::error::ApiError;
-use crate::infrastructure::models::user::UserInsert;
 use crate::presentation::dto::auth_dto::{
     ActivateAccountDto, LoginDto, OAuthCallbackQueryDto, OAuthResponseDto, RegisterUserDto,
 };
@@ -25,9 +25,10 @@ pub async fn register(
     auth_service: web::Data<Arc<dyn AuthService>>,
     body: web::Json<RegisterUserDto>,
 ) -> Result<NoContent, ApiError> {
-    let mut user: UserInsert = body.into_inner().into();
+    let user = body.into_inner();
+    user.validate()?;
 
-    auth_service.register(&mut user).await?;
+    auth_service.register(&mut user.into()).await?;
 
     Ok(NoContent)
 }

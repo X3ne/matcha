@@ -7,6 +7,7 @@ use crate::presentation::extractors::auth_extractor::Session;
 use actix_web::web;
 use apistos::actix::NoContent;
 use apistos::api_operation;
+use garde::Validate;
 use geo_types::Point;
 use std::sync::Arc;
 
@@ -30,6 +31,7 @@ pub async fn complete_onboarding(
     let user = session.authenticated_user()?;
 
     let onboarding = body.into_inner();
+    onboarding.validate()?;
 
     let profile = user_profile_service
         .create(&UserProfileInsert {

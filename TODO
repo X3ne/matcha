@@ -6,8 +6,11 @@ back:
   ☐ add validation on dtos (reject common passwords)
   ☐ rework error responses
   ☐ add UserProfile field to calculate distance from user
-  ☐ disable dev emails
-  ☐ mock db
+  ✔ disable dev emails @done(25-01-14 13:53)
+  ✔ mock db @done(25-01-14 13:53)
+  ☐ add likes
+  ☐ add block and report
+  ☐ add websocket notifications/realtime chat
 
 bonuses:
   ✔ oauth2 @done(25-01-13 16:24)

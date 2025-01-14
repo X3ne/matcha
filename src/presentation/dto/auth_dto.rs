@@ -1,15 +1,21 @@
 use crate::infrastructure::models::user::UserInsert;
 use apistos::ApiComponent;
+use garde::Validate;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug, ApiComponent, JsonSchema)]
+#[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
 #[serde(rename(deserialize = "RegisterUser"))]
 pub struct RegisterUserDto {
+    #[garde(email)]
     pub email: String,
+    #[garde(length(min = 3, max = 20), pattern("^[a-zA-Z0-9_-]+$"))]
     pub username: String,
+    #[garde(pattern("^[a-zA-Z]+$"))]
     pub first_name: String,
+    #[garde(pattern("^[a-zA-Z]+$"))]
     pub last_name: String,
+    #[garde(length(min = 8))]
     pub password: String,
 }
 
@@ -25,10 +31,12 @@ impl Into<UserInsert> for RegisterUserDto {
     }
 }
 
-#[derive(Deserialize, Debug, ApiComponent, JsonSchema)]
+#[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
 #[serde(rename(deserialize = "Login"))]
 pub struct LoginDto {
+    #[garde(length(min = 3, max = 20), pattern("^[a-zA-Z0-9_-]+$"))]
     pub username: String,
+    #[garde(length(min = 8))]
     pub password: String,
 }
 

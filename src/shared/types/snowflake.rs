@@ -1,18 +1,19 @@
-use std::sync::{Arc, Mutex};
-
+use garde::Validate;
 use once_cell::sync::Lazy;
 use schemars::JsonSchema;
 use schemars::_serde_json::Value;
 use schemars::schema::{InstanceType, Metadata, SchemaObject, SingleOrVec};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use snowflake::SnowflakeIdGenerator;
+use std::sync::{Arc, Mutex};
 
 // TODO: Maybe this is not the best way to implement this
 pub static SNOWFLAKE_GENERATOR: Lazy<SnowflakeGenerator> = Lazy::new(|| SnowflakeGenerator::new(1, 1));
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, Validate)]
+#[garde(transparent)]
 #[sqlx(transparent)]
-pub struct Snowflake(pub i64);
+pub struct Snowflake(#[garde(range(equal = 19))] pub i64);
 
 impl Snowflake {
     pub fn new(value: i64) -> Self {

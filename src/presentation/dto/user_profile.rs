@@ -1,4 +1,5 @@
 use apistos::ApiComponent;
+use garde::Validate;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -8,15 +9,20 @@ use crate::shared::types::snowflake::Snowflake;
 use crate::shared::types::tag::Tag;
 use crate::shared::types::user_profile::{Gender, Orientation};
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent, Validate)]
 #[serde(rename(deserialize = "CompleteOnboarding"))]
+#[garde(allow_unvalidated)]
 pub struct CompleteOnboardingDto {
+    #[garde(length(min = 1, max = 150))]
     pub bio: Option<String>,
+    #[garde(range(min = 18, max = 100))]
     pub age: i32,
     pub gender: Gender,
     pub sexual_orientation: Orientation,
+    #[garde(dive)]
     pub location: Option<Location>,
     #[serde(default)]
+    #[garde(dive)]
     pub tag_ids: Vec<Snowflake>,
 }
 

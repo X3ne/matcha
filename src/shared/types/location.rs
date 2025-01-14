@@ -1,10 +1,13 @@
 use apistos::ApiComponent;
+use garde::Validate;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, ApiComponent)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, ApiComponent, Validate)]
 pub struct Location {
+    #[garde(range(min = -90.0, max = 90.0))]
     pub latitude: f64,
+    #[garde(range(min = -180.0, max = 180.0))]
     pub longitude: f64,
 }
 

@@ -17,7 +17,7 @@ futures = "0.3.31"
 regex = "1.11.1"
 dotenvy = "0.15.7"
 config = "0.15.4"
-garde = { version = "0.21.0", features = ["regex", "email"] }
+garde = { version = "0.21.0", features = ["regex", "email", "derive"] }
 opentelemetry = "0.26.0"
 opentelemetry_sdk = { version = "0.26.0", features = ["rt-tokio-current-thread"] }
 opentelemetry-otlp = "0.26.0"
