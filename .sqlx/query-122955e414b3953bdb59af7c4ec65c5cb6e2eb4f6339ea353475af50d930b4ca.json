@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO user_profile (id, user_id, name, avatar_hash, bio, age, gender, sexual_orientation, location)\n            VALUES ($1, $2, $3, $4, $5, $6, $7::gender, $8::sexual_orientation, $9::geometry)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Int4",
+        {
+          "Custom": {
+            "name": "gender",
+            "kind": {
+              "Enum": [
+                "male",
+                "female"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "sexual_orientation",
+            "kind": {
+              "Enum": [
+                "male",
+                "female",
+                "bisexual"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "geometry",
+            "kind": "Simple"
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "122955e414b3953bdb59af7c4ec65c5cb6e2eb4f6339ea353475af50d930b4ca"
+}

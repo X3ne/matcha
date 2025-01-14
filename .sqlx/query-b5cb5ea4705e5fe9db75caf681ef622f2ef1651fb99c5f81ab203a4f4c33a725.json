@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO join_user_profile_tag (id, user_profile_id, profile_tag_id)\n                VALUES ($1, $2, $3)\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b5cb5ea4705e5fe9db75caf681ef622f2ef1651fb99c5f81ab203a4f4c33a725"
+}

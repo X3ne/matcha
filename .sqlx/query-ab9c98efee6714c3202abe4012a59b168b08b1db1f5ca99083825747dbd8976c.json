@@ -1,0 +1,126 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                up.id AS profile_id,\n                up.user_id,\n                up.name,\n                up.avatar_hash,\n                up.bio,\n                up.age,\n                up.gender AS \"gender: _\",\n                up.sexual_orientation AS \"sexual_orientation: _\",\n                up.location AS \"location!: _\",\n                up.rating,\n                up.created_at,\n                up.updated_at,\n                pt.id AS \"tag_id?: _\",\n                pt.name AS \"tag_name?: _\"\n            FROM\n                user_profile up\n            LEFT JOIN\n                join_user_profile_tag upt ON up.id = upt.user_profile_id\n            LEFT JOIN\n                profile_tag pt ON upt.profile_tag_id = pt.id\n            WHERE\n                up.user_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "profile_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "avatar_hash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "bio",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "age",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "gender: _",
+        "type_info": {
+          "Custom": {
+            "name": "gender",
+            "kind": {
+              "Enum": [
+                "male",
+                "female"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "sexual_orientation: _",
+        "type_info": {
+          "Custom": {
+            "name": "sexual_orientation",
+            "kind": {
+              "Enum": [
+                "male",
+                "female",
+                "bisexual"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "location!: _",
+        "type_info": {
+          "Custom": {
+            "name": "geometry",
+            "kind": "Simple"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "rating",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 11,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 12,
+        "name": "tag_id?: _",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 13,
+        "name": "tag_name?: _",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ab9c98efee6714c3202abe4012a59b168b08b1db1f5ca99083825747dbd8976c"
+}
