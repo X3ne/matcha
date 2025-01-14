@@ -40,14 +40,14 @@ const Navbar = () => {
   const desktopGuestLinks = (
     <ul className="hidden gap-4 md:flex">
       <li>
-        <Button>
-          <Link to="/login">Login</Link>
-        </Button>
+        <Link to="/login">
+          <Button>Login</Button>
+        </Link>
       </li>
       <li>
-        <Button>
-          <Link to="/register">Register</Link>
-        </Button>
+        <Link to="/register">
+          <Button>Register</Button>
+        </Link>
       </li>
     </ul>
   )
