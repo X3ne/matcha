@@ -4,6 +4,7 @@ pub mod error;
 #[cfg(feature = "mailing")]
 pub mod mailing;
 pub mod models;
+pub mod opcodes;
 pub mod repositories;
 pub mod server;
 pub mod services;

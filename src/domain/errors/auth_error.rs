@@ -1,5 +1,6 @@
 use actix_web::http::StatusCode;
 
+use crate::infrastructure::opcodes::ErrorCode;
 use crate::ApiErrorImpl;
 
 #[derive(Debug, thiserror::Error)]
@@ -23,16 +24,16 @@ pub enum AuthError {
 }
 
 impl ApiErrorImpl for AuthError {
-    fn get_codes(&self) -> (StatusCode, &str) {
+    fn get_codes(&self) -> (StatusCode, ErrorCode) {
         match self {
-            AuthError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized"),
-            AuthError::AccountNotActivated => (StatusCode::UNAUTHORIZED, "account_not_activated"),
-            AuthError::InvalidCredentials => (StatusCode::UNAUTHORIZED, "invalid_credentials"),
-            AuthError::OAuth2Error(..) => (StatusCode::INTERNAL_SERVER_ERROR, "oauth2_error"),
-            AuthError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, "database_error"),
-            AuthError::PasswordRequired => (StatusCode::BAD_REQUEST, "password_required"),
-            AuthError::PasswordHashError => (StatusCode::INTERNAL_SERVER_ERROR, "hash_error"),
-            AuthError::MailError => (StatusCode::INTERNAL_SERVER_ERROR, "mail_error"),
+            AuthError::Unauthorized => (StatusCode::UNAUTHORIZED, ErrorCode::Unauthorized),
+            AuthError::AccountNotActivated => (StatusCode::UNAUTHORIZED, ErrorCode::AccountNotActivated),
+            AuthError::InvalidCredentials => (StatusCode::UNAUTHORIZED, ErrorCode::InvalidCredentials),
+            AuthError::OAuth2Error(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            AuthError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            AuthError::PasswordRequired => (StatusCode::BAD_REQUEST, ErrorCode::InvalidCredentials),
+            AuthError::PasswordHashError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            AuthError::MailError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
         }
     }
 }

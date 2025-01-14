@@ -1,5 +1,6 @@
 use actix_web::http::StatusCode;
 
+use crate::infrastructure::opcodes::ErrorCode;
 use crate::ApiErrorImpl;
 
 #[derive(Debug, thiserror::Error)]
@@ -11,10 +12,10 @@ pub enum UserError {
 }
 
 impl ApiErrorImpl for UserError {
-    fn get_codes(&self) -> (StatusCode, &str) {
+    fn get_codes(&self) -> (StatusCode, ErrorCode) {
         match self {
-            UserError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, "database_error"),
-            UserError::NoProfile => (StatusCode::NOT_FOUND, "no_profile"),
+            UserError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            UserError::NoProfile => (StatusCode::NOT_FOUND, ErrorCode::UnknownProfile),
         }
     }
 }

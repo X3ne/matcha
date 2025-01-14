@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Display;
 
 use actix_web::http::StatusCode;
@@ -11,37 +11,40 @@ mod presentation;
 mod services;
 mod shared;
 
+use crate::infrastructure::opcodes::ErrorCode;
 pub use infrastructure::config;
 pub use infrastructure::server;
 pub use infrastructure::tracing;
 
-// TODO: move this
+#[derive(Serialize, Debug)]
+pub struct ErrorResponse {
+    pub code: u32,
+    pub message: String,
+    pub errors: BTreeMap<String, ErrorDetails>,
+}
+
 #[derive(Serialize, Debug, Clone)]
 pub struct ErrorDetails {
-    pub message: String,
-    pub code: String,
+    _errors: Vec<ErrorItem>,
 }
 
-#[derive(Serialize, Debug)]
-pub struct ErrorResponse<'a> {
-    pub code: &'a str,
-    pub message: String,
-    pub details: Option<Vec<ErrorDetails>>,
-    pub form_errors: Option<HashMap<String, String>>,
+#[derive(Serialize, Debug, Clone)]
+pub struct ErrorItem {
+    message: String,
 }
 
-impl ResponseError for ErrorResponse<'_> {}
+impl ResponseError for ErrorResponse {}
 
-impl Display for ErrorResponse<'_> {
+impl Display for ErrorResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "ErrorResponse {{ code: {}, message: {}, details: {:?}, form_errors: {:?} }}",
-            self.code, self.message, self.details, self.form_errors
+            "ErrorResponse {{ code: {}, message: {}, errors: {:?} }}",
+            self.code, self.message, self.errors
         )
     }
 }
 
 pub trait ApiErrorImpl {
-    fn get_codes(&self) -> (StatusCode, &str);
+    fn get_codes(&self) -> (StatusCode, ErrorCode);
 }

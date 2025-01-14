@@ -1,14 +1,14 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Debug;
 
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use apistos::ApiErrorComponent;
 use oauth2::error::OAuth2Error;
-use regex::Regex;
 
 use crate::domain::errors::auth_error::AuthError;
 use crate::domain::errors::user_error::UserError;
-use crate::{ApiErrorImpl, ErrorResponse};
+use crate::infrastructure::opcodes::ErrorCode;
+use crate::{ApiErrorImpl, ErrorDetails, ErrorItem, ErrorResponse};
 
 #[derive(thiserror::Error, Debug, ApiErrorComponent)]
 #[openapi_error(
@@ -38,16 +38,39 @@ pub enum ApiError {
 }
 
 impl ApiErrorImpl for ApiError {
-    fn get_codes(&self) -> (StatusCode, &str) {
+    fn get_codes(&self) -> (StatusCode, ErrorCode) {
         match self {
-            ApiError::BadRequest(..) => (StatusCode::BAD_REQUEST, "bad_request"),
-            ApiError::InternalServerError => (StatusCode::INTERNAL_SERVER_ERROR, "internal_server_error"),
-            ApiError::SessionError(..) => (StatusCode::INTERNAL_SERVER_ERROR, "session_error"),
-            ApiError::ValidationError(..) => (StatusCode::BAD_REQUEST, "validation_error"),
-            ApiError::DatabaseError(..) => (StatusCode::INTERNAL_SERVER_ERROR, "database_error"),
-            ApiError::OAuth2Error(..) => (StatusCode::INTERNAL_SERVER_ERROR, "oauth2_error"),
+            ApiError::BadRequest(..) => (StatusCode::BAD_REQUEST, ErrorCode::InvalidFormBody),
+            ApiError::InternalServerError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            ApiError::SessionError(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::UnknownSession),
+            ApiError::ValidationError(..) => (StatusCode::BAD_REQUEST, ErrorCode::InvalidFormBody),
+            ApiError::DatabaseError(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            ApiError::OAuth2Error(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             ApiError::AuthError(err) => err.get_codes(),
             ApiError::UserError(err) => err.get_codes(),
+        }
+    }
+}
+
+impl From<&garde::Report> for ErrorResponse {
+    fn from(report: &garde::Report) -> Self {
+        let mut errors = BTreeMap::new();
+
+        for (path, error) in report.iter() {
+            let field = path.to_string();
+            let message = error.message().to_string();
+
+            errors
+                .entry(field)
+                .or_insert_with(|| ErrorDetails { _errors: vec![] })
+                ._errors
+                .push(ErrorItem { message });
+        }
+
+        ErrorResponse {
+            code: ErrorCode::InvalidFormBody as u32,
+            errors,
+            message: ErrorCode::message(&ErrorCode::InvalidFormBody).to_string(),
         }
     }
 }
@@ -55,44 +78,15 @@ impl ApiErrorImpl for ApiError {
 impl ResponseError for ApiError {
     fn error_response(&self) -> HttpResponse {
         let (status, code) = self.get_codes();
-        let message = self.to_string();
 
         tracing::error!("{}", self);
 
-        fn parse_errors(description: &str) -> HashMap<String, String> {
-            let mut errors_map = HashMap::new();
-
-            let re = Regex::new(r"(\w+):\s*([^\[]+)\[.*?\]").unwrap();
-
-            for cap in re.captures_iter(description) {
-                errors_map.insert(
-                    cap[1].to_string(),
-                    cap[2]
-                        .to_string()
-                        .replace("Validation error: ", "invalid_")
-                        .trim()
-                        .to_lowercase(),
-                );
-            }
-
-            errors_map
-        }
-
         let error_response = match self {
-            ApiError::ValidationError(_) => {
-                let description = self.to_string();
-                ErrorResponse {
-                    code,
-                    message: "Validation error".to_string(),
-                    details: None,
-                    form_errors: Some(parse_errors(&description)),
-                }
-            }
+            ApiError::ValidationError(e) => e.into(),
             _ => ErrorResponse {
-                code,
-                message,
-                details: None,
-                form_errors: None,
+                code: code.clone() as u32,
+                message: ErrorCode::message(&code).to_string(),
+                errors: BTreeMap::new(),
             },
         };
 
