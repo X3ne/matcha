@@ -1,10 +1,10 @@
+import { UserProvider } from '@/providers/userProvider'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
-import { RouterProvider, createRouter } from '@tanstack/react-router'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { UserProvider } from '@/providers/userProvider'
-import './global.css'
 
+import './global.css'
 import { routeTree } from './routeTree.gen'
 
 const router = createRouter({ routeTree })
@@ -24,7 +24,7 @@ if (!rootElement.innerHTML) {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <UserProvider>
-            <RouterProvider router={router} />
+          <RouterProvider router={router} />
         </UserProvider>
       </QueryClientProvider>
     </StrictMode>

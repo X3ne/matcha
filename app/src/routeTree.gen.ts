@@ -17,7 +17,11 @@ import { Route as rootRoute } from './routes/__root'
 // Create Virtual Routes
 
 const IndexLazyImport = createFileRoute('/')()
+const SearchIndexLazyImport = createFileRoute('/search/')()
+const RegisterIndexLazyImport = createFileRoute('/register/')()
+const LoginIndexLazyImport = createFileRoute('/login/')()
 const ErrorIndexLazyImport = createFileRoute('/error/')()
+const ProfileUsernameLazyImport = createFileRoute('/profile/$username')()
 
 // Create/Update Routes
 
@@ -27,11 +31,39 @@ const IndexLazyRoute = IndexLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 
+const SearchIndexLazyRoute = SearchIndexLazyImport.update({
+  id: '/search/',
+  path: '/search/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/search/index.lazy').then((d) => d.Route))
+
+const RegisterIndexLazyRoute = RegisterIndexLazyImport.update({
+  id: '/register/',
+  path: '/register/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/register/index.lazy').then((d) => d.Route),
+)
+
+const LoginIndexLazyRoute = LoginIndexLazyImport.update({
+  id: '/login/',
+  path: '/login/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/login/index.lazy').then((d) => d.Route))
+
 const ErrorIndexLazyRoute = ErrorIndexLazyImport.update({
   id: '/error/',
   path: '/error/',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/error/index.lazy').then((d) => d.Route))
+
+const ProfileUsernameLazyRoute = ProfileUsernameLazyImport.update({
+  id: '/profile/$username',
+  path: '/profile/$username',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/profile/$username.lazy').then((d) => d.Route),
+)
 
 // Populate the FileRoutesByPath interface
 
@@ -44,11 +76,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyImport
       parentRoute: typeof rootRoute
     }
+    '/profile/$username': {
+      id: '/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof ProfileUsernameLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/error/': {
       id: '/error/'
       path: '/error'
       fullPath: '/error'
       preLoaderRoute: typeof ErrorIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/login/': {
+      id: '/login/'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/register/': {
+      id: '/register/'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/search/': {
+      id: '/search/'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchIndexLazyImport
       parentRoute: typeof rootRoute
     }
   }
@@ -58,37 +118,70 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
+  '/profile/$username': typeof ProfileUsernameLazyRoute
   '/error': typeof ErrorIndexLazyRoute
+  '/login': typeof LoginIndexLazyRoute
+  '/register': typeof RegisterIndexLazyRoute
+  '/search': typeof SearchIndexLazyRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
+  '/profile/$username': typeof ProfileUsernameLazyRoute
   '/error': typeof ErrorIndexLazyRoute
+  '/login': typeof LoginIndexLazyRoute
+  '/register': typeof RegisterIndexLazyRoute
+  '/search': typeof SearchIndexLazyRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexLazyRoute
+  '/profile/$username': typeof ProfileUsernameLazyRoute
   '/error/': typeof ErrorIndexLazyRoute
+  '/login/': typeof LoginIndexLazyRoute
+  '/register/': typeof RegisterIndexLazyRoute
+  '/search/': typeof SearchIndexLazyRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/error'
+  fullPaths:
+    | '/'
+    | '/profile/$username'
+    | '/error'
+    | '/login'
+    | '/register'
+    | '/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/error'
-  id: '__root__' | '/' | '/error/'
+  to: '/' | '/profile/$username' | '/error' | '/login' | '/register' | '/search'
+  id:
+    | '__root__'
+    | '/'
+    | '/profile/$username'
+    | '/error/'
+    | '/login/'
+    | '/register/'
+    | '/search/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
+  ProfileUsernameLazyRoute: typeof ProfileUsernameLazyRoute
   ErrorIndexLazyRoute: typeof ErrorIndexLazyRoute
+  LoginIndexLazyRoute: typeof LoginIndexLazyRoute
+  RegisterIndexLazyRoute: typeof RegisterIndexLazyRoute
+  SearchIndexLazyRoute: typeof SearchIndexLazyRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
+  ProfileUsernameLazyRoute: ProfileUsernameLazyRoute,
   ErrorIndexLazyRoute: ErrorIndexLazyRoute,
+  LoginIndexLazyRoute: LoginIndexLazyRoute,
+  RegisterIndexLazyRoute: RegisterIndexLazyRoute,
+  SearchIndexLazyRoute: SearchIndexLazyRoute,
 }
 
 export const routeTree = rootRoute
@@ -102,14 +195,30 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/error/"
+        "/profile/$username",
+        "/error/",
+        "/login/",
+        "/register/",
+        "/search/"
       ]
     },
     "/": {
       "filePath": "index.lazy.tsx"
     },
+    "/profile/$username": {
+      "filePath": "profile/$username.lazy.tsx"
+    },
     "/error/": {
       "filePath": "error/index.lazy.tsx"
+    },
+    "/login/": {
+      "filePath": "login/index.lazy.tsx"
+    },
+    "/register/": {
+      "filePath": "register/index.lazy.tsx"
+    },
+    "/search/": {
+      "filePath": "search/index.lazy.tsx"
     }
   }
 }

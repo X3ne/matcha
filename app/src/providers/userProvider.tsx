@@ -1,11 +1,13 @@
+import api, { User, UserProfile } from '@/api'
 import { useToast } from '@/components/ui/use-toast'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { createContext } from 'react'
-import api, { User } from '@/api'
 
 export const UserContext = createContext({
   user: undefined as unknown as User | undefined,
+  userProfile: undefined as unknown as UserProfile | undefined,
   isUserLoading: true,
+  isProfileLoading: true,
   logout: () => {}
 })
 
@@ -21,6 +23,18 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           credentials: 'include'
         })
       ).data
+  })
+
+  const { data: userProfile, isLoading: isProfileLoading } = useQuery({
+    queryKey: ['userProfile'],
+    retry: false,
+    queryFn: async () =>
+      (
+        await api.v1.getMyProfile({
+          credentials: 'include'
+        })
+      ).data,
+    enabled: !!user
   })
 
   const { mutate: logout } = useMutation({
@@ -49,7 +63,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   })
 
   return (
-    <UserContext.Provider value={{ user, logout, isUserLoading }}>
+    <UserContext.Provider
+      value={{ user, isUserLoading, userProfile, isProfileLoading, logout }}
+    >
       {children}
     </UserContext.Provider>
   )

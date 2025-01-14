@@ -3,5 +3,6 @@
   "singleQuote": true,
   "tabWidth": 2,
   "endOfLine": "lf",
-  "trailingComma": "none"
+  "trailingComma": "none",
+  "plugins": ["prettier-plugin-tailwindcss"]
 }
