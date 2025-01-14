@@ -17,6 +17,8 @@ use crate::domain::errors::auth_error::AuthError;
 use crate::domain::services::user_service::UserService;
 use crate::infrastructure::error::ApiError;
 
+const ALLOWED_PATHS: [&str; 2] = ["/v1/auth/oauth2/42/callback", "/v1/auth/login"];
+
 #[derive(ApiCookie)]
 #[openapi_cookie(name = "session", description = "Session cookie", required = true)]
 pub struct Session {
@@ -50,7 +52,7 @@ impl FromRequest for Session {
     fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
         let session = req.get_session();
 
-        if req.path() == "/v1/auth/oauth2/42/callback" {
+        if ALLOWED_PATHS.contains(&req.path()) {
             // TODO: find a better way to handle this
             return Box::pin(async move {
                 Ok(Session {
