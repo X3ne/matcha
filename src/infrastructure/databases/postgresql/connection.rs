@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{PgPool, Pool};
+use sqlx::PgPool;
 
 pub async fn connect(database_url: &str) -> Result<PgPool, sqlx::Error> {
     let database_url = database_url.replace("\"", "");
@@ -13,6 +13,9 @@ pub async fn connect(database_url: &str) -> Result<PgPool, sqlx::Error> {
         .max_lifetime(Some(Duration::from_secs(60 * 60)))
         .connect(&database_url)
         .await?;
+
+    #[cfg(feature = "faker")]
+    crate::infrastructure::databases::postgresql::faker::init_fake_data(&pool).await;
 
     Ok(pool)
 }
