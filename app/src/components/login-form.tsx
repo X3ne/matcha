@@ -7,21 +7,32 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogFooter
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 import { useMutation } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import React, { useState } from 'react'
 
-// import { Si42 } from 'react-icons/si'
-
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<'div'>) {
+  const { toast } = useToast()
+
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [resetEmail, setResetEmail] = useState('')
 
   const { mutate: handle42Login, isPending: is42Loading } = useMutation<
     void,
@@ -55,6 +66,31 @@ export function LoginForm({
     handleCredentialsLogin({ username, password })
   }
 
+  // const { mutate: handlePasswordReset, isPending: isResetLoading } =
+  //   useMutation<void, Error, string>({
+  //     mutationFn: async (email) => {
+  //       await api.v1.resetPassword({ email })
+  //     },
+  //     onSuccess: () => {
+  //       toast({
+  //         title: 'Reset link sent!',
+  //         description: 'Please check your email.'
+  //       })
+  //     },
+  //     onError: (err) => {
+  //       console.error('Reset password error:', err)
+  //     }
+  //   })
+
+  const onSubmitReset = (e: React.FormEvent<HTMLFormElement>) => {
+    // e.preventDefault()
+    // handlePasswordReset(resetEmail)
+    toast({
+      title: 'Reset link sent!',
+      description: 'Please check your email.'
+    })
+  }
+
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
@@ -76,14 +112,12 @@ export function LoginForm({
             </div>
           </div>
 
-          {/* Divider */}
           <div className="relative my-6 text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
             <span className="relative z-10 bg-background px-2 text-muted-foreground">
               Or continue with
             </span>
           </div>
 
-          {/* Username/Password Form */}
           <form onSubmit={onSubmitCredentials}>
             <div className="grid gap-6">
               <div className="grid gap-2">
@@ -100,12 +134,50 @@ export function LoginForm({
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <a
+                        href="#"
+                        className="ml-auto text-sm underline-offset-4 hover:underline"
+                      >
+                        Forgot your password?
+                      </a>
+                    </DialogTrigger>
+
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogDescription>
+                          Enter your email address to receive a reset link.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form
+                        onSubmit={onSubmitReset}
+                        className="grid gap-4 py-4"
+                      >
+                        <div className="grid gap-2">
+                          <Label htmlFor="resetEmail">Email</Label>
+                          <Input
+                            id="resetEmail"
+                            type="email"
+                            required
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                          />
+                        </div>
+                        <DialogFooter>
+                          <Button
+                            type="submit"
+                            // disabled={isResetLoading}
+                            className="w-full"
+                          >
+                            Send Reset Link
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
                 </div>
                 <Input
                   id="password"
