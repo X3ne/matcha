@@ -1,9 +1,10 @@
 use apistos::ApiComponent;
+use rand_derive2::RandGen;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-#[derive(Debug, sqlx::Type, PartialEq, Eq, Clone, Deserialize, Serialize, JsonSchema, ApiComponent)]
+#[derive(Debug, sqlx::Type, PartialEq, Eq, Clone, Deserialize, Serialize, JsonSchema, ApiComponent, RandGen)]
 #[sqlx(type_name = "gender", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum Gender {
@@ -20,7 +21,7 @@ impl Display for Gender {
     }
 }
 
-#[derive(Debug, sqlx::Type, PartialEq, Eq, Clone, Deserialize, Serialize, JsonSchema, ApiComponent)]
+#[derive(Debug, sqlx::Type, PartialEq, Eq, Clone, Deserialize, Serialize, JsonSchema, ApiComponent, RandGen)]
 #[sqlx(type_name = "sexual_orientation", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum Orientation {

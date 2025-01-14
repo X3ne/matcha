@@ -4,6 +4,7 @@ use crate::infrastructure::models::user_profile::{ProfileTagSqlx, UserProfileSql
 use crate::infrastructure::repositories::user_repo::PgUserRepository;
 use crate::shared::types::user_profile::{Gender, Orientation};
 use rand::prelude::SliceRandom;
+use rand::Rng;
 use sqlx::PgPool;
 
 mod profile;
@@ -16,14 +17,12 @@ pub async fn init_fake_data(pool: &PgPool) {
         return;
     }
 
+    let mut rng = rand::thread_rng();
+
     let users = UserSqlx::insert_fake_users(pool).await;
     let tags = ProfileTagSqlx::create_fake_tags(pool).await;
 
     for (i, user) in users.iter().enumerate() {
-        if i == 6 {
-            break;
-        }
-
         let (gender, orientation) = match i {
             0 => (Gender::Male, Orientation::Female),
             1 => (Gender::Male, Orientation::Male),
@@ -31,7 +30,7 @@ pub async fn init_fake_data(pool: &PgPool) {
             3 => (Gender::Female, Orientation::Male),
             4 => (Gender::Female, Orientation::Female),
             5 => (Gender::Female, Orientation::Bisexual),
-            _ => panic!("Too many users"),
+            _ => (rng.gen(), rng.gen()),
         };
 
         let tags = tags.choose_multiple(&mut rand::thread_rng(), 3).collect::<Vec<_>>();

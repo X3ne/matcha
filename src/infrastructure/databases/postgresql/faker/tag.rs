@@ -1,11 +1,11 @@
 use crate::infrastructure::models::user_profile::ProfileTagSqlx;
-use crate::shared::types::snowflake::SNOWFLAKE_GENERATOR;
+use crate::shared::types::snowflake::Snowflake;
 use fake::Fake;
 use sqlx::PgPool;
 
 impl ProfileTagSqlx {
     pub fn new() -> Self {
-        let id = SNOWFLAKE_GENERATOR.generate();
+        let id = Snowflake::new();
         let name: String = fake::faker::lorem::fr_fr::Word().fake();
 
         Self { id, name }

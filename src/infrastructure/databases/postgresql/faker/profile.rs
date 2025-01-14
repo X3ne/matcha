@@ -1,5 +1,5 @@
 use crate::infrastructure::models::user_profile::{ProfileTagSqlx, UserProfileSqlx};
-use crate::shared::types::snowflake::{Snowflake, SNOWFLAKE_GENERATOR};
+use crate::shared::types::snowflake::Snowflake;
 use crate::shared::types::user_profile::{Gender, Orientation};
 use chrono::Utc;
 use fake::faker::lorem::fr_fr::Paragraph;
@@ -12,7 +12,7 @@ use sqlx::PgPool;
 
 impl UserProfileSqlx {
     pub fn new(user_id: Snowflake, name: String, gender: Gender, orientation: Orientation) -> Self {
-        let id = SNOWFLAKE_GENERATOR.generate();
+        let id = Snowflake::new();
         let bio = Paragraph(1..3).fake();
         let mut rng = rand::thread_rng();
         let age = rng.gen_range(18..50);
@@ -59,7 +59,7 @@ impl UserProfileSqlx {
 
     pub async fn link_tags(&self, pool: &PgPool, tags: Vec<&ProfileTagSqlx>) {
         for tag in tags {
-            let id = SNOWFLAKE_GENERATOR.generate();
+            let id = Snowflake::new();
 
             sqlx::query!(
                 r#"

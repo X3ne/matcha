@@ -2,7 +2,7 @@ use sqlx::FromRow;
 
 use crate::shared::types::snowflake::Snowflake;
 
-#[derive(FromRow, Debug)]
+#[derive(FromRow, Debug, Clone)]
 pub struct UserSqlx {
     pub id: Snowflake,
     pub email: String,
