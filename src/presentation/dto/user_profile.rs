@@ -22,7 +22,8 @@ pub struct CompleteOnboardingDto {
     #[garde(range(min = 18, max = 100))]
     pub age: i32,
     pub gender: Gender,
-    pub sexual_orientation: Orientation,
+    #[serde(default = "Orientation::default")]
+    pub sexual_orientation: Option<Orientation>,
     #[garde(dive)]
     pub location: Option<Location>,
     #[serde(default)]

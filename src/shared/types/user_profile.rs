@@ -39,3 +39,9 @@ impl Display for Orientation {
         }
     }
 }
+
+impl Default for Orientation {
+    fn default() -> Self {
+        Orientation::Bisexual
+    }
+}
