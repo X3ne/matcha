@@ -8,6 +8,8 @@ pub enum ErrorCode {
     UnknownSession = 10004,
     Unauthorized = 40001,
     AccountNotActivated = 40002,
+    UserEmailAlreadyExists = 40003,
+    UserUsernameAlreadyExists = 40004,
     InvalidFormBody = 50001,
     InvalidCredentials = 50002,
 }
@@ -22,6 +24,8 @@ impl ErrorCode {
             ErrorCode::UnknownSession => "Unknown session",
             ErrorCode::Unauthorized => "Unauthorized",
             ErrorCode::AccountNotActivated => "You need to verify your account to perform this action",
+            ErrorCode::UserEmailAlreadyExists => "An user with this email already exists",
+            ErrorCode::UserUsernameAlreadyExists => "An user with this username already exists",
             ErrorCode::InvalidFormBody => "Invalid form body",
             ErrorCode::InvalidCredentials => "Invalid credentials",
         }

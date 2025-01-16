@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO \"user\" (id, email, username, last_name, first_name, password, is_active, activation_token, created_at, updated_at)\n                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Bool",
+        "Varchar",
+        "Timestamp",
+        "Timestamp"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "af8b477a94f4860e0ed9355e02383ad7dafb22950c7bc9760c25c7f4b83f40ee"
+}

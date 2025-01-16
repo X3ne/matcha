@@ -21,6 +21,10 @@ pub enum AuthError {
     PasswordHashError,
     #[error("Error sending mail")]
     MailError,
+    #[error("An user with this email already exists")]
+    UserEmailAlreadyExists,
+    #[error("An user with this username already exists")]
+    UserUsernameAlreadyExists,
 }
 
 impl ApiErrorImpl for AuthError {
@@ -34,6 +38,8 @@ impl ApiErrorImpl for AuthError {
             AuthError::PasswordRequired => (StatusCode::BAD_REQUEST, ErrorCode::InvalidCredentials),
             AuthError::PasswordHashError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             AuthError::MailError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            AuthError::UserEmailAlreadyExists => (StatusCode::CONFLICT, ErrorCode::UserEmailAlreadyExists),
+            AuthError::UserUsernameAlreadyExists => (StatusCode::CONFLICT, ErrorCode::UserUsernameAlreadyExists),
         }
     }
 }
@@ -41,6 +47,20 @@ impl ApiErrorImpl for AuthError {
 impl From<sqlx::Error> for AuthError {
     fn from(e: sqlx::Error) -> Self {
         tracing::error!("Database error: {}", e);
-        AuthError::DatabaseError
+        match e {
+            sqlx::Error::RowNotFound => AuthError::InvalidCredentials,
+            sqlx::Error::Database(db_err) => {
+                if let Some(constraint) = db_err.constraint() {
+                    match constraint {
+                        "user_email_key" => AuthError::UserEmailAlreadyExists,
+                        "user_username_key" => AuthError::UserUsernameAlreadyExists,
+                        _ => AuthError::DatabaseError,
+                    }
+                } else {
+                    AuthError::DatabaseError
+                }
+            }
+            _ => AuthError::DatabaseError,
+        }
     }
 }

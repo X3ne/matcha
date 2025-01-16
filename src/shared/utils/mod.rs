@@ -27,7 +27,7 @@ pub fn validate_password(password: &str, context: &ValidatePasswordContext) -> g
         ],
     );
 
-    if entropy.score() < Score::Three {
+    if entropy.score() < Score::Two {
         return Err(garde::Error::new("password is too weak"));
     }
 
