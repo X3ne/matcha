@@ -81,9 +81,9 @@ pub struct UserProfileQueryParamsDto {
     pub max_fame_rating: Option<i32>,
 
     #[garde(range(min = -90.0, max = 90.0))]
-    pub latitude: f64,
+    pub latitude: Option<f64>,
     #[garde(range(min = -180.0, max = 180.0))]
-    pub longitude: f64,
+    pub longitude: Option<f64>,
     #[garde(range(min = 0.0))]
     pub radius_km: Option<f64>,
     #[garde(dive)]
@@ -136,7 +136,9 @@ impl Into<UserProfileQueryParams> for UserProfileQueryParamsDto {
             max_age: self.max_age,
             min_fame_rating: self.min_fame_rating,
             max_fame_rating: self.max_fame_rating,
-            location: Some(Point::new(self.longitude, self.latitude)),
+            location: self
+                .latitude
+                .and_then(|lat| self.longitude.map(|lng| Point::new(lat, lng))),
             radius_km: self.radius_km,
             tag_ids: self.tag_ids,
             sort_by: self.sort_by,
