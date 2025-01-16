@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::errors::user_error::UserError;
-use crate::domain::repositories::user_profile_repo::UserProfileRepository;
+use crate::domain::repositories::user_profile_repo::{UserProfileQueryParams, UserProfileRepository};
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::models::user_profile::UserProfileInsert;
 use crate::infrastructure::repositories::user_profile::PgUserProfileRepository;
@@ -55,5 +55,13 @@ impl UserProfileService for UserProfileServiceImpl {
             })?;
 
         Ok(profile)
+    }
+
+    async fn search(&self, params: UserProfileQueryParams) -> Result<Vec<UserProfile>, UserError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let profiles = PgUserProfileRepository::search(&mut *conn, params).await?;
+
+        Ok(profiles)
     }
 }

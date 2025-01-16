@@ -2,7 +2,7 @@ use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::UserProfileInsert;
 use crate::presentation::dto::user_dto::UserDto;
-use crate::presentation::dto::user_profile::{CompleteOnboardingDto, UserProfileDto};
+use crate::presentation::dto::user_profile::{CompleteOnboardingDto, UserProfileDto, UserProfileQueryParamsDto};
 use crate::presentation::extractors::auth_extractor::Session;
 use actix_web::web;
 use apistos::actix::NoContent;
@@ -64,4 +64,19 @@ pub async fn get_my_profile(
     let profile = user_profile_service.get_by_user_id(user.id).await?;
 
     Ok(web::Json(profile.into()))
+}
+
+#[api_operation(tag = "users", operation_id = "search_profile", summary = "Search user profiles")]
+pub async fn search_profiles(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    params: web::Query<UserProfileQueryParamsDto>,
+    session: Session,
+) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+    // let user = session.authenticated_user()?;
+    let params = params.into_inner();
+    params.validate()?;
+
+    let profiles = user_profile_service.search(params.into()).await?;
+
+    Ok(web::Json(profiles.into_iter().map(|p| p.into()).collect()))
 }

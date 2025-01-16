@@ -62,8 +62,6 @@ impl FromRequest for Session {
             });
         }
 
-        // TODO: query user from db
-
         session.renew();
 
         let user_service = match req.app_data::<web::Data<Arc<dyn UserService>>>() {

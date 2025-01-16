@@ -1,7 +1,7 @@
 use apistos::web;
 use apistos::web::{resource, scope};
 
-use crate::presentation::controllers::user_controller::{complete_onboarding, get_me, get_my_profile};
+use crate::presentation::controllers::user_controller::{complete_onboarding, get_me, get_my_profile, search_profiles};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -11,6 +11,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             //             .service(resource("").route(web::get().to(login_42)))
             //             .service(resource("").route(web::get().to(callback_42))),
             // )
+            .service(scope("").service(resource("/search").route(web::get().to(search_profiles))))
             .service(
                 scope("/@me")
                     .service(resource("").route(web::get().to(get_me)))
