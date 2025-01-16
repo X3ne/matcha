@@ -8,7 +8,10 @@ impl ProfileTagSqlx {
         let id = Snowflake::new();
         let name: String = fake::faker::lorem::fr_fr::Word().fake();
 
-        Self { id, name }
+        Self {
+            id,
+            name: format!("{}_{}", name, id),
+        }
     }
 
     pub async fn create_fake_tags(pool: &PgPool) -> Vec<Self> {

@@ -9,6 +9,31 @@ use geozero::wkb;
 use geozero::wkb::Decode;
 use rand::Rng;
 use sqlx::PgPool;
+use std::f64::consts::PI;
+
+const DEFAULT_LATITUDE: f64 = 48.85580453177924;
+const DEFAULT_LONGITUDE: f64 = 2.3520428683913375;
+const EARTH_RADIUS_KM: f64 = 6371.0;
+
+fn random_location_around(latitude: f64, longitude: f64, radius_km: f64) -> Point<f64> {
+    let mut rng = rand::thread_rng();
+
+    let angle = rng.gen_range(0.0..2.0 * PI);
+
+    let random_fraction = rng.gen::<f64>();
+    let distance_km = radius_km * random_fraction.sqrt();
+
+    let distance_rad = distance_km / EARTH_RADIUS_KM;
+
+    let new_lat = latitude.to_radians() + distance_rad * angle.sin();
+
+    let new_lon = longitude.to_radians() + distance_rad * angle.cos() / latitude.to_radians().cos();
+
+    let final_lat = new_lat.to_degrees();
+    let final_lon = new_lon.to_degrees();
+
+    Point::new(final_lon, final_lat)
+}
 
 impl UserProfileSqlx {
     pub fn new(user_id: Snowflake, name: String, gender: Gender, orientation: Orientation) -> Self {
@@ -17,6 +42,7 @@ impl UserProfileSqlx {
         let mut rng = rand::thread_rng();
         let age = rng.gen_range(18..50);
         let now = Utc::now().naive_utc();
+        let location = random_location_around(DEFAULT_LATITUDE, DEFAULT_LONGITUDE, 20.0);
 
         Self {
             id,
@@ -28,7 +54,7 @@ impl UserProfileSqlx {
             gender,
             sexual_orientation: orientation,
             location: Decode {
-                geometry: Some(Point::new(0.0, 0.0).into()),
+                geometry: Some(location.into()),
             },
             rating: 0,
             created_at: now,

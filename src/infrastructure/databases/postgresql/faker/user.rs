@@ -23,22 +23,13 @@ impl UserSqlx {
             false => Some(generate_random_secure_string(32)),
         };
 
-        let salt = SaltString::generate(&mut OsRng);
-
-        let argon2 = Argon2::default();
-
-        let password_hash = argon2
-            .hash_password(password.as_bytes(), &salt)
-            .expect("Failed to hash password")
-            .to_string();
-
         Self {
             id,
             email,
             username,
             last_name,
             first_name,
-            password: Some(password_hash),
+            password: Some(password),
             is_active,
             activation_token,
             created_at: now,
@@ -50,7 +41,7 @@ impl UserSqlx {
         let id = Snowflake::new();
         let now = Utc::now().naive_utc();
         let username: String = Username().fake();
-        let email = format!("{}@test.com", username);
+        let email = format!("{}_{}@test.com", username, id);
         let first_name: String = FirstName().fake();
         let last_name: String = LastName().fake();
         let is_active = true;
@@ -61,22 +52,13 @@ impl UserSqlx {
             false => Some(generate_random_secure_string(32)),
         };
 
-        let salt = SaltString::generate(&mut OsRng);
-
-        let argon2 = Argon2::default();
-
-        let password_hash = argon2
-            .hash_password(password.as_bytes(), &salt)
-            .expect("Failed to hash password")
-            .to_string();
-
         Self {
             id,
             email,
-            username,
+            username: format!("{}_{}", username, id),
             last_name,
             first_name,
-            password: Some(password_hash),
+            password: Some(password.to_string()),
             is_active,
             activation_token,
             created_at: now,
@@ -88,47 +70,56 @@ impl UserSqlx {
         let fake_password = "password";
         let start_id = 7284668132873080833;
 
+        let salt = SaltString::generate(&mut OsRng);
+
+        let argon2 = Argon2::default();
+
+        let password_hash = argon2
+            .hash_password(fake_password.as_bytes(), &salt)
+            .expect("Failed to hash password")
+            .to_string();
+
         vec![
             Self::new(
                 Snowflake(start_id),
                 "testmf".to_string(),
-                fake_password.to_string(),
+                password_hash.to_string(),
                 true,
             ),
             Self::new(
                 Snowflake(start_id + 1),
                 "testmm".to_string(),
-                fake_password.to_string(),
+                password_hash.to_string(),
                 true,
             ),
             Self::new(
                 Snowflake(start_id + 2),
                 "testmb".to_string(),
-                fake_password.to_string(),
+                password_hash.to_string(),
                 true,
             ),
             Self::new(
                 Snowflake(start_id + 3),
                 "testfm".to_string(),
-                fake_password.to_string(),
+                password_hash.to_string(),
                 true,
             ),
             Self::new(
                 Snowflake(start_id + 4),
                 "testff".to_string(),
-                fake_password.to_string(),
+                password_hash.to_string(),
                 true,
             ),
             Self::new(
                 Snowflake(start_id + 5),
                 "testfb".to_string(),
-                fake_password.to_string(),
+                password_hash.to_string(),
                 true,
             ),
             Self::new(
                 Snowflake(start_id + 6),
                 "not_activated".to_string(),
-                fake_password.to_string(),
+                password_hash.to_string(),
                 false,
             ),
         ]
@@ -137,7 +128,7 @@ impl UserSqlx {
     pub async fn insert_fake_users(pool: &PgPool) -> Vec<User> {
         let mut users = Self::generate_fake_users();
 
-        for _ in 0..100 {
+        for _ in 0..1000 {
             users.push(Self::new_random());
         }
 
