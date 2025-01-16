@@ -8,7 +8,6 @@ use crate::domain::repositories::user_profile_repo::{UserProfileQueryParams, Use
 use crate::infrastructure::models::user_profile::{
     RawProfileWithTag, UserProfileInsert, UserProfileSqlx, UserProfileUpdate,
 };
-use crate::shared::types::filtering::SortOrder;
 use crate::shared::types::snowflake::Snowflake;
 
 pub struct PgUserProfileRepository;

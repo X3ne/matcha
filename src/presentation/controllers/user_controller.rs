@@ -33,7 +33,12 @@ pub async fn complete_onboarding(
     let onboarding = body.into_inner();
     onboarding.validate()?;
 
-    let profile = user_profile_service
+    let location = match onboarding.location {
+        Some(location) => Point::new(location.latitude, location.longitude),
+        None => Point::new(0.0, 0.0), // TODO: use ip to get location
+    };
+
+    user_profile_service
         .create(&UserProfileInsert {
             user_id: user.id,
             name: format!("{} {}", user.first_name, user.last_name),
@@ -42,7 +47,7 @@ pub async fn complete_onboarding(
             age: onboarding.age,
             gender: onboarding.gender,
             sexual_orientation: onboarding.sexual_orientation,
-            location: Point::new(0.0, 0.0), // TODO: send location or use ip to get location
+            location,
             tag_ids: onboarding.tag_ids,
         })
         .await?;
