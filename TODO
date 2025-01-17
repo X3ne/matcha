@@ -3,17 +3,25 @@ back:
   ✔ add onboarding flow to create user profile @done(25-01-12 16:25)
   ✔ send mail to validate account creation @done(25-01-12 20:00)
   ☐ password reset flow
-  ☐ add validation on dtos (reject common passwords)
-  ☐ rework error responses
+  ✔ add validation on dtos (reject common passwords) @done(25-01-16 19:11)
+  ✔ rework error responses @done(25-01-16 19:11)
   ☐ add UserProfile field to calculate distance from user
   ✔ disable dev emails @done(25-01-14 13:53)
   ✔ mock db @done(25-01-14 13:53)
   ☐ add likes
   ☐ add block and report
   ☐ add websocket notifications/realtime chat
+  ☐ remove current user from search results
+  ☐ remove blocked users from search results
+  ☐ find user location from ip
+  ☐ recommend users based on location
+  ✔ add s3 for images @done(25-01-17 17:17)
+  ✔ add image upload @done(25-01-17 17:17) @done(25-01-17 17:17)
+  ☐ rewrite tags api
 
 bonuses:
   ✔ oauth2 @done(25-01-13 16:24)
+  ✔ cross platform app @done(25-01-16 19:11)
   ☐ e2e encryption chat
   ☐ vocal messages
   ☐ map

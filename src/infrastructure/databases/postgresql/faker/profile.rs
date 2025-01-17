@@ -49,6 +49,7 @@ impl UserProfileSqlx {
             user_id,
             name,
             avatar_hash: None,
+            picture_hashes: vec![],
             bio,
             age,
             gender,

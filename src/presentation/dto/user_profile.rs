@@ -1,9 +1,13 @@
+use actix_multipart::form::json::Json;
+use actix_multipart::form::tempfile::TempFile;
+use actix_multipart::form::MultipartForm;
 use apistos::ApiComponent;
 use garde::Validate;
 use geo_types::Point;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::domain::constants::MAX_PROFILE_IMAGES;
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::repositories::repository::DEFAULT_LIMIT;
 use crate::domain::repositories::user_profile_repo::{UserProfileQueryParams, UserProfileSortBy};
@@ -13,22 +17,38 @@ use crate::shared::types::snowflake::Snowflake;
 use crate::shared::types::tag::Tag;
 use crate::shared::types::user_profile::{Gender, Orientation};
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent, Validate)]
+#[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
 #[serde(rename(deserialize = "CompleteOnboarding"))]
-#[garde(allow_unvalidated)]
 pub struct CompleteOnboardingDto {
     #[garde(length(min = 1, max = 150))]
     pub bio: Option<String>,
     #[garde(range(min = 18, max = 100))]
     pub age: i32,
+    #[serde(default = "default_index")]
+    #[garde(range(min = 0, max = MAX_PROFILE_IMAGES))]
+    pub avatar_index: usize,
+    #[garde(skip)]
     pub gender: Gender,
     #[serde(default = "Orientation::default")]
+    #[garde(skip)]
     pub sexual_orientation: Orientation,
     #[garde(dive)]
     pub location: Option<Location>,
     #[serde(default)]
     #[garde(dive)]
     pub tag_ids: Vec<Snowflake>,
+}
+
+fn default_index() -> usize {
+    0
+}
+
+#[derive(Debug, MultipartForm)]
+#[multipart(duplicate_field = "deny")]
+pub struct CompleteOnboardingForm {
+    #[multipart(limit = "100MB")]
+    pub pictures: Vec<TempFile>,
+    pub profile: Json<CompleteOnboardingDto>,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent)]

@@ -77,6 +77,7 @@ pub fn init_server(
             .app_data(web::Data::new(container.auth_service.clone()))
             .app_data(web::Data::new(container.user_service.clone()))
             .app_data(web::Data::new(container.user_profile_service.clone()))
+            .app_data(web::Data::new(container.cdn_service.clone()))
             .app_data(
                 web::FormConfig::default().error_handler(|err, _req| ApiError::BadRequest(err.to_string()).into()),
             )
@@ -96,6 +97,7 @@ pub fn init_server(
                         .configure(|cfg| {
                             crate::presentation::routes::auth_route::config(cfg);
                             crate::presentation::routes::user_route::config(cfg);
+                            crate::presentation::routes::cdn_route::config(cfg);
                         }),
                 );
             })

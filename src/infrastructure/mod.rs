@@ -6,7 +6,7 @@ pub mod mailing;
 pub mod models;
 pub mod opcodes;
 pub mod repositories;
+pub mod s3;
 pub mod server;
-pub mod services;
 pub mod tracing;
 pub mod web;

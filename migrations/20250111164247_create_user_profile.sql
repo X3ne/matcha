@@ -26,6 +26,7 @@ CREATE TABLE user_profile
     user_id            BIGINT                NOT NULL UNIQUE REFERENCES "user" (id) ON DELETE CASCADE,
     name               VARCHAR(255)          NOT NULL,
     avatar_hash        VARCHAR(255),
+    picture_hashes     VARCHAR(255)[]        NOT NULL DEFAULT '{}',
     bio                TEXT,
     age                INTEGER               NOT NULL
         CONSTRAINT user_profile_age_check CHECK (age >= 18),

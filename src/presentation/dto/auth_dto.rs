@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::infrastructure::models::user::UserInsert;
-use crate::shared::utils::{validate_password, ValidatePasswordContext};
+use crate::shared::utils::validation::{validate_password, ValidatePasswordContext};
 
 #[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
 #[garde(context(ValidatePasswordContext))]

@@ -8,6 +8,7 @@ use oauth2::error::OAuth2Error;
 use crate::domain::errors::auth_error::AuthError;
 use crate::domain::errors::user_error::UserError;
 use crate::infrastructure::opcodes::ErrorCode;
+use crate::infrastructure::s3::error::ImageError;
 use crate::{ApiErrorImpl, ErrorDetails, ErrorItem, ErrorResponse};
 
 #[derive(thiserror::Error, Debug, ApiErrorComponent)]
@@ -31,10 +32,14 @@ pub enum ApiError {
     DatabaseError(#[from] sqlx::Error),
     #[error("OAuth2 Error: {0}")]
     OAuth2Error(#[from] OAuth2Error),
+    #[error("Only images are allowed")]
+    OnlyImagesAllowed,
     #[error(transparent)]
     AuthError(#[from] AuthError),
     #[error(transparent)]
     UserError(#[from] UserError),
+    #[error(transparent)]
+    ImageError(#[from] ImageError),
 }
 
 impl ApiErrorImpl for ApiError {
@@ -46,8 +51,10 @@ impl ApiErrorImpl for ApiError {
             ApiError::ValidationError(..) => (StatusCode::BAD_REQUEST, ErrorCode::InvalidFormBody),
             ApiError::DatabaseError(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             ApiError::OAuth2Error(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            ApiError::OnlyImagesAllowed => (StatusCode::BAD_REQUEST, ErrorCode::OnlyImagesAllowed),
             ApiError::AuthError(err) => err.get_codes(),
             ApiError::UserError(err) => err.get_codes(),
+            ApiError::ImageError(err) => err.get_codes(),
         }
     }
 }

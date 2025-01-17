@@ -120,3 +120,26 @@ impl SmtpConfig {
         Ok(cfg)
     }
 }
+
+#[derive(Debug, Default, Clone, Deserialize, PartialEq, Eq)]
+pub struct S3Config {
+    pub access_key_id: String,
+    pub secret_access_key: String,
+    pub region: String,
+    pub endpoint: String,
+    pub bucket_name: String,
+}
+
+impl S3Config {
+    pub fn from_env() -> Result<Self, config::ConfigError> {
+        load_env();
+
+        let config = config::Config::builder()
+            .add_source(config::Environment::with_prefix("S3").try_parsing(true))
+            .build()?;
+
+        let cfg: S3Config = config.try_deserialize()?;
+
+        Ok(cfg)
+    }
+}

@@ -13,7 +13,7 @@ use crate::presentation::dto::auth_dto::{
 };
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
-use crate::shared::utils::ValidatePasswordContext;
+use crate::shared::utils::validation::ValidatePasswordContext;
 // **
 // * TODO:
 // * - Implement pkce

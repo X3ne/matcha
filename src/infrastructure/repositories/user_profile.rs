@@ -26,13 +26,14 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         sqlx::query!(
             r#"
-            INSERT INTO user_profile (id, user_id, name, avatar_hash, bio, age, gender, sexual_orientation, location)
-            VALUES ($1, $2, $3, $4, $5, $6, $7::gender, $8::sexual_orientation, $9::geometry)
+            INSERT INTO user_profile (id, user_id, name, avatar_hash, picture_hashes, bio, age, gender, sexual_orientation, location)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry)
             "#,
             id.as_i64(),
             profile.user_id.as_i64(),
             profile.name,
             profile.avatar_hash,
+            &profile.picture_hashes,
             profile.bio,
             profile.age,
             profile.gender as _,
@@ -75,6 +76,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.user_id,
                 up.name,
                 up.avatar_hash,
+                up.picture_hashes,
                 up.bio,
                 up.age,
                 up.gender AS "gender: _",
@@ -121,6 +123,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.user_id,
                 up.name,
                 up.avatar_hash,
+                up.picture_hashes,
                 up.bio,
                 up.age,
                 up.gender AS "gender: _",
