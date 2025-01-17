@@ -1,4 +1,5 @@
 import api from '@/api'
+import { UserProfileSortBy, UserProfile, SortOrder } from '@/api/spec'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,11 +19,10 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { UserContext } from '@/providers/userProvider'
 import { useQuery } from '@tanstack/react-query'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { Link } from '@tanstack/react-router'
-import { useState, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import { FaMapMarkerAlt } from 'react-icons/fa'
 import { FaHeart, FaFire, FaFilter } from 'react-icons/fa6'
 
@@ -31,21 +31,16 @@ export const Route = createLazyFileRoute('/search/')({
 })
 
 function Search() {
-  const { userProfile } = useContext(UserContext)
-  const currentUserSexualOrientation =
-    userProfile?.sexual_orientation || 'Bisexual'
-
-  const [sortOption, setSortOption] = useState('location')
+  const [sortOption, setSortOption] = useState<UserProfileSortBy>(
+    UserProfileSortBy.Distance
+  )
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isAdvancedSearch, setIsAdvancedSearch] = useState(false)
-
   const [filters, setFilters] = useState({
     age: '',
     location: '',
     fameRating: '',
     commonTags: '',
-
-    // Advanced fields
     minAge: '',
     maxAge: '',
     minFame: '',
@@ -53,7 +48,9 @@ function Search() {
     multipleTags: ''
   })
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [activeFilters, setActiveFilters] = useState(filters)
+
+  const handleFilterChange = (e) => {
     const { name, value } = e.target
     setFilters((prevFilters) => ({
       ...prevFilters,
@@ -62,125 +59,95 @@ function Search() {
   }
 
   const handleAdvancedSearchToggle = () => {
+    setFilters({
+      age: '',
+      location: '',
+      fameRating: '',
+      commonTags: '',
+      minAge: '',
+      maxAge: '',
+      minFame: '',
+      maxFame: '',
+      multipleTags: ''
+    })
     setIsAdvancedSearch((prev) => !prev)
   }
 
+  const { data: users = [], refetch } = useQuery({
+    queryKey: ['users', activeFilters, sortOption],
+    retry: false,
+    queryFn: async () => {
+      const query: Record<string, any> = {
+        limit: 25,
+        sort_by: sortOption,
+        ...(activeFilters.age && {
+          min_age: parseInt(activeFilters.age),
+          max_age: parseInt(activeFilters.age)
+        }),
+        sort_order: SortOrder.Desc,
+        ...(activeFilters.fameRating && {
+          min_fame_rating: parseInt(activeFilters.fameRating),
+          max_fame_rating: parseInt(activeFilters.fameRating)
+        }),
+        ...(activeFilters.location && { location: activeFilters.location }),
+        ...(activeFilters.commonTags && {
+          common_tags: activeFilters.commonTags
+            .split(',')
+            .map((tag) => tag.trim())
+        }),
+        ...(activeFilters.maxAge && {
+          max_age: parseInt(activeFilters.maxAge)
+        }),
+        ...(activeFilters.minAge && {
+          min_age: parseInt(activeFilters.minAge)
+        }),
+        ...(activeFilters.maxFame && {
+          max_fame_rating: parseInt(activeFilters.maxFame)
+        }),
+        ...(activeFilters.minFame && {
+          min_fame_rating: parseInt(activeFilters.minFame)
+        }),
+        ...(activeFilters.multipleTags && {
+          tag_ids: activeFilters.multipleTags
+            .split(',')
+            .map((tag) => tag.trim())
+        })
+      }
+
+      const response = await api.v1.searchProfile(query)
+      return response.data
+    },
+    enabled: true
+  })
+
+  useEffect(() => {
+    refetch()
+  }, [sortOption, refetch])
+
   const applyFilters = () => {
-    refetch({ queryKey: ['users', filters] })
-    console.log('Filters to apply:', filters)
+    setActiveFilters(filters)
+    refetch()
+    setIsDialogOpen(false)
+    console.log('Filters applied:', filters, 'Sorting applied:', sortOption)
   }
-
-  // const { data: users = [], refetch } = useQuery(
-  //   ['users', filters],
-  //   async () => {
-  //     const response = await api.v1.getUsers({ params: {
-  //       sort: sortOption,
-  //       // basic
-  //       age: filters.age,
-  //       location: filters.location,
-  //       fameRating: filters.fameRating,
-  //       commonTags: filters.commonTags,
-  //       // advanced
-  //       minAge: filters.minAge,
-  //       maxAge: filters.maxAge,
-  //       minFame: filters.minFame,
-  //       maxFame: filters.maxFame,
-  //       multipleTags: filters.multipleTags,
-  //     }})
-  //     return response.data
-  //   },
-  //   {
-  //     enabled: false // Disabling auto refetch for demonstration
-  //   }
-  // )
-
-  const mockUsers = [
-    {
-      id: '1',
-      username: 'Alice',
-      age: 25,
-      sexual_orientation: 'Bisexual',
-      city: 'New York',
-      score: 42,
-      profilePicture:
-        'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg',
-      badges: [
-        'Yoga Enthusiast',
-        'Cat Lover',
-        'Tech Geek',
-        'Traveler',
-        'Foodie'
-      ]
-    },
-    {
-      id: '2',
-      username: 'Bob',
-      age: 30,
-      sexual_orientation: 'Heterosexual',
-      city: 'Los Angeles',
-      score: 30,
-      profilePicture:
-        'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg',
-      badges: ['Dog Lover', 'Gamer', 'Fitness Buff', 'Photographer', 'Surfer']
-    },
-    {
-      id: '3',
-      username: 'Charlie',
-      age: 18,
-      sexual_orientation: 'Homosexual',
-      city: 'Chicago',
-      score: 55,
-      profilePicture:
-        'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg',
-      badges: ['Student', 'Musician', 'Artist', 'Blogger', 'Runner']
-    },
-    {
-      id: '4',
-      username: 'Diana',
-      age: 42,
-      sexual_orientation: 'Heterosexual',
-      city: 'Miami',
-      score: 60,
-      profilePicture:
-        'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg',
-      badges: ['Chef', 'Gardener', 'Swimmer', 'Cyclist', 'Bookworm']
-    },
-    {
-      id: '5',
-      username: 'Eve',
-      age: 56,
-      sexual_orientation: 'Bisexual',
-      city: 'San Francisco',
-      score: 75,
-      profilePicture:
-        'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg',
-      badges: ['Painter', 'Writer', 'Volunteer', 'Photographer', 'Traveler']
-    },
-    {
-      id: '6',
-      username: 'Alan',
-      age: 52,
-      sexual_orientation: 'Bisexual',
-      city: 'San Francisco',
-      score: 75,
-      profilePicture:
-        'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg',
-      badges: ['Painter', 'Writer', 'Volunteer', 'Photographer', 'Traveler']
-    }
-  ]
 
   return (
     <div className="container w-full px-0">
       <div className="mb-4 flex justify-between">
-        <Select onValueChange={setSortOption} defaultValue="location">
+        <Select
+          onValueChange={(value) => {
+            setSortOption(value as UserProfileSortBy)
+          }}
+          defaultValue={UserProfileSortBy.Distance}
+        >
           <SelectTrigger className="w-fit gap-3">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="location">Location</SelectItem>
-            <SelectItem value="age">Age</SelectItem>
-            <SelectItem value="fame_rating">Fame</SelectItem>
-            <SelectItem value="common_tags">Tags</SelectItem>
+            <SelectItem value={UserProfileSortBy.Distance}>Distance</SelectItem>
+            <SelectItem value={UserProfileSortBy.Age}>Age</SelectItem>
+            <SelectItem value={UserProfileSortBy.FameRating}>Fame</SelectItem>
+            <SelectItem value={UserProfileSortBy.Tags}>Tags</SelectItem>
           </SelectContent>
         </Select>
 
@@ -286,7 +253,7 @@ function Search() {
       </div>
 
       <div className="flex w-full flex-wrap justify-between gap-6">
-        {mockUsers.map((user) => (
+        {users.map((user) => (
           <UserCard key={user.id} user={user} />
         ))}
       </div>
@@ -294,20 +261,7 @@ function Search() {
   )
 }
 
-function UserCard({
-  user
-}: {
-  user: {
-    id: string
-    username: string
-    age: number
-    sexual_orientation: string
-    city: string
-    score: number
-    profilePicture: string
-    badges: string[]
-  }
-}) {
+function UserCard({ user }: { user: UserProfile }) {
   const [isConfettiActive, setIsConfettiActive] = useState(false)
 
   const handleLikeClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -322,11 +276,11 @@ function UserCard({
 
   return (
     <Link
-      to="/profile/$username"
-      params={{ username: user.username }}
+      to="/profile/$id"
+      params={{ id: user.id }}
       className="motion-preset-slide-down mx-auto flex h-72 w-56 flex-col justify-end overflow-hidden rounded-xl shadow sm:mx-0"
       style={{
-        backgroundImage: `url(${user.profilePicture})`,
+        backgroundImage: `url(${user.avatar_hash ? `/avatars/${user.avatar_hash}` : 'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg'})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
@@ -335,16 +289,20 @@ function UserCard({
         <div className="flex items-center justify-between px-4">
           <div className="flex flex-col text-white">
             <h2 className="text-lg font-semibold uppercase">
-              {user.username}, {user.age}
+              {user.name.split(' ')[0]}, {user.age}
             </h2>
             <ul className="gap flex flex-col gap-1">
               <li className="flex items-center gap-1">
                 <FaMapMarkerAlt size={12} />
-                <p className="text-xs font-light">{user.city}</p>
+                <p className="text-xs font-light">
+                  Lyon {/* {user.location} */}
+                </p>
               </li>
               <li className="flex items-center gap-1">
                 <FaFire size={12} />
-                <p className="text-xs font-light">{user.score}</p>
+                <p className="text-xs font-light">
+                  10 {/* {user.fame_rating} */}
+                </p>
               </li>
             </ul>
           </div>
@@ -362,13 +320,13 @@ function UserCard({
           </Button>
         </div>
         <div className="mt-2 flex flex-wrap gap-1 px-4 pb-4">
-          {user.badges.slice(0, 2).map((badge, index) => (
+          {user.tags.slice(0, 2).map((tag, index) => (
             <Badge
               key={index}
               variant="secondary"
               className="rounded-full border border-white/20 bg-black/80 py-1 text-[8px] font-normal text-white hover:bg-black/80"
             >
-              {badge}
+              {tag.name}
             </Badge>
           ))}
         </div>

@@ -16,7 +16,8 @@ export interface CompleteOnboarding {
   bio?: string | null
   gender: Gender
   location?: Location | null
-  sexual_orientation: Orientation
+  /** @default "bisexual" */
+  sexual_orientation?: Orientation
   /** @default [] */
   tag_ids?: Snowflake[]
 }
@@ -79,6 +80,11 @@ export type Session = string
  */
 export type Snowflake = string
 
+export enum SortOrder {
+  Asc = 'asc',
+  Desc = 'desc'
+}
+
 export interface Tag {
   /** A 64 bit integer unique identifier (serialized as string to avoid overflow issues) */
   id: Snowflake
@@ -109,6 +115,13 @@ export interface UserProfile {
   tags: Tag[]
   /** A 64 bit integer unique identifier (serialized as string to avoid overflow issues) */
   user_id: Snowflake
+}
+
+export enum UserProfileSortBy {
+  Age = 'Age',
+  FameRating = 'FameRating',
+  Distance = 'Distance',
+  Tags = 'Tags'
 }
 
 export type QueryParamsType = Record<string | number, any>
@@ -372,7 +385,6 @@ export class Api<
      */
     health: (params: RequestParams = {}) =>
       this.request<ServerHealth, void>({
-        baseUrl: 'https://matcha.abastos.dev',
         path: `/v1`,
         method: 'GET',
         format: 'json',
@@ -389,7 +401,6 @@ export class Api<
      */
     login42: (params: RequestParams = {}) =>
       this.request<OAuthResponse, void>({
-        baseUrl: 'https://matcha.abastos.dev',
         path: `/v1/auth/oauth2/42/login`,
         method: 'GET',
         format: 'json',
@@ -412,7 +423,6 @@ export class Api<
       params: RequestParams = {}
     ) =>
       this.request<void, void>({
-        baseUrl: 'https://matcha.abastos.dev',
         path: `/v1/auth/oauth2/42/callback`,
         method: 'GET',
         query: query,
@@ -429,7 +439,6 @@ export class Api<
      */
     register: (data: RegisterUser, params: RequestParams = {}) =>
       this.request<void, void>({
-        baseUrl: 'https://matcha.abastos.dev',
         path: `/v1/auth/register`,
         method: 'POST',
         body: data,
@@ -447,12 +456,11 @@ export class Api<
      */
     login: (data: Login, params: RequestParams = {}) =>
       this.request<void, void>({
-        baseUrl: 'https://matcha.abastos.dev',
+        credentials: 'include',
         path: `/v1/auth/login`,
         method: 'POST',
         body: data,
         type: ContentType.Json,
-        credentials: 'include',
         ...params
       }),
 
@@ -471,7 +479,6 @@ export class Api<
       params: RequestParams = {}
     ) =>
       this.request<void, void>({
-        baseUrl: 'https://matcha.abastos.dev',
         path: `/v1/auth/activate`,
         method: 'GET',
         query: query,
@@ -488,9 +495,57 @@ export class Api<
      */
     logout: (params: RequestParams = {}) =>
       this.request<void, void>({
-        baseUrl: 'https://matcha.abastos.dev',
         path: `/v1/auth/logout`,
         method: 'POST',
+        ...params
+      }),
+
+    /**
+     * No description
+     *
+     * @tags users
+     * @name SearchProfile
+     * @summary Search user profiles
+     * @request GET:/v1/users/search
+     */
+    searchProfile: (
+      query?: {
+        /** @format double */
+        latitude?: number | null
+        /**
+         * @format int64
+         * @default 25
+         */
+        limit?: number
+        /** @format double */
+        longitude?: number | null
+        /** @format int32 */
+        max_age?: number | null
+        /** @format int32 */
+        max_fame_rating?: number | null
+        /** @format int32 */
+        min_age?: number | null
+        /** @format int32 */
+        min_fame_rating?: number | null
+        /**
+         * @format int64
+         * @default 0
+         */
+        offset?: number
+        /** @format double */
+        radius_km?: number | null
+        sort_by?: UserProfileSortBy | null
+        sort_order?: SortOrder | null
+        tag_ids?: Snowflake[] | null
+      },
+      params: RequestParams = {}
+    ) =>
+      this.request<UserProfile[], void>({
+        credentials: 'include',
+        path: `/v1/users/search`,
+        method: 'GET',
+        query: query,
+        format: 'json',
         ...params
       }),
 
@@ -504,7 +559,7 @@ export class Api<
      */
     getMe: (params: RequestParams = {}) =>
       this.request<User, void>({
-        baseUrl: 'https://matcha.abastos.dev',
+        credentials: 'include',
         path: `/v1/users/@me`,
         method: 'GET',
         format: 'json',
@@ -524,11 +579,11 @@ export class Api<
       params: RequestParams = {}
     ) =>
       this.request<void, void>({
-        baseUrl: 'https://matcha.abastos.dev',
         path: `/v1/users/@me/onboarding`,
         method: 'POST',
         body: data,
         type: ContentType.Json,
+        credentials: 'include',
         ...params
       }),
 
@@ -542,10 +597,26 @@ export class Api<
      */
     getMyProfile: (params: RequestParams = {}) =>
       this.request<UserProfile, void>({
-        baseUrl: 'https://matcha.abastos.dev',
+        credentials: 'include',
         path: `/v1/users/@me/profile`,
         method: 'GET',
         format: 'json',
+        ...params
+      }),
+
+    /**
+     * No description
+     *
+     * @tags cdn
+     * @name GetProfileImage
+     * @summary Get a profile image
+     * @request GET:/v1/cdn/profile/{hash}
+     */
+    getProfileImage: (hash: string, params: RequestParams = {}) =>
+      this.request<void, void>({
+        credentials: 'include',
+        path: `/v1/cdn/profile/${hash}`,
+        method: 'GET',
         ...params
       })
   }
