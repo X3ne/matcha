@@ -13,6 +13,12 @@
 export interface CompleteOnboarding {
   /** @format int32 */
   age: number
+  /**
+   * @format uint
+   * @min 0
+   * @default 0
+   */
+  avatar_index?: number
   bio?: string | null
   gender: Gender
   location?: Location | null
@@ -22,11 +28,18 @@ export interface CompleteOnboarding {
   tag_ids?: Snowflake[]
 }
 
+export interface CompleteOnboardingForm {
+  /** @format binary */
+  pictures?: string
+  profile?: CompleteOnboarding
+}
+
 export enum Gender {
   Male = 'male',
   Female = 'female'
 }
 
+/** Location */
 export interface Location {
   /** @format double */
   latitude: number
@@ -385,6 +398,7 @@ export class Api<
      */
     health: (params: RequestParams = {}) =>
       this.request<ServerHealth, void>({
+        baseUrl: 'https://matcha.abastos.dev',
         path: `/v1`,
         method: 'GET',
         format: 'json',
@@ -401,6 +415,8 @@ export class Api<
      */
     login42: (params: RequestParams = {}) =>
       this.request<OAuthResponse, void>({
+        baseUrl: 'https://matcha.abastos.dev',
+        credentials: 'include',
         path: `/v1/auth/oauth2/42/login`,
         method: 'GET',
         format: 'json',
@@ -423,6 +439,8 @@ export class Api<
       params: RequestParams = {}
     ) =>
       this.request<void, void>({
+        baseUrl: 'https://matcha.abastos.dev',
+        credentials: 'include',
         path: `/v1/auth/oauth2/42/callback`,
         method: 'GET',
         query: query,
@@ -439,6 +457,8 @@ export class Api<
      */
     register: (data: RegisterUser, params: RequestParams = {}) =>
       this.request<void, void>({
+        baseUrl: 'https://matcha.abastos.dev',
+        credentials: 'include',
         path: `/v1/auth/register`,
         method: 'POST',
         body: data,
@@ -456,6 +476,7 @@ export class Api<
      */
     login: (data: Login, params: RequestParams = {}) =>
       this.request<void, void>({
+        baseUrl: 'https://matcha.abastos.dev',
         credentials: 'include',
         path: `/v1/auth/login`,
         method: 'POST',
@@ -479,6 +500,8 @@ export class Api<
       params: RequestParams = {}
     ) =>
       this.request<void, void>({
+        baseUrl: 'https://matcha.abastos.dev',
+        credentials: 'include',
         path: `/v1/auth/activate`,
         method: 'GET',
         query: query,
@@ -495,6 +518,8 @@ export class Api<
      */
     logout: (params: RequestParams = {}) =>
       this.request<void, void>({
+        baseUrl: 'https://matcha.abastos.dev',
+        credentials: 'include',
         path: `/v1/auth/logout`,
         method: 'POST',
         ...params
@@ -541,6 +566,7 @@ export class Api<
       params: RequestParams = {}
     ) =>
       this.request<UserProfile[], void>({
+        baseUrl: 'https://matcha.abastos.dev',
         credentials: 'include',
         path: `/v1/users/search`,
         method: 'GET',
@@ -559,6 +585,7 @@ export class Api<
      */
     getMe: (params: RequestParams = {}) =>
       this.request<User, void>({
+        baseUrl: 'https://matcha.abastos.dev',
         credentials: 'include',
         path: `/v1/users/@me`,
         method: 'GET',
@@ -575,15 +602,16 @@ export class Api<
      * @request POST:/v1/users/@me/onboarding
      */
     completeOnboarding: (
-      data: CompleteOnboarding,
+      data: CompleteOnboardingForm,
       params: RequestParams = {}
     ) =>
       this.request<void, void>({
+        baseUrl: 'https://matcha.abastos.dev',
+        credentials: 'include',
         path: `/v1/users/@me/onboarding`,
         method: 'POST',
         body: data,
-        type: ContentType.Json,
-        credentials: 'include',
+        type: ContentType.FormData,
         ...params
       }),
 
@@ -597,6 +625,7 @@ export class Api<
      */
     getMyProfile: (params: RequestParams = {}) =>
       this.request<UserProfile, void>({
+        baseUrl: 'https://matcha.abastos.dev',
         credentials: 'include',
         path: `/v1/users/@me/profile`,
         method: 'GET',
@@ -614,6 +643,7 @@ export class Api<
      */
     getProfileImage: (hash: string, params: RequestParams = {}) =>
       this.request<void, void>({
+        baseUrl: 'https://matcha.abastos.dev',
         credentials: 'include',
         path: `/v1/cdn/profile/${hash}`,
         method: 'GET',

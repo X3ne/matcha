@@ -161,7 +161,7 @@ function Search() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Filter Users</DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-xs">
                 {isAdvancedSearch
                   ? 'Advanced criteria: set ranges and multiple tags.'
                   : 'Basic filters: single age, location, etc.'}
