@@ -1,4 +1,5 @@
 import { Tag } from '@/api/spec'
+import { EditProfileForm } from '@/components/edit-profile-form'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -23,6 +24,7 @@ export const Route = createLazyFileRoute('/profile/')({
 function Profile() {
   const { user, userProfile } = useContext(UserContext)
   const [isActivityOpen, setIsActivityOpen] = useState(false)
+  const [isEditProfileOpen, setEditProfileOpen] = useState(false)
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
@@ -54,9 +56,29 @@ function Profile() {
             </div>
 
             <div className="flex flex-col items-center space-y-2 pt-6 sm:pt-0 md:items-start">
-              <Button variant="outline" size="sm" className="w-full">
-                <Edit className="h-4 w-4" /> Edit Profile
-              </Button>
+              <Dialog
+                open={isEditProfileOpen}
+                onOpenChange={setEditProfileOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Edit className="h-4 w-4" /> Edit Profile
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>Edit Profile</DialogTitle>
+                    <DialogDescription className="text-xs">
+                      Update your profile information
+                    </DialogDescription>
+                  </DialogHeader>
+                  <ScrollArea className="mt-4 max-h-[60vh]">
+                    <div className="">
+                      <EditProfileForm />
+                    </div>
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
               <Dialog open={isActivityOpen} onOpenChange={setIsActivityOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full">

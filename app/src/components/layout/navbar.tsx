@@ -97,7 +97,7 @@ const Navbar = () => {
     <nav className="bg-white">
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-8 py-4 sm:px-6">
         {/* Logo */}
-        <Link to="/" className="text-3xl font-semibold">
+        <Link to="/search" className="text-3xl font-semibold">
           Matcha
         </Link>
 
