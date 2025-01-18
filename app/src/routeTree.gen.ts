@@ -19,9 +19,12 @@ import { Route as rootRoute } from './routes/__root'
 const IndexLazyImport = createFileRoute('/')()
 const SearchIndexLazyImport = createFileRoute('/search/')()
 const RegisterIndexLazyImport = createFileRoute('/register/')()
+const ProfileIndexLazyImport = createFileRoute('/profile/')()
+const OnboardingIndexLazyImport = createFileRoute('/onboarding/')()
+const MessagesIndexLazyImport = createFileRoute('/messages/')()
 const LoginIndexLazyImport = createFileRoute('/login/')()
 const ErrorIndexLazyImport = createFileRoute('/error/')()
-const ProfileUsernameLazyImport = createFileRoute('/profile/$username')()
+const ProfileIdLazyImport = createFileRoute('/profile/$id')()
 
 // Create/Update Routes
 
@@ -45,6 +48,28 @@ const RegisterIndexLazyRoute = RegisterIndexLazyImport.update({
   import('./routes/register/index.lazy').then((d) => d.Route),
 )
 
+const ProfileIndexLazyRoute = ProfileIndexLazyImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/profile/index.lazy').then((d) => d.Route))
+
+const OnboardingIndexLazyRoute = OnboardingIndexLazyImport.update({
+  id: '/onboarding/',
+  path: '/onboarding/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/onboarding/index.lazy').then((d) => d.Route),
+)
+
+const MessagesIndexLazyRoute = MessagesIndexLazyImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/messages/index.lazy').then((d) => d.Route),
+)
+
 const LoginIndexLazyRoute = LoginIndexLazyImport.update({
   id: '/login/',
   path: '/login/',
@@ -57,13 +82,11 @@ const ErrorIndexLazyRoute = ErrorIndexLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/error/index.lazy').then((d) => d.Route))
 
-const ProfileUsernameLazyRoute = ProfileUsernameLazyImport.update({
-  id: '/profile/$username',
-  path: '/profile/$username',
+const ProfileIdLazyRoute = ProfileIdLazyImport.update({
+  id: '/profile/$id',
+  path: '/profile/$id',
   getParentRoute: () => rootRoute,
-} as any).lazy(() =>
-  import('./routes/profile/$username.lazy').then((d) => d.Route),
-)
+} as any).lazy(() => import('./routes/profile/$id.lazy').then((d) => d.Route))
 
 // Populate the FileRoutesByPath interface
 
@@ -76,11 +99,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyImport
       parentRoute: typeof rootRoute
     }
-    '/profile/$username': {
-      id: '/profile/$username'
-      path: '/profile/$username'
-      fullPath: '/profile/$username'
-      preLoaderRoute: typeof ProfileUsernameLazyImport
+    '/profile/$id': {
+      id: '/profile/$id'
+      path: '/profile/$id'
+      fullPath: '/profile/$id'
+      preLoaderRoute: typeof ProfileIdLazyImport
       parentRoute: typeof rootRoute
     }
     '/error/': {
@@ -95,6 +118,27 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/messages/': {
+      id: '/messages/'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/onboarding/': {
+      id: '/onboarding/'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/profile/': {
+      id: '/profile/'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileIndexLazyImport
       parentRoute: typeof rootRoute
     }
     '/register/': {
@@ -118,18 +162,24 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
-  '/profile/$username': typeof ProfileUsernameLazyRoute
+  '/profile/$id': typeof ProfileIdLazyRoute
   '/error': typeof ErrorIndexLazyRoute
   '/login': typeof LoginIndexLazyRoute
+  '/messages': typeof MessagesIndexLazyRoute
+  '/onboarding': typeof OnboardingIndexLazyRoute
+  '/profile': typeof ProfileIndexLazyRoute
   '/register': typeof RegisterIndexLazyRoute
   '/search': typeof SearchIndexLazyRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
-  '/profile/$username': typeof ProfileUsernameLazyRoute
+  '/profile/$id': typeof ProfileIdLazyRoute
   '/error': typeof ErrorIndexLazyRoute
   '/login': typeof LoginIndexLazyRoute
+  '/messages': typeof MessagesIndexLazyRoute
+  '/onboarding': typeof OnboardingIndexLazyRoute
+  '/profile': typeof ProfileIndexLazyRoute
   '/register': typeof RegisterIndexLazyRoute
   '/search': typeof SearchIndexLazyRoute
 }
@@ -137,9 +187,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexLazyRoute
-  '/profile/$username': typeof ProfileUsernameLazyRoute
+  '/profile/$id': typeof ProfileIdLazyRoute
   '/error/': typeof ErrorIndexLazyRoute
   '/login/': typeof LoginIndexLazyRoute
+  '/messages/': typeof MessagesIndexLazyRoute
+  '/onboarding/': typeof OnboardingIndexLazyRoute
+  '/profile/': typeof ProfileIndexLazyRoute
   '/register/': typeof RegisterIndexLazyRoute
   '/search/': typeof SearchIndexLazyRoute
 }
@@ -148,19 +201,34 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/profile/$username'
+    | '/profile/$id'
     | '/error'
     | '/login'
+    | '/messages'
+    | '/onboarding'
+    | '/profile'
     | '/register'
     | '/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile/$username' | '/error' | '/login' | '/register' | '/search'
+  to:
+    | '/'
+    | '/profile/$id'
+    | '/error'
+    | '/login'
+    | '/messages'
+    | '/onboarding'
+    | '/profile'
+    | '/register'
+    | '/search'
   id:
     | '__root__'
     | '/'
-    | '/profile/$username'
+    | '/profile/$id'
     | '/error/'
     | '/login/'
+    | '/messages/'
+    | '/onboarding/'
+    | '/profile/'
     | '/register/'
     | '/search/'
   fileRoutesById: FileRoutesById
@@ -168,18 +236,24 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
-  ProfileUsernameLazyRoute: typeof ProfileUsernameLazyRoute
+  ProfileIdLazyRoute: typeof ProfileIdLazyRoute
   ErrorIndexLazyRoute: typeof ErrorIndexLazyRoute
   LoginIndexLazyRoute: typeof LoginIndexLazyRoute
+  MessagesIndexLazyRoute: typeof MessagesIndexLazyRoute
+  OnboardingIndexLazyRoute: typeof OnboardingIndexLazyRoute
+  ProfileIndexLazyRoute: typeof ProfileIndexLazyRoute
   RegisterIndexLazyRoute: typeof RegisterIndexLazyRoute
   SearchIndexLazyRoute: typeof SearchIndexLazyRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
-  ProfileUsernameLazyRoute: ProfileUsernameLazyRoute,
+  ProfileIdLazyRoute: ProfileIdLazyRoute,
   ErrorIndexLazyRoute: ErrorIndexLazyRoute,
   LoginIndexLazyRoute: LoginIndexLazyRoute,
+  MessagesIndexLazyRoute: MessagesIndexLazyRoute,
+  OnboardingIndexLazyRoute: OnboardingIndexLazyRoute,
+  ProfileIndexLazyRoute: ProfileIndexLazyRoute,
   RegisterIndexLazyRoute: RegisterIndexLazyRoute,
   SearchIndexLazyRoute: SearchIndexLazyRoute,
 }
@@ -195,9 +269,12 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/profile/$username",
+        "/profile/$id",
         "/error/",
         "/login/",
+        "/messages/",
+        "/onboarding/",
+        "/profile/",
         "/register/",
         "/search/"
       ]
@@ -205,14 +282,23 @@ export const routeTree = rootRoute
     "/": {
       "filePath": "index.lazy.tsx"
     },
-    "/profile/$username": {
-      "filePath": "profile/$username.lazy.tsx"
+    "/profile/$id": {
+      "filePath": "profile/$id.lazy.tsx"
     },
     "/error/": {
       "filePath": "error/index.lazy.tsx"
     },
     "/login/": {
       "filePath": "login/index.lazy.tsx"
+    },
+    "/messages/": {
+      "filePath": "messages/index.lazy.tsx"
+    },
+    "/onboarding/": {
+      "filePath": "onboarding/index.lazy.tsx"
+    },
+    "/profile/": {
+      "filePath": "profile/index.lazy.tsx"
     },
     "/register/": {
       "filePath": "register/index.lazy.tsx"
