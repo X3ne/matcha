@@ -88,17 +88,12 @@ impl Sender {
         Ok(content)
     }
 
-    pub async fn send_confirmation_mail(&self, user: &User) -> Result<(), Error> {
+    pub async fn send_confirmation_mail(&self, user: &User, confirmation_url: String) -> Result<(), Error> {
         let (html_path, subject_path, text_path) = self.get_template_paths(ACCOUNT_CONFIRMATION_TEMPLATE);
 
         let html = self.get_template_content(html_path)?;
         let subject = self.get_template_content(subject_path)?;
         let txt = self.get_template_content(text_path)?;
-
-        let confirmation_url = format!(
-            "http://localhost:3000/v1/auth/activate?token={}", // TODO: make this configurable
-            user.activation_token
-        ); // TODO: make activation token NOT NULL
 
         let rendered = render_email(
             &Mail::AccountConfirmation {

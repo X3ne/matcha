@@ -34,7 +34,7 @@ pub struct Container {
 }
 
 impl Container {
-    pub async fn new(database_url: &str, redis_url: &str) -> Self {
+    pub async fn new(database_url: &str, redis_url: &str, service_base_url: &str) -> Self {
         let pool = connect(database_url).await.expect("Failed to connect to database");
         let pool = Arc::new(pool);
 
@@ -80,6 +80,7 @@ impl Container {
             oauth2_client: Arc::clone(&oauth_client),
             #[cfg(feature = "mailing")]
             mail_sender: Arc::clone(&mail_sender),
+            service_base_url: service_base_url.to_string(),
         });
 
         let user_service = Arc::new(UserServiceImpl {

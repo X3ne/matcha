@@ -15,7 +15,7 @@ async fn main() -> std::io::Result<()> {
 
     tracing::debug!("Configuration: {:?}", cfg);
 
-    let container = Container::new(&cfg.database_url, &cfg.redis_url).await;
+    let container = Container::new(&cfg.database_url, &cfg.redis_url, &cfg.base_url).await;
 
     let port = cfg.port;
     let host = cfg.host.clone();

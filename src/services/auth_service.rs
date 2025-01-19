@@ -33,6 +33,7 @@ pub struct AuthServiceImpl {
     pub oauth2_client: Arc<OAuth2Client>,
     #[cfg(feature = "mailing")]
     pub mail_sender: Arc<Sender>,
+    pub service_base_url: String,
 }
 
 impl AuthServiceImpl {
@@ -41,6 +42,7 @@ impl AuthServiceImpl {
         redis: Arc<redis::Client>,
         oauth2_client: Arc<OAuth2Client>,
         #[cfg(feature = "mailing")] mail_sender: Arc<Sender>,
+        service_base_url: String,
     ) -> Self {
         AuthServiceImpl {
             pool,
@@ -48,6 +50,7 @@ impl AuthServiceImpl {
             oauth2_client,
             #[cfg(feature = "mailing")]
             mail_sender,
+            service_base_url,
         }
     }
 }
@@ -78,11 +81,19 @@ impl AuthService for AuthServiceImpl {
 
         let user = PgUserRepository::insert(&mut *tx, user).await?;
 
+        let confirmation_url = format!(
+            "{}/v1/auth/activate?token={}",
+            self.service_base_url, user.activation_token
+        );
+
         #[cfg(feature = "mailing")]
-        self.mail_sender.send_confirmation_mail(&user).await.map_err(|e| {
-            tracing::error!("Error sending confirmation mail: {:?}", e);
-            AuthError::MailError
-        })?;
+        self.mail_sender
+            .send_confirmation_mail(&user, confirmation_url)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error sending confirmation mail: {:?}", e);
+                AuthError::MailError
+            })?;
 
         tx.commit().await?;
 
@@ -191,11 +202,19 @@ impl AuthService for AuthServiceImpl {
             }
         };
 
+        let confirmation_url = format!(
+            "{}/v1/auth/activate?token={}",
+            self.service_base_url, user.activation_token
+        );
+
         #[cfg(feature = "mailing")]
-        self.mail_sender.send_confirmation_mail(&user).await.map_err(|e| {
-            tracing::error!("Error sending confirmation mail: {:?}", e);
-            AuthError::MailError
-        })?;
+        self.mail_sender
+            .send_confirmation_mail(&user, confirmation_url)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error sending confirmation mail: {:?}", e);
+                AuthError::MailError
+            })?;
 
         // Send error to client to ask for validation
         tx.commit().await?;

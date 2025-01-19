@@ -19,6 +19,7 @@ pub struct Config {
     pub redis_url: String,
     pub origins: Vec<String>,
     pub telemetry_collector_endpoint: Option<String>,
+    pub base_url: String,
 }
 
 impl Config {
