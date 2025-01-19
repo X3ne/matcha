@@ -3,8 +3,8 @@ version: '3.8'
 services:
   db:
     image: postgis/postgis:17-3.5
-    container_name: database
-    restart: always
+    container_name: matcha-database
+    restart: unless-stopped
     ports:
       - "5433:5432"
     environment:
@@ -16,7 +16,8 @@ services:
 
   minio:
     image: minio/minio:latest
-    container_name: minio
+    restart: unless-stopped
+    container_name: matcha-minio
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -26,6 +27,30 @@ services:
     volumes:
       - s3_data:/data
     command: server /data --console-address ":9001"
+
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:latest
+    restart: unless-stopped
+    container_name: matcha-jaeger
+    ports:
+      - "16686:16686"
+      - "14268"
+      - "14250"
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    restart: unless-stopped
+    command: [ "--config=/etc/otel-collector-config.yaml" ]
+    volumes:
+      - ./deployments/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317:4317"   # OTLP gRPC receiver
+    depends_on:
+      - jaeger-all-in-one
 
 volumes:
   db_data:
