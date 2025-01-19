@@ -14,7 +14,7 @@ COPY templates ./templates
 COPY crates ./crates
 COPY .sqlx ./.sqlx
 
-RUN cargo build --features faker
+RUN cargo build --features faker,mailing --bin matcha-back
 
 FROM rust:1.81.0-bullseye
 LABEL org.opencontainers.image.source=https://github.com/x3ne/matcha
@@ -27,6 +27,7 @@ RUN cargo install --version 0.8.3 sqlx-cli --locked --no-default-features --feat
 
 COPY --from=build /app/migrations ./migrations
 COPY --from=build /app/Makefile ./Makefile
+COPY --from=build /app/templates ./templates
 
 COPY --from=build /app/target/debug/matcha-back .
 

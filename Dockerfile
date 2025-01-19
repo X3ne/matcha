@@ -27,6 +27,7 @@ RUN cargo install --version 0.8.3 sqlx-cli --locked --no-default-features --feat
 
 COPY --from=build /app/migrations ./migrations
 COPY --from=build /app/Makefile ./Makefile
+COPY --from=build /app/templates ./templates
 
 COPY --from=build /app/target/debug/matcha-back .
 
