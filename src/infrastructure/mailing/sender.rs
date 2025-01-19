@@ -115,17 +115,12 @@ impl Sender {
     }
 
     #[tracing::instrument(skip(self))]
-    pub async fn send_password_reset_mail(&self, email: &str, reset_token: &str) -> Result<(), Error> {
+    pub async fn send_password_reset_mail(&self, email: &str, reset_url: String) -> Result<(), Error> {
         let (html_path, subject_path, text_path) = self.get_template_paths(RESET_PASSWORD_TEMPLATE);
 
         let html = self.get_template_content(html_path)?;
         let subject = self.get_template_content(subject_path)?;
         let txt = self.get_template_content(text_path)?;
-
-        let reset_url = format!(
-            "http://localhost:3000/v1/auth/reset?token={}", // TODO: make this configurable
-            reset_token
-        );
 
         let rendered = render_email(&Mail::ResetPassword { reset_url }, &subject, &html, &txt).await?;
 

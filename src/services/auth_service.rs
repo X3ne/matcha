@@ -1,5 +1,15 @@
 use std::sync::Arc;
 
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use async_trait::async_trait;
+use oauth2::client::providers::ft::FtProvider;
+use oauth2::client::providers::ProviderKind;
+use oauth2::client::{CsrfToken, OAuth2Client, Url};
+use redis::AsyncCommands;
+use sqlx::PgPool;
+
 use crate::domain::constants::RESET_PASSWORD_TOKEN_TTL;
 use crate::domain::entities::user::User;
 use crate::domain::errors::auth_error::AuthError;
@@ -15,16 +25,6 @@ use crate::infrastructure::repositories::oauth_account_repo::PgOAuthAccountRepos
 use crate::infrastructure::repositories::oauth_provider_repo::PgOAuthProviderRepository;
 use crate::infrastructure::repositories::user_repo::PgUserRepository;
 use crate::shared::utils::generate_random_secure_string;
-use argon2::password_hash::rand_core::OsRng;
-use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
-use async_trait::async_trait;
-use oauth2::client::providers::ft::FtProvider;
-use oauth2::client::providers::ProviderKind;
-use oauth2::client::{CsrfToken, OAuth2Client, Url};
-use redis::AsyncCommands;
-use sqlx::PgPool;
-use tracing::Instrument;
 
 #[derive(Clone)]
 pub struct AuthServiceImpl {
@@ -237,18 +237,19 @@ impl AuthService for AuthServiceImpl {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn request_password_reset(&self, email: &str) -> Result<(), AuthError> {
+    async fn request_password_reset(&self, email: &str, reset_url: &str) -> Result<(), AuthError> {
         let reset_token = generate_random_secure_string(32);
 
-        // store to redis
         let mut conn = self.redis.get_multiplexed_async_connection().await?;
 
         let key = format!("password_reset:{}", reset_token);
         conn.set_ex(&key, email, RESET_PASSWORD_TOKEN_TTL).await?;
 
+        let reset_url = format!("{}?token={}", reset_url, reset_token);
+
         #[cfg(feature = "mailing")]
         self.mail_sender
-            .send_password_reset_mail(email, &reset_token)
+            .send_password_reset_mail(email, reset_url)
             .await
             .map_err(|e| {
                 tracing::error!("Error sending confirmation mail: {:?}", e);

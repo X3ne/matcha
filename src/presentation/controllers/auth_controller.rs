@@ -1,11 +1,6 @@
 use std::sync::Arc;
 
-use actix_web::web;
-use apistos::actix::NoContent;
-use apistos::api_operation;
-use garde::Validate;
-use oauth2::client::providers::ProviderKind;
-
+use crate::config::Config;
 use crate::domain::services::auth_service::AuthService;
 use crate::infrastructure::error::ApiError;
 use crate::presentation::dto::auth_dto::{
@@ -15,6 +10,11 @@ use crate::presentation::dto::user_dto::ResetPasswordDto;
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::utils::validation::ValidatePasswordContext;
+use actix_web::web;
+use apistos::actix::NoContent;
+use apistos::api_operation;
+use garde::Validate;
+use oauth2::client::providers::ProviderKind;
 // **
 // * TODO:
 // * - Implement pkce
@@ -131,15 +131,18 @@ pub async fn activate_account(
     summary = "Request a password reset",
     skip_args = "peer_infos"
 )]
-#[tracing::instrument(skip(auth_service, session))]
+#[tracing::instrument(skip(auth_service, cfg, session))]
 pub async fn request_reset_password(
     auth_service: web::Data<Arc<dyn AuthService>>,
+    cfg: web::Data<Arc<Config>>,
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
     let user = session.authenticated_user()?;
 
-    auth_service.request_password_reset(&user.email).await?;
+    auth_service
+        .request_password_reset(&user.email, &cfg.reset_password_url)
+        .await?;
 
     Ok(NoContent)
 }
