@@ -13,7 +13,8 @@ use crate::shared::types::snowflake::Snowflake;
 use crate::shared::utils::generate_random_secure_string;
 
 impl UserSqlx {
-    pub fn new(id: Snowflake, username: String, password: String, is_active: bool) -> Self {
+    pub fn new(username: String, password: String, is_active: bool) -> Self {
+        let id = Snowflake::new();
         let now = Utc::now().naive_utc();
         let email = format!("{}@test.com", username);
         let first_name: String = FirstName().fake();
@@ -59,7 +60,6 @@ impl UserSqlx {
 
     pub fn generate_fake_users() -> Vec<Self> {
         let fake_password = "password";
-        let start_id = 7284668132873080833;
 
         let salt = SaltString::generate(&mut OsRng);
 
@@ -71,48 +71,13 @@ impl UserSqlx {
             .to_string();
 
         vec![
-            Self::new(
-                Snowflake(start_id),
-                "testmf".to_string(),
-                password_hash.to_string(),
-                true,
-            ),
-            Self::new(
-                Snowflake(start_id + 1),
-                "testmm".to_string(),
-                password_hash.to_string(),
-                true,
-            ),
-            Self::new(
-                Snowflake(start_id + 2),
-                "testmb".to_string(),
-                password_hash.to_string(),
-                true,
-            ),
-            Self::new(
-                Snowflake(start_id + 3),
-                "testfm".to_string(),
-                password_hash.to_string(),
-                true,
-            ),
-            Self::new(
-                Snowflake(start_id + 4),
-                "testff".to_string(),
-                password_hash.to_string(),
-                true,
-            ),
-            Self::new(
-                Snowflake(start_id + 5),
-                "testfb".to_string(),
-                password_hash.to_string(),
-                true,
-            ),
-            Self::new(
-                Snowflake(start_id + 6),
-                "not_activated".to_string(),
-                password_hash.to_string(),
-                false,
-            ),
+            Self::new("testmf".to_string(), password_hash.to_string(), true),
+            Self::new("testmm".to_string(), password_hash.to_string(), true),
+            Self::new("testmb".to_string(), password_hash.to_string(), true),
+            Self::new("testfm".to_string(), password_hash.to_string(), true),
+            Self::new("testff".to_string(), password_hash.to_string(), true),
+            Self::new("testfb".to_string(), password_hash.to_string(), true),
+            Self::new("not_activated".to_string(), password_hash.to_string(), false),
         ]
     }
 
