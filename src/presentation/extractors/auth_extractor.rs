@@ -5,12 +5,8 @@ use std::sync::Arc;
 use actix_session::{Session as ActixSession, SessionExt};
 use actix_web::dev::Payload;
 use actix_web::{web, FromRequest, HttpRequest};
-use apistos::ApiCookie;
+use apistos::ApiSecurity;
 use async_trait::async_trait;
-use schemars::_serde_json::Value;
-use schemars::gen::SchemaGenerator;
-use schemars::schema::{InstanceType, Metadata, Schema, SchemaObject, SingleOrVec};
-use schemars::JsonSchema;
 
 use crate::domain::entities::user::User;
 use crate::domain::errors::auth_error::AuthError;
@@ -19,8 +15,8 @@ use crate::infrastructure::error::ApiError;
 
 const ALLOWED_PATHS: [&str; 2] = ["/v1/auth/oauth2/42/callback", "/v1/auth/login"];
 
-#[derive(ApiCookie)]
-#[openapi_cookie(name = "session", description = "Session cookie", required = true)]
+#[derive(ApiSecurity)]
+#[openapi_security(scheme(security_type(api_key(name = "session", api_key_in = "cookie"))))]
 pub struct Session {
     inner: ActixSession,
     user: Option<User>,
@@ -29,10 +25,6 @@ pub struct Session {
 impl Session {
     pub fn inner(&self) -> &ActixSession {
         &self.inner
-    }
-
-    pub fn user(&self) -> Option<&User> {
-        self.user.as_ref()
     }
 
     pub fn is_authenticated(&self) -> bool {
@@ -87,26 +79,5 @@ impl FromRequest for Session {
                 user: Some(user),
             })
         })
-    }
-}
-
-impl JsonSchema for Session {
-    fn schema_name() -> String {
-        "Session".to_string()
-    }
-
-    fn json_schema(_: &mut SchemaGenerator) -> Schema {
-        let schema = SchemaObject {
-            instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::String))),
-            format: Some("session".to_string()),
-            string: Some(Default::default()),
-            metadata: Some(Box::new(Metadata {
-                description: Some("The session cookie".to_string()),
-                examples: vec![Value::String("session=123456".to_string())],
-                ..Default::default()
-            })),
-            ..Default::default()
-        };
-        schema.into()
     }
 }

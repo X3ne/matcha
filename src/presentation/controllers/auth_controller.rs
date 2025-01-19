@@ -114,7 +114,7 @@ pub async fn callback_42(
 #[tracing::instrument(skip(auth_service))]
 pub async fn activate_account(
     auth_service: web::Data<Arc<dyn AuthService>>,
-    query: web::Query<ActivateAccountDto>, // TODO: add redirect_url to redirect the user after activation
+    query: web::Query<ActivateAccountDto>,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
     let token = query.into_inner().token;
