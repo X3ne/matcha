@@ -20,6 +20,7 @@ pub struct Config {
     pub origins: Vec<String>,
     pub telemetry_collector_endpoint: Option<String>,
     pub base_url: String,
+    pub client_base_url: Option<String>,
     pub reset_password_url: String,
 }
 

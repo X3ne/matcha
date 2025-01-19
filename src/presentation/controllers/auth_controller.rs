@@ -1,5 +1,11 @@
 use std::sync::Arc;
 
+use actix_web::{web, HttpResponse};
+use apistos::actix::NoContent;
+use apistos::api_operation;
+use garde::Validate;
+use oauth2::client::providers::ProviderKind;
+
 use crate::config::Config;
 use crate::domain::services::auth_service::AuthService;
 use crate::infrastructure::error::ApiError;
@@ -10,17 +16,6 @@ use crate::presentation::dto::user_dto::ResetPasswordDto;
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::utils::validation::ValidatePasswordContext;
-use actix_web::web;
-use apistos::actix::NoContent;
-use apistos::api_operation;
-use garde::Validate;
-use oauth2::client::providers::ProviderKind;
-// **
-// * TODO:
-// * - Implement pkce
-// * - Implement csrf
-// * - make oauth routes generics
-// **
 
 #[api_operation(
     tag = "auth",
@@ -89,13 +84,14 @@ pub async fn login_42(
 }
 
 #[api_operation(tag = "auth", operation_id = "callback_42", summary = "Callback for 42 OAuth", skip_args = peer_infos)]
-#[tracing::instrument(skip(auth_service, session))]
+#[tracing::instrument(skip(auth_service, cfg, session))]
 pub async fn callback_42(
     query: web::Query<OAuthCallbackQueryDto>,
     auth_service: web::Data<Arc<dyn AuthService>>,
+    cfg: web::Data<Arc<Config>>,
     session: Session,
     peer_infos: PeerInfos,
-) -> Result<NoContent, ApiError> {
+) -> Result<HttpResponse, ApiError> {
     let OAuthCallbackQueryDto { code, state } = query.into_inner();
 
     let user = auth_service.oauth_callback(ProviderKind::Ft, code, state).await?;
@@ -103,7 +99,10 @@ pub async fn callback_42(
     let _ = session.inner().insert("user_id", user.id.to_string());
     session.inner().renew();
 
-    Ok(NoContent)
+    match cfg.client_base_url.as_ref() {
+        Some(uri) => Ok(HttpResponse::Found().append_header(("Location", uri.clone())).finish()),
+        None => Ok(HttpResponse::Ok().finish()),
+    }
 }
 
 #[api_operation(
