@@ -65,7 +65,7 @@ impl UserProfileService for UserProfileServiceImpl {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn search(&self, params: UserProfileQueryParams) -> Result<Vec<UserProfile>, UserProfileError> {
+    async fn search(&self, params: &UserProfileQueryParams) -> Result<Vec<UserProfile>, UserProfileError> {
         let mut conn = self.pool.acquire().await?;
 
         let profiles = PgUserProfileRepository::search(&mut *conn, params).await?;

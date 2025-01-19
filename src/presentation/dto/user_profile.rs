@@ -63,6 +63,8 @@ pub struct UserProfileDto {
     pub gender: Gender,
     pub sexual_orientation: Orientation,
     pub tags: Vec<ProfileTag>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approx_distance_km: Option<u64>,
 }
 
 impl From<UserProfile> for UserProfileDto {
@@ -81,6 +83,7 @@ impl From<UserProfile> for UserProfileDto {
             gender: user.gender,
             sexual_orientation: user.sexual_orientation,
             tags: vec![],
+            approx_distance_km: None,
         }
     }
 }
@@ -88,6 +91,10 @@ impl From<UserProfile> for UserProfileDto {
 impl UserProfileDto {
     pub fn append_tags(&mut self, tags: Vec<ProfileTag>) {
         self.tags = tags;
+    }
+
+    pub fn set_approx_distance(&mut self, distance: f64) {
+        self.approx_distance_km = Some(distance as u64);
     }
 }
 

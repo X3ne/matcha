@@ -19,7 +19,7 @@ impl From<geo_types::Geometry<f64>> for Location {
                 latitude: point.clone().y(),
                 longitude: point.x(),
             },
-            _ => unreachable!(),
+            _ => panic!("Only Point geometry is supported"),
         }
     }
 }

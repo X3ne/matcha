@@ -163,7 +163,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
     }
 
     #[tracing::instrument(skip(conn))]
-    async fn search<'a, A>(conn: A, params: UserProfileQueryParams) -> sqlx::Result<Vec<UserProfile>, Error>
+    async fn search<'a, A>(conn: A, params: &UserProfileQueryParams) -> sqlx::Result<Vec<UserProfile>, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
     {

@@ -1,10 +1,6 @@
 use std::sync::Arc;
 
-use actix_web::web;
-use apistos::actix::NoContent;
-use apistos::api_operation;
-use garde::{Error, Path, Report, Validate};
-
+use crate::domain::repositories::user_profile_repo::UserProfileQueryParams;
 use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
@@ -15,6 +11,12 @@ use crate::presentation::dto::user_profile::{
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::types::snowflake::Snowflake;
+use crate::shared::utils::approx_distance_km;
+use actix_web::web;
+use apistos::actix::NoContent;
+use apistos::api_operation;
+use garde::{Error, Path, Report, Validate};
+use geo_types::Point;
 
 #[api_operation(
     tag = "profiles",
@@ -105,11 +107,21 @@ pub async fn get_user_profile_by_id(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<web::Json<UserProfileDto>, ApiError> {
+    let user = session.authenticated_user()?;
+    let user_profile = user_profile_service.get_by_user_id(user.id).await?;
+
     let profile_id = profile_id.into_inner();
 
     let profile = user_profile_service.get_by_id(profile_id).await?;
+    let tags = user_profile_service.get_profile_tags(profile.id).await?;
 
-    Ok(web::Json(profile.into()))
+    let approx_distance = approx_distance_km(&user_profile.location, &profile.location);
+
+    let mut profile: UserProfileDto = profile.into();
+    profile.append_tags(tags);
+    profile.set_approx_distance(approx_distance);
+
+    Ok(web::Json(profile))
 }
 
 #[api_operation(
@@ -125,12 +137,39 @@ pub async fn search_profiles(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+    let user = session.authenticated_user()?;
+    let user_profile = user_profile_service.get_by_user_id(user.id).await?;
+
     let params = params.into_inner();
     params.validate()?;
 
-    let profiles = user_profile_service.search(params.into()).await?;
+    let mut search_params: UserProfileQueryParams = params.into();
+    if search_params.location.is_none() {
+        let point: Point<f64> = user_profile
+            .location
+            .clone()
+            .try_into()
+            .map_err(|_| ApiError::InternalServerError)?;
+        search_params.location = Some(point);
+    }
 
-    Ok(web::Json(profiles.into_iter().map(|p| p.into()).collect()))
+    let profiles = user_profile_service.search(&search_params).await?;
+
+    let mut profiles_dto: Vec<UserProfileDto> = vec![];
+
+    for profile in profiles {
+        // TODO: this is slow and should be optimized
+        let tags = user_profile_service.get_profile_tags(profile.id).await?;
+        let approx_distance = approx_distance_km(&user_profile.location, &profile.location);
+
+        let mut profile_dto: UserProfileDto = profile.into();
+        profile_dto.append_tags(tags);
+        profile_dto.set_approx_distance(approx_distance);
+
+        profiles_dto.push(profile_dto);
+    }
+
+    Ok(web::Json(profiles_dto))
 }
 
 #[api_operation(

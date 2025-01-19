@@ -13,7 +13,7 @@ pub trait UserProfileService: 'static + Sync + Send {
     async fn get_by_id(&self, profile_id: Snowflake) -> Result<UserProfile, UserProfileError>;
     async fn get_by_user_id(&self, user_id: Snowflake) -> Result<UserProfile, UserProfileError>;
     async fn update(&self, id: Snowflake, profile: &UserProfileUpdate) -> Result<(), UserProfileError>;
-    async fn search(&self, params: UserProfileQueryParams) -> Result<Vec<UserProfile>, UserProfileError>;
+    async fn search(&self, params: &UserProfileQueryParams) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn get_profile_tags(&self, profile_id: Snowflake) -> Result<Vec<ProfileTag>, UserProfileError>;
     async fn add_tag(&self, profile_id: Snowflake, tag_id: Snowflake) -> Result<(), UserProfileError>;
     async fn remove_tag(&self, profile_id: Snowflake, tag_id: Snowflake) -> Result<(), UserProfileError>;

@@ -5,7 +5,7 @@ back:
   ✔ password reset flow @done(25-01-19 20:39)
   ✔ add validation on dtos (reject common passwords) @done(25-01-16 19:11)
   ✔ rework error responses @done(25-01-16 19:11)
-  ☐ add UserProfile field to calculate distance from user
+  ✔ add UserProfile field to calculate distance from user @done(25-01-20 00:27)
   ✔ disable dev emails @done(25-01-14 13:53)
   ✔ mock db @done(25-01-14 13:53)
   ☐ add likes
