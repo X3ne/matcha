@@ -1,9 +1,12 @@
 use apistos::ApiComponent;
+use garde::Validate;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::domain::entities::user::{PartialUser, User};
+use crate::domain::entities::user::User;
+use crate::infrastructure::models::user::UserUpdate;
 use crate::shared::types::snowflake::Snowflake;
+use crate::shared::utils::validation::{validate_opt_password, ValidatePasswordContext};
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent)]
 #[serde(rename(deserialize = "User"))]
@@ -27,25 +30,30 @@ impl From<User> for UserDto {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent)]
-#[serde(rename(deserialize = "PartialUser"))]
-pub struct PartialUserDto {
-    pub id: Snowflake,
-    pub email: String,
+#[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
+#[garde(context(ValidatePasswordContext))]
+#[serde(rename(deserialize = "UpdateUser"))]
+pub struct UpdateUserDto {
+    #[garde(email)]
+    pub email: Option<String>,
+    #[garde(length(min = 3, max = 20), pattern("^[a-zA-Z0-9_-]+$"))]
+    pub username: Option<String>,
+    #[garde(length(min = 1, max = 50), pattern("^[a-zA-Z]+$"))]
+    pub first_name: Option<String>,
+    #[garde(length(min = 1, max = 50), pattern("^[a-zA-Z]+$"))]
+    pub last_name: Option<String>,
+    #[garde(custom(validate_opt_password))]
+    pub password: Option<String>,
 }
 
-impl PartialUserDto {
-    pub fn from_user(user: User) -> Self {
-        Self {
-            id: user.id,
-            email: user.email,
-        }
-    }
-
-    pub fn from_partial_user(partial_user: PartialUser) -> Self {
-        Self {
-            id: partial_user.id,
-            email: partial_user.email,
+impl Into<UserUpdate> for UpdateUserDto {
+    fn into(self) -> UserUpdate {
+        UserUpdate {
+            email: self.email,
+            username: self.username,
+            first_name: self.first_name,
+            last_name: self.last_name,
+            password: self.password,
         }
     }
 }

@@ -4,7 +4,7 @@ use sqlx::Acquire;
 
 use crate::domain::entities::user::User;
 use crate::domain::repositories::repository::{QueryParams, DEFAULT_LIMIT, DEFAULT_OFFSET};
-use crate::infrastructure::models::user::UserInsert;
+use crate::infrastructure::models::user::{UserInsert, UserUpdate};
 use crate::shared::types::snowflake::Snowflake;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,6 +37,10 @@ pub trait UserRepository<Db>: Send + Sync {
         A: Acquire<'a, Database = Db> + Send;
 
     async fn get_by_username<'a, A>(conn: A, username: &str) -> sqlx::Result<User, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn update<'a, A>(conn: A, id: Snowflake, user: &UserUpdate) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
 

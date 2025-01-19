@@ -7,6 +7,7 @@ use crate::domain::entities::user::User;
 use crate::domain::errors::user_error::UserError;
 use crate::domain::repositories::user_repo::UserRepository;
 use crate::domain::services::user_service::UserService;
+use crate::infrastructure::models::user::UserUpdate;
 use crate::infrastructure::repositories::user_repo::PgUserRepository;
 use crate::shared::types::snowflake::Snowflake;
 
@@ -29,5 +30,15 @@ impl UserService for UserServiceImpl {
         let user = PgUserRepository::get_by_id(&mut *conn, user_id).await?;
 
         Ok(user)
+    }
+
+    async fn update(&self, user_id: Snowflake, user: &UserUpdate) -> Result<(), UserError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserRepository::update(&mut *tx, user_id, user).await?;
+
+        tx.commit().await?;
+
+        Ok(())
     }
 }

@@ -11,9 +11,10 @@ use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::domain::services::cdn_service::CdnService;
 use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
+use crate::domain::services::user_service::UserService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
-use crate::presentation::dto::user_dto::UserDto;
+use crate::presentation::dto::user_dto::{UpdateUserDto, UserDto};
 use crate::presentation::dto::user_profile::{
     CompleteOnboardingForm, UpdateProfileDto, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto,
     UserProfileTagParamsDto,
@@ -26,6 +27,22 @@ pub async fn get_me(session: Session) -> Result<web::Json<UserDto>, ApiError> {
     let user = session.authenticated_user()?;
 
     Ok(web::Json(user.clone().into()))
+}
+
+#[api_operation(tag = "users", operation_id = "update_me", summary = "Update the current user")]
+pub async fn update_me(
+    user_service: web::Data<Arc<dyn UserService>>,
+    body: web::Json<UpdateUserDto>,
+    session: Session,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let body = body.into_inner();
+    body.validate()?;
+
+    user_service.update(user.id, &body.into()).await?;
+
+    Ok(NoContent)
 }
 
 #[api_operation(

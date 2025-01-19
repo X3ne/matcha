@@ -3,7 +3,7 @@ use sqlx::{Acquire, Error, Postgres, Result};
 
 use crate::domain::entities::user::User;
 use crate::domain::repositories::user_repo::UserRepository;
-use crate::infrastructure::models::user::{UserInsert, UserSqlx};
+use crate::infrastructure::models::user::{UserInsert, UserSqlx, UserUpdate};
 use crate::shared::types::snowflake::Snowflake;
 use crate::shared::utils::generate_random_secure_string;
 
@@ -101,6 +101,35 @@ impl UserRepository<Postgres> for PgUserRepository {
         .await?;
 
         Ok(user.into())
+    }
+
+    async fn update<'a, A>(conn: A, id: Snowflake, user: &UserUpdate) -> Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE "user"
+            SET email = COALESCE($2, email),
+                username = COALESCE($3, username),
+                last_name = COALESCE($4, last_name),
+                first_name = COALESCE($5, first_name),
+                password = COALESCE($6, password)
+            WHERE id = $1
+            "#,
+            id.as_i64(),
+            user.email,
+            user.username,
+            user.last_name,
+            user.first_name,
+            user.password
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
     }
 
     async fn activate<'a, A>(conn: A, token: String) -> Result<(), Error>

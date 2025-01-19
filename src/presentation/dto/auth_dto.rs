@@ -14,9 +14,9 @@ pub struct RegisterUserDto {
     pub email: String,
     #[garde(length(min = 3, max = 20), pattern("^[a-zA-Z0-9_-]+$"))]
     pub username: String,
-    #[garde(pattern("^[a-zA-Z]+$"))]
+    #[garde(length(min = 1, max = 50), pattern("^[a-zA-Z]+$"))]
     pub first_name: String,
-    #[garde(pattern("^[a-zA-Z]+$"))]
+    #[garde(length(min = 1, max = 50), pattern("^[a-zA-Z]+$"))]
     pub last_name: String,
     #[garde(custom(validate_password))]
     pub password: String,
@@ -39,7 +39,7 @@ impl Into<UserInsert> for RegisterUserDto {
 pub struct LoginDto {
     #[garde(length(min = 3, max = 20), pattern("^[a-zA-Z0-9_-]+$"))]
     pub username: String,
-    #[garde(length(min = 8))]
+    #[garde(skip)]
     pub password: String,
 }
 

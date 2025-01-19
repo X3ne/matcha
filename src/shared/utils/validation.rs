@@ -25,3 +25,11 @@ pub fn validate_password(password: &str, context: &ValidatePasswordContext) -> g
 
     Ok(())
 }
+
+pub fn validate_opt_password(password: &Option<String>, context: &ValidatePasswordContext) -> garde::Result {
+    if let Some(password) = password {
+        validate_password(password, context)?;
+    }
+
+    Ok(())
+}

@@ -31,27 +31,3 @@ impl From<UserSqlx> for User {
         }
     }
 }
-
-#[derive(Debug)]
-pub struct PartialUser {
-    pub id: Snowflake,
-    pub email: String,
-}
-
-impl From<User> for PartialUser {
-    fn from(user: User) -> Self {
-        Self {
-            id: user.id,
-            email: user.email,
-        }
-    }
-}
-
-impl From<UserSqlx> for PartialUser {
-    fn from(user: UserSqlx) -> Self {
-        Self {
-            id: user.id,
-            email: user.email,
-        }
-    }
-}

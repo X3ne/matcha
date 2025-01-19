@@ -32,6 +32,4 @@ pub struct UserUpdate {
     pub last_name: Option<String>,
     pub first_name: Option<String>,
     pub password: Option<String>,
-    pub is_active: Option<bool>,
-    pub activation_token: Option<String>,
 }
