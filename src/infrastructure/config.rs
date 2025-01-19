@@ -16,6 +16,7 @@ pub struct Config {
     pub host: String,
     pub port: u16,
     pub database_url: String,
+    pub redis_url: String,
     pub origins: Vec<String>,
     pub telemetry_collector_endpoint: Option<String>,
 }

@@ -1,12 +1,13 @@
+use std::fs;
+use std::path::{Path, PathBuf};
+
 use lettre::message::{header, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use mail_template::render_email;
-use std::fs;
-use std::path::{Path, PathBuf};
 
 use crate::config::SmtpConfig;
-use crate::domain::constants::TEMPLATE_DIR;
+use crate::domain::constants::{ACCOUNT_CONFIRMATION_TEMPLATE, RESET_PASSWORD_TEMPLATE, TEMPLATE_DIR};
 use crate::domain::entities::user::User;
 use crate::infrastructure::mailing::error::Error;
 use crate::infrastructure::mailing::mails::Mail;
@@ -88,7 +89,7 @@ impl Sender {
     }
 
     pub async fn send_confirmation_mail(&self, user: &User) -> Result<(), Error> {
-        let (html_path, subject_path, text_path) = self.get_template_paths("account_confirmation");
+        let (html_path, subject_path, text_path) = self.get_template_paths(ACCOUNT_CONFIRMATION_TEMPLATE);
 
         let html = self.get_template_content(html_path)?;
         let subject = self.get_template_content(subject_path)?;
@@ -96,7 +97,7 @@ impl Sender {
 
         let confirmation_url = format!(
             "http://localhost:3000/v1/auth/activate?token={}", // TODO: make this configurable
-            user.activation_token.clone().unwrap()
+            user.activation_token
         ); // TODO: make activation token NOT NULL
 
         let rendered = render_email(
@@ -111,6 +112,24 @@ impl Sender {
         .await?;
 
         self.send_mail(&user.email, rendered.subject(), rendered.html(), rendered.txt())
+            .await
+    }
+
+    pub async fn send_password_reset_mail(&self, email: &str, reset_token: &str) -> Result<(), Error> {
+        let (html_path, subject_path, text_path) = self.get_template_paths(RESET_PASSWORD_TEMPLATE);
+
+        let html = self.get_template_content(html_path)?;
+        let subject = self.get_template_content(subject_path)?;
+        let txt = self.get_template_content(text_path)?;
+
+        let reset_url = format!(
+            "http://localhost:3000/v1/auth/reset?token={}", // TODO: make this configurable
+            reset_token
+        );
+
+        let rendered = render_email(&Mail::ResetPassword { reset_url }, &subject, &html, &txt).await?;
+
+        self.send_mail(email, rendered.subject(), rendered.html(), rendered.txt())
             .await
     }
 }

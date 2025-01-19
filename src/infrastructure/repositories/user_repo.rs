@@ -115,8 +115,7 @@ impl UserRepository<Postgres> for PgUserRepository {
             SET email = COALESCE($2, email),
                 username = COALESCE($3, username),
                 last_name = COALESCE($4, last_name),
-                first_name = COALESCE($5, first_name),
-                password = COALESCE($6, password)
+                first_name = COALESCE($5, first_name)
             WHERE id = $1
             "#,
             id.as_i64(),
@@ -124,7 +123,27 @@ impl UserRepository<Postgres> for PgUserRepository {
             user.username,
             user.last_name,
             user.first_name,
-            user.password
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    async fn update_password<'a, A>(conn: A, email: &str, password: &str) -> Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE "user"
+            SET password = $2
+            WHERE email = $1
+            "#,
+            email,
+            password
         )
         .execute(&mut *conn)
         .await?;

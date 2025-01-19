@@ -2,7 +2,7 @@ use apistos::web;
 use apistos::web::{resource, scope};
 
 use crate::presentation::controllers::auth_controller::{
-    activate_account, callback_42, login, login_42, logout, register,
+    activate_account, callback_42, login, login_42, logout, register, request_reset_password, reset_password,
 };
 
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -20,6 +20,11 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                     .service(resource("/register").route(web::post().to(register)))
                     .service(resource("/login").route(web::post().to(login)))
                     .service(resource("/activate").route(web::get().to(activate_account)))
+                    .service(
+                        resource("/password")
+                            .route(web::post().to(request_reset_password))
+                            .route(web::put().to(reset_password)),
+                    )
                     .service(resource("/logout").route(web::post().to(logout))),
             ),
     );

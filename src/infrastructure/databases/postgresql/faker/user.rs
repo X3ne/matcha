@@ -1,7 +1,3 @@
-use crate::domain::entities::user::User;
-use crate::infrastructure::models::user::UserSqlx;
-use crate::shared::types::snowflake::Snowflake;
-use crate::shared::utils::generate_random_secure_string;
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
@@ -11,17 +7,17 @@ use fake::faker::name::fr_fr::{FirstName, LastName};
 use fake::Fake;
 use sqlx::PgPool;
 
+use crate::domain::entities::user::User;
+use crate::infrastructure::models::user::UserSqlx;
+use crate::shared::types::snowflake::Snowflake;
+use crate::shared::utils::generate_random_secure_string;
+
 impl UserSqlx {
     pub fn new(id: Snowflake, username: String, password: String, is_active: bool) -> Self {
         let now = Utc::now().naive_utc();
         let email = format!("{}@test.com", username);
         let first_name: String = FirstName().fake();
         let last_name: String = LastName().fake();
-
-        let activation_token = match is_active {
-            true => None,
-            false => Some(generate_random_secure_string(32)),
-        };
 
         Self {
             id,
@@ -31,7 +27,7 @@ impl UserSqlx {
             first_name,
             password: Some(password),
             is_active,
-            activation_token,
+            activation_token: generate_random_secure_string(32),
             created_at: now,
             updated_at: now,
         }
@@ -47,11 +43,6 @@ impl UserSqlx {
         let is_active = true;
         let password = "password";
 
-        let activation_token = match is_active {
-            true => None,
-            false => Some(generate_random_secure_string(32)),
-        };
-
         Self {
             id,
             email,
@@ -60,7 +51,7 @@ impl UserSqlx {
             first_name,
             password: Some(password.to_string()),
             is_active,
-            activation_token,
+            activation_token: generate_random_secure_string(32),
             created_at: now,
             updated_at: now,
         }

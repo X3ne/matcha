@@ -44,6 +44,10 @@ pub trait UserRepository<Db>: Send + Sync {
     where
         A: Acquire<'a, Database = Db> + Send;
 
+    async fn update_password<'a, A>(conn: A, email: &str, password: &str) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
     async fn activate<'a, A>(conn: A, token: String) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;

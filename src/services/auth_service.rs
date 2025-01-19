@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
@@ -5,9 +7,10 @@ use async_trait::async_trait;
 use oauth2::client::providers::ft::FtProvider;
 use oauth2::client::providers::ProviderKind;
 use oauth2::client::{CsrfToken, OAuth2Client, Url};
+use redis::AsyncCommands;
 use sqlx::PgPool;
-use std::sync::Arc;
 
+use crate::domain::constants::RESET_PASSWORD_TOKEN_TTL;
 use crate::domain::entities::user::User;
 use crate::domain::errors::auth_error::AuthError;
 use crate::domain::repositories::oauth_account_repo::OAuthAccountRepository;
@@ -21,11 +24,12 @@ use crate::infrastructure::models::user::UserInsert;
 use crate::infrastructure::repositories::oauth_account_repo::PgOAuthAccountRepository;
 use crate::infrastructure::repositories::oauth_provider_repo::PgOAuthProviderRepository;
 use crate::infrastructure::repositories::user_repo::PgUserRepository;
-use crate::shared::types::snowflake::Snowflake;
+use crate::shared::utils::generate_random_secure_string;
 
 #[derive(Clone)]
 pub struct AuthServiceImpl {
     pub pool: Arc<PgPool>,
+    pub redis: Arc<redis::Client>,
     pub oauth2_client: Arc<OAuth2Client>,
     #[cfg(feature = "mailing")]
     pub mail_sender: Arc<Sender>,
@@ -34,11 +38,13 @@ pub struct AuthServiceImpl {
 impl AuthServiceImpl {
     pub fn new(
         pool: Arc<PgPool>,
+        redis: Arc<redis::Client>,
         oauth2_client: Arc<OAuth2Client>,
         #[cfg(feature = "mailing")] mail_sender: Arc<Sender>,
     ) -> Self {
         AuthServiceImpl {
             pool,
+            redis,
             oauth2_client,
             #[cfg(feature = "mailing")]
             mail_sender,
@@ -200,6 +206,58 @@ impl AuthService for AuthServiceImpl {
         let mut tx = self.pool.begin().await?;
 
         PgUserRepository::activate(&mut *tx, token).await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn request_password_reset(&self, email: &str) -> Result<(), AuthError> {
+        let reset_token = generate_random_secure_string(32);
+
+        // store to redis
+        let mut conn = self.redis.get_multiplexed_async_connection().await?;
+
+        let key = format!("password_reset:{}", reset_token);
+        conn.set_ex(&key, email, RESET_PASSWORD_TOKEN_TTL).await?;
+
+        #[cfg(feature = "mailing")]
+        self.mail_sender
+            .send_password_reset_mail(email, &reset_token)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error sending confirmation mail: {:?}", e);
+                AuthError::MailError
+            })?;
+
+        Ok(())
+    }
+
+    async fn reset_password(&self, token: &str, new_password: &str) -> Result<(), AuthError> {
+        let mut conn = self.redis.get_multiplexed_async_connection().await?;
+
+        let key = format!("password_reset:{}", token);
+        let email: String = conn.get(&key).await?;
+
+        if email.is_empty() {
+            return Err(AuthError::InvalidCredentials);
+        }
+
+        let mut tx = self.pool.begin().await?;
+
+        let salt = SaltString::generate(&mut OsRng);
+
+        let argon2 = Argon2::default();
+
+        let password_hash = argon2
+            .hash_password(new_password.as_bytes(), &salt)
+            .map_err(|e| {
+                tracing::error!("Error hashing password: {:?}", e);
+                AuthError::PasswordHashError
+            })?
+            .to_string();
+
+        PgUserRepository::update_password(&mut *tx, &email, &password_hash).await?;
 
         tx.commit().await?;
 

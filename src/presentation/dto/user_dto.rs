@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::domain::entities::user::User;
 use crate::infrastructure::models::user::UserUpdate;
 use crate::shared::types::snowflake::Snowflake;
-use crate::shared::utils::validation::{validate_opt_password, ValidatePasswordContext};
+use crate::shared::utils::validation::{validate_password, ValidatePasswordContext};
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent)]
 #[serde(rename(deserialize = "User"))]
@@ -31,7 +31,6 @@ impl From<User> for UserDto {
 }
 
 #[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
-#[garde(context(ValidatePasswordContext))]
 #[serde(rename(deserialize = "UpdateUser"))]
 pub struct UpdateUserDto {
     #[garde(email)]
@@ -42,8 +41,6 @@ pub struct UpdateUserDto {
     pub first_name: Option<String>,
     #[garde(length(min = 1, max = 50), pattern("^[a-zA-Z]+$"))]
     pub last_name: Option<String>,
-    #[garde(custom(validate_opt_password))]
-    pub password: Option<String>,
 }
 
 impl Into<UserUpdate> for UpdateUserDto {
@@ -53,7 +50,16 @@ impl Into<UserUpdate> for UpdateUserDto {
             username: self.username,
             first_name: self.first_name,
             last_name: self.last_name,
-            password: self.password,
         }
     }
+}
+
+#[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
+#[garde(context(ValidatePasswordContext))]
+#[serde(rename(deserialize = "ResetPassword"))]
+pub struct ResetPasswordDto {
+    #[garde(custom(validate_password))]
+    pub password: String,
+    #[garde(skip)]
+    pub token: String,
 }

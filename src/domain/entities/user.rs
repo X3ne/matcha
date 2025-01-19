@@ -10,7 +10,7 @@ pub struct User {
     pub first_name: String,
     pub password: Option<String>,
     pub is_active: bool,
-    pub activation_token: Option<String>,
+    pub activation_token: String,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }

@@ -30,16 +30,21 @@ pub struct Container {
     pub cdn_service: Arc<dyn CdnService>,
     pub s3: Arc<S3Service>,
     pub pool: Arc<sqlx::PgPool>,
+    pub redis: Arc<redis::Client>,
 }
 
 impl Container {
-    pub async fn new(database_url: &str) -> Self {
+    pub async fn new(database_url: &str, redis_url: &str) -> Self {
         let pool = connect(database_url).await.expect("Failed to connect to database");
         let pool = Arc::new(pool);
 
         create_default_providers(&pool)
             .await
             .expect("Failed to create default providers");
+
+        // Redis
+        let redis = redis::Client::open(redis_url).expect("Failed to connect to redis");
+        let redis = Arc::new(redis);
 
         // OAuth2
         let oauth_config = OAuth2Config::from_env().expect("Failed to load oauth2 configuration");
@@ -71,6 +76,7 @@ impl Container {
         // Services
         let auth_service = Arc::new(AuthServiceImpl {
             pool: Arc::clone(&pool),
+            redis: Arc::clone(&redis),
             oauth2_client: Arc::clone(&oauth_client),
             #[cfg(feature = "mailing")]
             mail_sender: Arc::clone(&mail_sender),
@@ -98,6 +104,7 @@ impl Container {
             cdn_service,
             s3,
             pool,
+            redis,
         }
     }
 }

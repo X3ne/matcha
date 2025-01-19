@@ -7,7 +7,7 @@ CREATE TABLE "user"
     first_name       VARCHAR(255)       NOT NULL,
     password         VARCHAR(255),
     is_active        BOOLEAN            NOT NULL DEFAULT FALSE,
-    activation_token VARCHAR(255),
+    activation_token VARCHAR(255)       NOT NULL,
     created_at       TIMESTAMP          NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMP          NOT NULL DEFAULT NOW()
 );

@@ -11,6 +11,7 @@ use crate::infrastructure::error::ApiError;
 use crate::presentation::dto::auth_dto::{
     ActivateAccountDto, LoginDto, OAuthCallbackQueryDto, OAuthResponseDto, RegisterUserDto,
 };
+use crate::presentation::dto::user_dto::ResetPasswordDto;
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::utils::validation::ValidatePasswordContext;
@@ -132,9 +133,57 @@ pub async fn activate_account(
 
 #[api_operation(
     tag = "auth",
+    operation_id = "request_reset_password",
+    summary = "Request a password reset",
+    skip_args = "peer_infos"
+)]
+pub async fn request_reset_password(
+    auth_service: web::Data<Arc<dyn AuthService>>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    trace_peer_infos!(peer_infos);
+
+    let user = session.authenticated_user()?;
+
+    auth_service.request_password_reset(&user.email).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "auth",
+    operation_id = "reset_password",
+    summary = "Reset the user password",
+    skip_args = "peer_infos"
+)]
+pub async fn reset_password(
+    auth_service: web::Data<Arc<dyn AuthService>>,
+    body: web::Json<ResetPasswordDto>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    trace_peer_infos!(peer_infos);
+
+    let user = session.authenticated_user()?;
+
+    let body = body.into_inner();
+    body.validate_with(&ValidatePasswordContext {
+        username: user.username.clone(),
+        last_name: user.last_name.clone(),
+        first_name: user.first_name.clone(),
+        email: user.email.clone(),
+    })?;
+
+    auth_service.reset_password(&body.token, &body.password).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "auth",
     operation_id = "logout",
     summary = "Logout the current user",
-    description = "This endpoint can use the `session` cookie to logout the user",
     skip_args = "peer_infos"
 )]
 pub async fn logout(session: Session, peer_infos: PeerInfos) -> Result<NoContent, ApiError> {

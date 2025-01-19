@@ -15,6 +15,8 @@ pub enum AuthError {
     OAuth2Error(#[from] oauth2::error::OAuth2Error),
     #[error("Database error")]
     DatabaseError,
+    #[error("Redis error")]
+    RedisError(#[from] redis::RedisError),
     #[error("Password is required")]
     PasswordRequired,
     #[error("Error hashing password")]
@@ -35,6 +37,7 @@ impl ApiErrorImpl for AuthError {
             AuthError::InvalidCredentials => (StatusCode::UNAUTHORIZED, ErrorCode::InvalidCredentials),
             AuthError::OAuth2Error(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             AuthError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            AuthError::RedisError(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             AuthError::PasswordRequired => (StatusCode::BAD_REQUEST, ErrorCode::InvalidCredentials),
             AuthError::PasswordHashError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             AuthError::MailError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
