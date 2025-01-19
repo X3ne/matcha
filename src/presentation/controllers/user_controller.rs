@@ -1,10 +1,11 @@
+use std::sync::Arc;
+
 use actix_multipart::form::MultipartForm;
 use actix_web::web;
 use apistos::actix::NoContent;
 use apistos::api_operation;
 use garde::{Error, Path, Report, Validate};
 use geo_types::Point;
-use std::sync::Arc;
 
 use crate::domain::constants::PROFILE_IMAGES_PATH;
 use crate::domain::errors::user_profile_error::UserProfileError;
@@ -23,20 +24,36 @@ use crate::presentation::dto::user_profile::{
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::types::snowflake::Snowflake;
+use crate::trace_peer_infos;
 
-#[api_operation(tag = "users", operation_id = "get_me", summary = "Get the current user")]
-pub async fn get_me(session: Session) -> Result<web::Json<UserDto>, ApiError> {
+#[api_operation(
+    tag = "users",
+    operation_id = "get_me",
+    summary = "Get the current user",
+    skip_args = "peer_infos"
+)]
+pub async fn get_me(session: Session, peer_infos: PeerInfos) -> Result<web::Json<UserDto>, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let user = session.authenticated_user()?;
 
     Ok(web::Json(user.clone().into()))
 }
 
-#[api_operation(tag = "users", operation_id = "update_me", summary = "Update the current user")]
+#[api_operation(
+    tag = "users",
+    operation_id = "update_me",
+    summary = "Update the current user",
+    skip_args = "peer_infos"
+)]
 pub async fn update_me(
     user_service: web::Data<Arc<dyn UserService>>,
     body: web::Json<UpdateUserDto>,
     session: Session,
+    peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let user = session.authenticated_user()?;
 
     let body = body.into_inner();
@@ -58,8 +75,10 @@ pub async fn complete_onboarding(
     cdn_service: web::Data<Arc<dyn CdnService>>,
     MultipartForm(form): MultipartForm<CompleteOnboardingForm>,
     session: Session,
-    peer_infos: PeerInfos
+    peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let user = session.authenticated_user()?;
 
     if form.pictures.len() > 5 {
@@ -81,9 +100,9 @@ pub async fn complete_onboarding(
         None => {
             let ip_addr = peer_infos.ip_address.ok_or(ApiError::BadRequest("".to_string()))?;
             let location = locate_ip(ip_addr).await?;
-            
+
             tracing::info!("Located IP: {:?}", location);
-            
+
             Point::new(location.latitude, location.longitude)
         }
     };
@@ -123,12 +142,16 @@ pub async fn complete_onboarding(
 #[api_operation(
     tag = "users",
     operation_id = "get_my_profile",
-    summary = "Get the current user profile"
+    summary = "Get the current user profile",
+    skip_args = "peer_infos"
 )]
 pub async fn get_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     session: Session,
+    peer_infos: PeerInfos,
 ) -> Result<web::Json<UserProfileDto>, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let user = session.authenticated_user()?;
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
@@ -143,13 +166,17 @@ pub async fn get_my_profile(
 #[api_operation(
     tag = "users",
     operation_id = "update_my_profile",
-    summary = "Update the current user profile"
+    summary = "Update the current user profile",
+    skip_args = "peer_infos"
 )]
 pub async fn update_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     body: web::Json<UpdateProfileDto>,
     session: Session,
+    peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let user = session.authenticated_user()?;
 
     let body = body.into_inner();
@@ -193,13 +220,17 @@ pub async fn update_my_profile(
 #[api_operation(
     tag = "users",
     operation_id = "get_user_profile_by_id",
-    summary = "Get the user profile by id"
+    summary = "Get the user profile by id",
+    skip_args = "peer_infos"
 )]
 pub async fn get_user_profile_by_id(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_id: web::Path<Snowflake>,
     _: Session,
+    peer_infos: PeerInfos,
 ) -> Result<web::Json<UserProfileDto>, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let profile_id = profile_id.into_inner();
 
     let profile = user_profile_service.get_by_id(profile_id).await?;
@@ -207,12 +238,20 @@ pub async fn get_user_profile_by_id(
     Ok(web::Json(profile.into()))
 }
 
-#[api_operation(tag = "users", operation_id = "search_profile", summary = "Search user profiles")]
+#[api_operation(
+    tag = "users",
+    operation_id = "search_profile",
+    summary = "Search user profiles",
+    skip_args = "peer_infos"
+)]
 pub async fn search_profiles(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     params: web::Query<UserProfileQueryParamsDto>,
     _: Session,
+    peer_infos: PeerInfos,
 ) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let params = params.into_inner();
     params.validate()?;
 
@@ -224,14 +263,18 @@ pub async fn search_profiles(
 #[api_operation(
     tag = "users",
     operation_id = "add_tag_to_my_profile",
-    summary = "Add a tag to my profile"
+    summary = "Add a tag to my profile",
+    skip_args = "peer_infos"
 )]
 pub async fn add_tag_to_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
     params: web::Query<UserProfileTagParamsDto>,
     session: Session,
+    peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let user = session.authenticated_user()?;
 
     let params = params.into_inner();
@@ -247,14 +290,18 @@ pub async fn add_tag_to_my_profile(
 #[api_operation(
     tag = "users",
     operation_id = "remove_tag_from_my_profile",
-    summary = "Remove a tag from my profile"
+    summary = "Remove a tag from my profile",
+    skip_args = "peer_infos"
 )]
 pub async fn remove_tag_from_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
     params: web::Query<UserProfileTagParamsDto>,
     session: Session,
+    peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let user = session.authenticated_user()?;
 
     let params = params.into_inner();
@@ -270,14 +317,18 @@ pub async fn remove_tag_from_my_profile(
 #[api_operation(
     tag = "users",
     operation_id = "bulk_add_tag_to_my_profile",
-    summary = "Bulk add tags to my profile"
+    summary = "Bulk add tags to my profile",
+    skip_args = "peer_infos"
 )]
 pub async fn bulk_add_tag_to_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
     body: web::Json<UserProfileBulkTagsDto>,
     session: Session,
+    peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let user = session.authenticated_user()?;
 
     let body = body.into_inner();
@@ -293,14 +344,18 @@ pub async fn bulk_add_tag_to_my_profile(
 #[api_operation(
     tag = "users",
     operation_id = "bulk_remove_tag_from_my_profile",
-    summary = "Bulk remove tags from my profile"
+    summary = "Bulk remove tags from my profile",
+    skip_args = "peer_infos"
 )]
 pub async fn bulk_remove_tag_from_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
     body: web::Json<UserProfileBulkTagsDto>,
     session: Session,
+    peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
+    trace_peer_infos!(peer_infos);
+
     let user = session.authenticated_user()?;
 
     let body = body.into_inner();
