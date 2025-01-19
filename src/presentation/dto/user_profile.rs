@@ -62,6 +62,7 @@ pub struct UserProfileDto {
     pub age: i32,
     pub gender: Gender,
     pub sexual_orientation: Orientation,
+    pub rating: i32,
     pub tags: Vec<ProfileTag>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub approx_distance_km: Option<u64>,
@@ -82,6 +83,7 @@ impl From<UserProfile> for UserProfileDto {
             age: user.age,
             gender: user.gender,
             sexual_orientation: user.sexual_orientation,
+            rating: user.rating,
             tags: vec![],
             approx_distance_km: None,
         }
