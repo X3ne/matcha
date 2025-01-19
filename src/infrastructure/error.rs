@@ -12,6 +12,7 @@ use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::infrastructure::opcodes::ErrorCode;
 use crate::infrastructure::s3::error::ImageError;
 use crate::{ApiErrorImpl, ErrorDetails, ErrorItem, ErrorResponse};
+use crate::infrastructure::services::iploc::error::IpLocError;
 
 #[derive(thiserror::Error, Debug, ApiErrorComponent)]
 #[openapi_error(
@@ -37,6 +38,8 @@ pub enum ApiError {
     #[error("Only images are allowed")]
     OnlyImagesAllowed,
     #[error(transparent)]
+    IpLocError(#[from] IpLocError),
+    #[error(transparent)]
     AuthError(#[from] AuthError),
     #[error(transparent)]
     UserError(#[from] UserError),
@@ -58,6 +61,7 @@ impl ApiErrorImpl for ApiError {
             ApiError::DatabaseError(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             ApiError::OAuth2Error(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             ApiError::OnlyImagesAllowed => (StatusCode::BAD_REQUEST, ErrorCode::OnlyImagesAllowed),
+            ApiError::IpLocError(err) => err.get_codes(),
             ApiError::AuthError(err) => err.get_codes(),
             ApiError::UserError(err) => err.get_codes(),
             ApiError::UserProfileError(err) => err.get_codes(),

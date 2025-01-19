@@ -2711,6 +2711,7 @@ dependencies = [
  "rand",
  "rand_derive2",
  "regex",
+ "reqwest 0.12.12",
  "rs-snowflake",
  "rust-s3",
  "serde",

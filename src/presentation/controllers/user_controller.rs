@@ -14,12 +14,14 @@ use crate::domain::services::user_profile_service::UserProfileService;
 use crate::domain::services::user_service::UserService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
+use crate::infrastructure::services::iploc::locate_ip;
 use crate::presentation::dto::user_dto::{UpdateUserDto, UserDto};
 use crate::presentation::dto::user_profile::{
     CompleteOnboardingForm, UpdateProfileDto, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto,
     UserProfileTagParamsDto,
 };
 use crate::presentation::extractors::auth_extractor::Session;
+use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::types::snowflake::Snowflake;
 
 #[api_operation(tag = "users", operation_id = "get_me", summary = "Get the current user")]
@@ -48,13 +50,15 @@ pub async fn update_me(
 #[api_operation(
     tag = "users",
     operation_id = "complete_onboarding",
-    summary = "Complete the onboarding process"
+    summary = "Complete the onboarding process",
+    skip_args = "peer_infos"
 )]
 pub async fn complete_onboarding(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     cdn_service: web::Data<Arc<dyn CdnService>>,
-    session: Session,
     MultipartForm(form): MultipartForm<CompleteOnboardingForm>,
+    session: Session,
+    peer_infos: PeerInfos
 ) -> Result<NoContent, ApiError> {
     let user = session.authenticated_user()?;
 
@@ -74,7 +78,14 @@ pub async fn complete_onboarding(
 
     let location = match onboarding.location {
         Some(location) => Point::new(location.latitude, location.longitude),
-        None => Point::new(0.0, 0.0), // TODO: use ip to get location
+        None => {
+            let ip_addr = peer_infos.ip_address.ok_or(ApiError::BadRequest("".to_string()))?;
+            let location = locate_ip(ip_addr).await?;
+            
+            tracing::info!("Located IP: {:?}", location);
+            
+            Point::new(location.latitude, location.longitude)
+        }
     };
 
     let mut picture_hashes = vec![];

@@ -1,8 +1,9 @@
 use actix_web::HttpRequest;
+use std::net::IpAddr;
 
 #[derive(Debug)]
 pub struct PeerInfos {
-    pub ip_address: String,
+    pub ip_address: Option<IpAddr>,
     pub user_agent: Option<String>,
     pub product: Option<String>,
     pub version: Option<String>,
@@ -11,10 +12,7 @@ pub struct PeerInfos {
 
 impl From<HttpRequest> for PeerInfos {
     fn from(req: HttpRequest) -> Self {
-        let ip_address = req
-            .peer_addr()
-            .map(|addr| addr.ip().to_string())
-            .unwrap_or("".to_string());
+        let ip_address = req.peer_addr().map(|addr| addr.ip());
         let user_agent = req
             .headers()
             .get("User-Agent")
