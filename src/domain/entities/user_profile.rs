@@ -1,6 +1,5 @@
 use crate::infrastructure::models::user_profile::UserProfileSqlx;
 use crate::shared::types::snowflake::Snowflake;
-use crate::shared::types::tag::Tag;
 use crate::shared::types::user_profile::{Gender, Orientation};
 
 #[derive(Debug, Clone)]
@@ -16,7 +15,6 @@ pub struct UserProfile {
     pub sexual_orientation: Orientation,
     pub location: geo_types::Geometry<f64>,
     pub rating: i32,
-    pub tags: Vec<Tag>,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }
@@ -35,7 +33,6 @@ impl From<UserProfileSqlx> for UserProfile {
             sexual_orientation: profile.sexual_orientation,
             location: profile.location.geometry.unwrap(), // TODO: Fix unsafe unwrap
             rating: profile.rating,
-            tags: vec![],
             created_at: profile.created_at,
             updated_at: profile.updated_at,
         }

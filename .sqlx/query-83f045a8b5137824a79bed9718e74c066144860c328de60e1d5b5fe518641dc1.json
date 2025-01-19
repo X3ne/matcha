@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT pt.*\n            FROM profile_tag pt\n            JOIN join_user_profile_tag jpt ON pt.id = jpt.profile_tag_id\n            WHERE jpt.user_profile_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "83f045a8b5137824a79bed9718e74c066144860c328de60e1d5b5fe518641dc1"
+}

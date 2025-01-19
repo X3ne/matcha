@@ -1,3 +1,4 @@
+use apistos::ApiComponent;
 use garde::Validate;
 use once_cell::sync::Lazy;
 use schemars::JsonSchema;
@@ -9,7 +10,7 @@ use std::sync::{Arc, Mutex};
 
 static SNOWFLAKE_GENERATOR: Lazy<SnowflakeGenerator> = Lazy::new(|| SnowflakeGenerator::new(1, 1));
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, Validate)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, Validate, ApiComponent)]
 #[garde(transparent)]
 #[sqlx(transparent)]
 pub struct Snowflake(#[garde(range(equal = 19))] pub i64);

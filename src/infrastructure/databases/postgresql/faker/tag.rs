@@ -1,7 +1,8 @@
-use crate::infrastructure::models::user_profile::ProfileTagSqlx;
-use crate::shared::types::snowflake::Snowflake;
 use fake::Fake;
 use sqlx::PgPool;
+
+use crate::infrastructure::models::profile_tag::ProfileTagSqlx;
+use crate::shared::types::snowflake::Snowflake;
 
 impl ProfileTagSqlx {
     pub fn new() -> Self {

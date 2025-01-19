@@ -7,14 +7,18 @@ use geo_types::Point;
 use std::sync::Arc;
 
 use crate::domain::constants::PROFILE_IMAGES_PATH;
-use crate::domain::errors::user_error::UserError;
+use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::domain::services::cdn_service::CdnService;
+use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::UserProfileInsert;
 use crate::presentation::dto::user_dto::UserDto;
-use crate::presentation::dto::user_profile::{CompleteOnboardingForm, UserProfileDto, UserProfileQueryParamsDto};
+use crate::presentation::dto::user_profile::{
+    CompleteOnboardingForm, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto, UserProfileTagParamsDto,
+};
 use crate::presentation::extractors::auth_extractor::Session;
+use crate::shared::types::snowflake::Snowflake;
 
 #[api_operation(tag = "users", operation_id = "get_me", summary = "Get the current user")]
 pub async fn get_me(session: Session) -> Result<web::Json<UserDto>, ApiError> {
@@ -37,7 +41,7 @@ pub async fn complete_onboarding(
     let user = session.authenticated_user()?;
 
     if form.pictures.len() > 5 {
-        return Err(UserError::MaxImages.into());
+        return Err(UserProfileError::MaxImages.into());
     }
 
     let onboarding = form.profile.into_inner();
@@ -81,7 +85,6 @@ pub async fn complete_onboarding(
             gender: onboarding.gender,
             sexual_orientation: onboarding.sexual_orientation,
             location,
-            tag_ids: onboarding.tag_ids,
         })
         .await?;
 
@@ -100,6 +103,27 @@ pub async fn get_my_profile(
     let user = session.authenticated_user()?;
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let tags = user_profile_service.get_profile_tags(profile.id).await?;
+
+    let mut profile_dto: UserProfileDto = profile.into();
+    profile_dto.append_tags(tags);
+
+    Ok(web::Json(profile_dto))
+}
+
+#[api_operation(
+    tag = "users",
+    operation_id = "get_user_profile_by_id",
+    summary = "Get the user profile by id"
+)]
+pub async fn get_user_profile_by_id(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_id: web::Path<Snowflake>,
+    _: Session,
+) -> Result<web::Json<UserProfileDto>, ApiError> {
+    let profile_id = profile_id.into_inner();
+
+    let profile = user_profile_service.get_by_id(profile_id).await?;
 
     Ok(web::Json(profile.into()))
 }
@@ -108,13 +132,104 @@ pub async fn get_my_profile(
 pub async fn search_profiles(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     params: web::Query<UserProfileQueryParamsDto>,
-    session: Session,
+    _: Session,
 ) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
-    // let user = session.authenticated_user()?;
     let params = params.into_inner();
     params.validate()?;
 
     let profiles = user_profile_service.search(params.into()).await?;
 
     Ok(web::Json(profiles.into_iter().map(|p| p.into()).collect()))
+}
+
+#[api_operation(
+    tag = "users",
+    operation_id = "add_tag_to_my_profile",
+    summary = "Add a tag to my profile"
+)]
+pub async fn add_tag_to_my_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
+    params: web::Query<UserProfileTagParamsDto>,
+    session: Session,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let params = params.into_inner();
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let tag = profile_tag_service.get_by_id(params.tag_id).await?;
+
+    user_profile_service.add_tag(profile.id, tag.id).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "users",
+    operation_id = "remove_tag_from_my_profile",
+    summary = "Remove a tag from my profile"
+)]
+pub async fn remove_tag_from_my_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
+    params: web::Query<UserProfileTagParamsDto>,
+    session: Session,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let params = params.into_inner();
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let tag = profile_tag_service.get_by_id(params.tag_id).await?;
+
+    user_profile_service.remove_tag(profile.id, tag.id).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "users",
+    operation_id = "bulk_add_tag_to_my_profile",
+    summary = "Bulk add tags to my profile"
+)]
+pub async fn bulk_add_tag_to_my_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
+    body: web::Json<UserProfileBulkTagsDto>,
+    session: Session,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let body = body.into_inner();
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let _ = profile_tag_service.get_by_ids(body.tag_ids.clone()).await?;
+
+    user_profile_service.bulk_add_tags(profile.id, body.tag_ids).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "users",
+    operation_id = "bulk_remove_tag_from_my_profile",
+    summary = "Bulk remove tags from my profile"
+)]
+pub async fn bulk_remove_tag_from_my_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
+    body: web::Json<UserProfileBulkTagsDto>,
+    session: Session,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let body = body.into_inner();
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let _ = profile_tag_service.get_by_ids(body.tag_ids.clone()).await?;
+
+    user_profile_service.bulk_remove_tags(profile.id, body.tag_ids).await?;
+
+    Ok(NoContent)
 }

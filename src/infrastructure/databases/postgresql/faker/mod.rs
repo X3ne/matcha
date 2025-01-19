@@ -1,11 +1,13 @@
-use crate::domain::repositories::user_repo::UserRepository;
-use crate::infrastructure::models::user::UserSqlx;
-use crate::infrastructure::models::user_profile::{ProfileTagSqlx, UserProfileSqlx};
-use crate::infrastructure::repositories::user_repo::PgUserRepository;
-use crate::shared::types::user_profile::{Gender, Orientation};
 use rand::prelude::SliceRandom;
 use rand::Rng;
 use sqlx::PgPool;
+
+use crate::domain::repositories::user_repo::UserRepository;
+use crate::infrastructure::models::profile_tag::ProfileTagSqlx;
+use crate::infrastructure::models::user::UserSqlx;
+use crate::infrastructure::models::user_profile::UserProfileSqlx;
+use crate::infrastructure::repositories::user_repo::PgUserRepository;
+use crate::shared::types::user_profile::{Gender, Orientation};
 
 mod profile;
 mod tag;

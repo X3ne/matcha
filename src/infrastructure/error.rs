@@ -6,7 +6,9 @@ use apistos::ApiErrorComponent;
 use oauth2::error::OAuth2Error;
 
 use crate::domain::errors::auth_error::AuthError;
+use crate::domain::errors::profile_tag_error::ProfileTagError;
 use crate::domain::errors::user_error::UserError;
+use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::infrastructure::opcodes::ErrorCode;
 use crate::infrastructure::s3::error::ImageError;
 use crate::{ApiErrorImpl, ErrorDetails, ErrorItem, ErrorResponse};
@@ -39,7 +41,11 @@ pub enum ApiError {
     #[error(transparent)]
     UserError(#[from] UserError),
     #[error(transparent)]
+    UserProfileError(#[from] UserProfileError),
+    #[error(transparent)]
     ImageError(#[from] ImageError),
+    #[error(transparent)]
+    ProfileTagError(#[from] ProfileTagError),
 }
 
 impl ApiErrorImpl for ApiError {
@@ -54,7 +60,9 @@ impl ApiErrorImpl for ApiError {
             ApiError::OnlyImagesAllowed => (StatusCode::BAD_REQUEST, ErrorCode::OnlyImagesAllowed),
             ApiError::AuthError(err) => err.get_codes(),
             ApiError::UserError(err) => err.get_codes(),
+            ApiError::UserProfileError(err) => err.get_codes(),
             ApiError::ImageError(err) => err.get_codes(),
+            ApiError::ProfileTagError(err) => err.get_codes(),
         }
     }
 }

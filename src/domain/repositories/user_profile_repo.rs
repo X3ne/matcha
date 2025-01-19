@@ -1,3 +1,9 @@
+use crate::domain::entities::profile_tag::ProfileTag;
+use crate::domain::entities::user_profile::UserProfile;
+use crate::domain::repositories::repository::{QueryParams, DEFAULT_LIMIT, DEFAULT_OFFSET};
+use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
+use crate::shared::types::filtering::SortOrder;
+use crate::shared::types::snowflake::Snowflake;
 use apistos::ApiComponent;
 use async_trait::async_trait;
 use geo_types::Point;
@@ -5,12 +11,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sqlx::Acquire;
 use std::fmt::Display;
-
-use crate::domain::entities::user_profile::UserProfile;
-use crate::domain::repositories::repository::{QueryParams, DEFAULT_LIMIT, DEFAULT_OFFSET};
-use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
-use crate::shared::types::filtering::SortOrder;
-use crate::shared::types::snowflake::Snowflake;
 
 #[derive(Debug)]
 pub struct UserProfileQueryParams {
@@ -78,6 +78,34 @@ pub trait UserProfileRepository<Db>: Send + Sync {
         A: Acquire<'a, Database = Db> + Send;
 
     async fn search<'a, A>(conn: A, params: UserProfileQueryParams) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn get_profile_tags<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<ProfileTag>, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn add_tag<'a, A>(conn: A, profile_id: Snowflake, tag_id: Snowflake) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn remove_tag<'a, A>(conn: A, profile_id: Snowflake, tag_id: Snowflake) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn bulk_add_tags<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        tag_ids: Vec<Snowflake>,
+    ) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn bulk_remove_tags<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        tag_ids: Vec<Snowflake>,
+    ) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
 }

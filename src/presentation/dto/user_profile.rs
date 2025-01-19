@@ -8,14 +8,15 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::domain::constants::MAX_PROFILE_IMAGES;
+use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::repositories::repository::DEFAULT_LIMIT;
 use crate::domain::repositories::user_profile_repo::{UserProfileQueryParams, UserProfileSortBy};
 use crate::shared::types::filtering::SortOrder;
 use crate::shared::types::location::Location;
 use crate::shared::types::snowflake::Snowflake;
-use crate::shared::types::tag::Tag;
 use crate::shared::types::user_profile::{Gender, Orientation};
+use crate::shared::utils::build_cdn_profile_image_uri;
 
 #[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
 #[serde(rename(deserialize = "CompleteOnboarding"))]
@@ -34,9 +35,6 @@ pub struct CompleteOnboardingDto {
     pub sexual_orientation: Orientation,
     #[garde(dive)]
     pub location: Option<Location>,
-    #[serde(default)]
-    #[garde(dive)]
-    pub tag_ids: Vec<Snowflake>,
 }
 
 fn default_index() -> usize {
@@ -55,29 +53,39 @@ pub struct CompleteOnboardingForm {
 #[serde(rename(deserialize = "UserProfile"))]
 pub struct UserProfileDto {
     pub id: Snowflake,
-    pub user_id: Snowflake,
     pub name: String,
-    pub avatar_hash: Option<String>,
+    pub avatar_url: Option<String>,
+    pub picture_urls: Vec<String>,
     pub bio: Option<String>,
     pub age: i32,
     pub gender: Gender,
     pub sexual_orientation: Orientation,
-    pub tags: Vec<Tag>,
+    pub tags: Vec<ProfileTag>,
 }
 
 impl From<UserProfile> for UserProfileDto {
     fn from(user: UserProfile) -> Self {
         Self {
             id: user.id,
-            user_id: user.user_id,
             name: user.name,
-            avatar_hash: user.avatar_hash,
+            avatar_url: user.avatar_hash.map(|hash| build_cdn_profile_image_uri(&hash)),
+            picture_urls: user
+                .picture_hashes
+                .iter()
+                .map(|hash| build_cdn_profile_image_uri(hash))
+                .collect(),
             bio: user.bio,
             age: user.age,
             gender: user.gender,
             sexual_orientation: user.sexual_orientation,
-            tags: user.tags,
+            tags: vec![],
         }
+    }
+}
+
+impl UserProfileDto {
+    pub fn append_tags(&mut self, tags: Vec<ProfileTag>) {
+        self.tags = tags;
     }
 }
 
@@ -166,4 +174,18 @@ impl Into<UserProfileQueryParams> for UserProfileQueryParamsDto {
             sort_order: self.sort_order,
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent, Validate)]
+#[serde(rename(deserialize = "UserProfileTagParams"))]
+pub struct UserProfileTagParamsDto {
+    #[garde(dive)]
+    pub tag_id: Snowflake,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent, Validate)]
+#[serde(rename(deserialize = "UserProfileBulkTags"))]
+pub struct UserProfileBulkTagsDto {
+    #[garde(dive)]
+    pub tag_ids: Vec<Snowflake>,
 }

@@ -1,14 +1,13 @@
-use async_trait::async_trait;
-use geozero::wkb;
-use sqlx::{Acquire, Error, Postgres, QueryBuilder};
-
+use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::repositories::repository::QueryParams;
 use crate::domain::repositories::user_profile_repo::{UserProfileQueryParams, UserProfileRepository};
-use crate::infrastructure::models::user_profile::{
-    RawProfileWithTag, UserProfileInsert, UserProfileSqlx, UserProfileUpdate,
-};
+use crate::infrastructure::models::profile_tag::ProfileTagSqlx;
+use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileSqlx, UserProfileUpdate};
 use crate::shared::types::snowflake::Snowflake;
+use async_trait::async_trait;
+use geozero::wkb;
+use sqlx::{Acquire, Error, Postgres, QueryBuilder};
 
 pub struct PgUserProfileRepository;
 
@@ -43,22 +42,6 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         .execute(&mut *conn)
         .await?;
 
-        for tag_id in &profile.tag_ids {
-            let join_id = Snowflake::new();
-
-            sqlx::query!(
-                r#"
-                INSERT INTO join_user_profile_tag (id, user_profile_id, profile_tag_id)
-                VALUES ($1, $2, $3)
-                "#,
-                join_id.as_i64(),
-                id.as_i64(),
-                tag_id.as_i64()
-            )
-            .execute(&mut *conn)
-            .await?;
-        }
-
         Ok(())
     }
 
@@ -68,45 +51,34 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
     {
         let mut conn = conn.acquire().await?;
 
-        let rows: Vec<RawProfileWithTag> = sqlx::query_as!(
-            RawProfileWithTag,
+        let profile = sqlx::query_as!(
+            UserProfileSqlx,
             r#"
             SELECT 
-                up.id AS profile_id,
-                up.user_id,
-                up.name,
-                up.avatar_hash,
-                up.picture_hashes,
-                up.bio,
-                up.age,
-                up.gender AS "gender: _",
-                up.sexual_orientation AS "sexual_orientation: _",
-                up.location AS "location!: _",
-                up.rating,
-                up.created_at,
-                up.updated_at,
-                pt.id AS "tag_id?: _",
-                pt.name AS "tag_name?: _"
+                id,
+                user_id,
+                name,
+                avatar_hash,
+                picture_hashes,
+                bio,
+                age,
+                gender AS "gender: _",
+                sexual_orientation AS "sexual_orientation: _",
+                location AS "location!: _",
+                rating,
+                created_at,
+                updated_at
             FROM
-                user_profile up
-            LEFT JOIN
-                join_user_profile_tag upt ON up.id = upt.user_profile_id
-            LEFT JOIN
-                profile_tag pt ON upt.profile_tag_id = pt.id
+                user_profile
             WHERE
-                up.id = $1
+                id = $1
             "#,
             id.as_i64()
         )
-        .fetch_all(&mut *conn)
+        .fetch_one(&mut *conn)
         .await?;
 
-        if rows.is_empty() {
-            return Err(Error::RowNotFound);
-        }
-
-        let user_profile: UserProfile = rows.try_into()?;
-        Ok(user_profile)
+        Ok(profile.into())
     }
 
     async fn get_by_user_id<'a, A>(conn: A, user_id: Snowflake) -> sqlx::Result<UserProfile, Error>
@@ -115,45 +87,34 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
     {
         let mut conn = conn.acquire().await?;
 
-        let rows: Vec<RawProfileWithTag> = sqlx::query_as!(
-            RawProfileWithTag,
+        let profile = sqlx::query_as!(
+            UserProfileSqlx,
             r#"
             SELECT 
-                up.id AS profile_id,
-                up.user_id,
-                up.name,
-                up.avatar_hash,
-                up.picture_hashes,
-                up.bio,
-                up.age,
-                up.gender AS "gender: _",
-                up.sexual_orientation AS "sexual_orientation: _",
-                up.location AS "location!: _",
-                up.rating,
-                up.created_at,
-                up.updated_at,
-                pt.id AS "tag_id?: _",
-                pt.name AS "tag_name?: _"
+                id,
+                user_id,
+                name,
+                avatar_hash,
+                picture_hashes,
+                bio,
+                age,
+                gender AS "gender: _",
+                sexual_orientation AS "sexual_orientation: _",
+                location AS "location!: _",
+                rating,
+                created_at,
+                updated_at
             FROM
-                user_profile up
-            LEFT JOIN
-                join_user_profile_tag upt ON up.id = upt.user_profile_id
-            LEFT JOIN
-                profile_tag pt ON upt.profile_tag_id = pt.id
+                user_profile
             WHERE
-                up.user_id = $1
+                user_id = $1
             "#,
             user_id.as_i64()
         )
-        .fetch_all(&mut *conn)
+        .fetch_one(&mut *conn)
         .await?;
 
-        if rows.is_empty() {
-            return Err(Error::RowNotFound);
-        }
-
-        let user_profile: UserProfile = rows.try_into()?;
-        Ok(user_profile)
+        Ok(profile.into())
     }
 
     async fn update<'a, A>(conn: A, id: Snowflake, profile: UserProfileUpdate) -> sqlx::Result<UserProfile, Error>
@@ -235,5 +196,122 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         let profiles: Vec<UserProfile> = profiles.into_iter().map(|profile| profile.into()).collect();
         Ok(profiles)
+    }
+
+    async fn get_profile_tags<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<ProfileTag>, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let tags = sqlx::query_as!(
+            ProfileTagSqlx,
+            r#"
+            SELECT pt.*
+            FROM profile_tag pt
+            JOIN join_user_profile_tag jpt ON pt.id = jpt.profile_tag_id
+            WHERE jpt.user_profile_id = $1
+            "#,
+            profile_id.as_i64()
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        Ok(tags.into_iter().map(|tag| tag.into()).collect())
+    }
+
+    async fn add_tag<'a, A>(conn: A, profile_id: Snowflake, tag_id: Snowflake) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let join_id = Snowflake::new();
+
+        sqlx::query!(
+            r#"
+            INSERT INTO join_user_profile_tag (id, user_profile_id, profile_tag_id)
+            VALUES ($1, $2, $3)
+            "#,
+            join_id.as_i64(),
+            profile_id.as_i64(),
+            tag_id.as_i64()
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    async fn remove_tag<'a, A>(conn: A, profile_id: Snowflake, tag_id: Snowflake) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            DELETE FROM join_user_profile_tag
+            WHERE user_profile_id = $1 AND profile_tag_id = $2
+            "#,
+            profile_id.as_i64(),
+            tag_id.as_i64()
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    async fn bulk_add_tags<'a, A>(conn: A, profile_id: Snowflake, tag_ids: Vec<Snowflake>) -> Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        if tag_ids.is_empty() {
+            return Ok(());
+        }
+
+        let mut query_builder =
+            QueryBuilder::<Postgres>::new("INSERT INTO join_user_profile_tag (id, user_profile_id, profile_tag_id) ");
+
+        query_builder.push("VALUES ");
+
+        query_builder.push_values(tag_ids.iter(), |mut b, tag_id| {
+            let join_id = Snowflake::new();
+            b.push_bind(join_id.as_i64())
+                .push_bind(profile_id.as_i64())
+                .push_bind(tag_id.as_i64());
+        });
+
+        let query = query_builder.build();
+        query.execute(&mut *conn).await?;
+
+        Ok(())
+    }
+
+    async fn bulk_remove_tags<'a, A>(conn: A, profile_id: Snowflake, tag_ids: Vec<Snowflake>) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        if tag_ids.is_empty() {
+            return Ok(());
+        }
+
+        sqlx::query!(
+            r#"
+            DELETE FROM join_user_profile_tag
+            WHERE user_profile_id = $1 AND profile_tag_id = ANY($2)
+            "#,
+            profile_id.as_i64(),
+            &tag_ids.iter().map(|tag_id| tag_id.as_i64()).collect::<Vec<_>>()
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
     }
 }

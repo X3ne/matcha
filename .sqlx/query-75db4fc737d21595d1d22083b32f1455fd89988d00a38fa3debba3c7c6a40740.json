@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM join_user_profile_tag\n            WHERE user_profile_id = $1 AND profile_tag_id = $2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "75db4fc737d21595d1d22083b32f1455fd89988d00a38fa3debba3c7c6a40740"
+}

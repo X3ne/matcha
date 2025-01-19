@@ -1,6 +1,3 @@
-use crate::infrastructure::models::user_profile::{ProfileTagSqlx, UserProfileSqlx};
-use crate::shared::types::snowflake::Snowflake;
-use crate::shared::types::user_profile::{Gender, Orientation};
 use chrono::Utc;
 use fake::faker::lorem::fr_fr::Paragraph;
 use fake::Fake;
@@ -10,6 +7,11 @@ use geozero::wkb::Decode;
 use rand::Rng;
 use sqlx::PgPool;
 use std::f64::consts::PI;
+
+use crate::infrastructure::models::profile_tag::ProfileTagSqlx;
+use crate::infrastructure::models::user_profile::UserProfileSqlx;
+use crate::shared::types::snowflake::Snowflake;
+use crate::shared::types::user_profile::{Gender, Orientation};
 
 const DEFAULT_LATITUDE: f64 = 48.85580453177924;
 const DEFAULT_LONGITUDE: f64 = 2.3520428683913375;
