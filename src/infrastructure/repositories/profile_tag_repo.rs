@@ -10,6 +10,7 @@ pub struct PgProfileTagRepository;
 
 #[async_trait]
 impl ProfileTagRepository<Postgres> for PgProfileTagRepository {
+    #[tracing::instrument(skip(conn))]
     async fn insert<'a, A>(conn: A, tag: &ProfileTagInsert) -> sqlx::Result<ProfileTag, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -34,6 +35,7 @@ impl ProfileTagRepository<Postgres> for PgProfileTagRepository {
         Ok(result.into())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_id<'a, A>(conn: A, id: Snowflake) -> sqlx::Result<ProfileTag, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -55,6 +57,7 @@ impl ProfileTagRepository<Postgres> for PgProfileTagRepository {
         Ok(result.into())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_ids<'a, A>(conn: A, ids: Vec<Snowflake>) -> sqlx::Result<Vec<ProfileTag>, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -76,6 +79,7 @@ impl ProfileTagRepository<Postgres> for PgProfileTagRepository {
         Ok(result.into_iter().map(|tag| tag.into()).collect())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_name<'a, A>(conn: A, name: &str) -> sqlx::Result<ProfileTag, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -97,6 +101,7 @@ impl ProfileTagRepository<Postgres> for PgProfileTagRepository {
         Ok(result.into())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_all<'a, A>(conn: A) -> sqlx::Result<Vec<ProfileTag>, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -116,6 +121,7 @@ impl ProfileTagRepository<Postgres> for PgProfileTagRepository {
         Ok(result.into_iter().map(|tag| tag.into()).collect())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn delete<'a, A>(conn: A, id: Snowflake) -> sqlx::Result<(), Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,

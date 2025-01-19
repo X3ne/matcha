@@ -15,7 +15,6 @@ use crate::presentation::dto::user_profile::{
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::types::snowflake::Snowflake;
-use crate::trace_peer_infos;
 
 #[api_operation(
     tag = "profiles",
@@ -23,13 +22,12 @@ use crate::trace_peer_infos;
     summary = "Get the current user profile",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_profile_service, session))]
 pub async fn get_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<web::Json<UserProfileDto>, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
@@ -47,14 +45,13 @@ pub async fn get_my_profile(
     summary = "Update the current user profile",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_profile_service, session))]
 pub async fn update_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     body: web::Json<UpdateProfileDto>,
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     let body = body.into_inner();
@@ -101,14 +98,13 @@ pub async fn update_my_profile(
     summary = "Get the user profile by id",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_profile_service, session))]
 pub async fn get_user_profile_by_id(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_id: web::Path<Snowflake>,
-    _: Session,
+    session: Session,
     peer_infos: PeerInfos,
 ) -> Result<web::Json<UserProfileDto>, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let profile_id = profile_id.into_inner();
 
     let profile = user_profile_service.get_by_id(profile_id).await?;
@@ -122,14 +118,13 @@ pub async fn get_user_profile_by_id(
     summary = "Search user profiles",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_profile_service, session))]
 pub async fn search_profiles(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     params: web::Query<UserProfileQueryParamsDto>,
-    _: Session,
+    session: Session,
     peer_infos: PeerInfos,
 ) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let params = params.into_inner();
     params.validate()?;
 
@@ -144,6 +139,7 @@ pub async fn search_profiles(
     summary = "Add a tag to my profile",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_profile_service, profile_tag_service, session))]
 pub async fn add_tag_to_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
@@ -151,8 +147,6 @@ pub async fn add_tag_to_my_profile(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     let params = params.into_inner();
@@ -171,6 +165,7 @@ pub async fn add_tag_to_my_profile(
     summary = "Remove a tag from my profile",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_profile_service, profile_tag_service, session))]
 pub async fn remove_tag_from_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
@@ -178,8 +173,6 @@ pub async fn remove_tag_from_my_profile(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     let params = params.into_inner();
@@ -198,6 +191,7 @@ pub async fn remove_tag_from_my_profile(
     summary = "Bulk add tags to my profile",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_profile_service, profile_tag_service, session))]
 pub async fn bulk_add_tag_to_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
@@ -205,8 +199,6 @@ pub async fn bulk_add_tag_to_my_profile(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     let body = body.into_inner();
@@ -225,6 +217,7 @@ pub async fn bulk_add_tag_to_my_profile(
     summary = "Bulk remove tags from my profile",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_profile_service, profile_tag_service, session))]
 pub async fn bulk_remove_tag_from_my_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
@@ -232,8 +225,6 @@ pub async fn bulk_remove_tag_from_my_profile(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     let body = body.into_inner();

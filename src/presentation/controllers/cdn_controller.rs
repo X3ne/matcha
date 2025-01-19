@@ -7,7 +7,6 @@ use crate::domain::services::cdn_service::CdnService;
 use crate::infrastructure::error::ApiError;
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
-use crate::trace_peer_infos;
 
 #[api_operation(
     tag = "cdn",
@@ -15,14 +14,13 @@ use crate::trace_peer_infos;
     summary = "Get a profile image",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(cdn_service, session))]
 pub async fn get_profile_image(
     cdn_service: web::Data<Arc<dyn CdnService>>,
     hash: web::Path<String>,
-    _: Session,
+    session: Session,
     peer_infos: PeerInfos,
 ) -> Result<HttpResponse, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let hash = hash.into_inner();
     let image = cdn_service
         .get_by_hash(&format!("{}/{}", PROFILE_IMAGES_PATH, hash))

@@ -15,7 +15,6 @@ use crate::presentation::dto::user_dto::ResetPasswordDto;
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::utils::validation::ValidatePasswordContext;
-use crate::trace_peer_infos;
 // **
 // * TODO:
 // * - Implement pkce
@@ -29,13 +28,12 @@ use crate::trace_peer_infos;
     summary = "Register a new user",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(auth_service))]
 pub async fn register(
     auth_service: web::Data<Arc<dyn AuthService>>,
     body: web::Json<RegisterUserDto>,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = body.into_inner();
     user.validate_with(&ValidatePasswordContext {
         username: user.username.clone(),
@@ -55,14 +53,13 @@ pub async fn register(
     summary = "Login with credentials",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(auth_service, session))]
 pub async fn login(
     auth_service: web::Data<Arc<dyn AuthService>>,
     body: web::Json<LoginDto>,
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let LoginDto { username, password } = body.into_inner();
 
     let user = auth_service.login(&username, &password).await?;
@@ -79,12 +76,11 @@ pub async fn login(
     summary = "Login with 42 account",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(auth_service))]
 pub async fn login_42(
     auth_service: web::Data<Arc<dyn AuthService>>,
     peer_infos: PeerInfos,
 ) -> Result<web::Json<OAuthResponseDto>, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let (auth_url, _csrf_state) = auth_service.generate_oauth_url(ProviderKind::Ft).await?;
 
     Ok(web::Json(OAuthResponseDto {
@@ -93,14 +89,13 @@ pub async fn login_42(
 }
 
 #[api_operation(tag = "auth", operation_id = "callback_42", summary = "Callback for 42 OAuth", skip_args = peer_infos)]
+#[tracing::instrument(skip(auth_service, session))]
 pub async fn callback_42(
     query: web::Query<OAuthCallbackQueryDto>,
     auth_service: web::Data<Arc<dyn AuthService>>,
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let OAuthCallbackQueryDto { code, state } = query.into_inner();
 
     let user = auth_service.oauth_callback(ProviderKind::Ft, code, state).await?;
@@ -117,13 +112,12 @@ pub async fn callback_42(
     summary = "Activate the user account",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(auth_service))]
 pub async fn activate_account(
     auth_service: web::Data<Arc<dyn AuthService>>,
     query: web::Query<ActivateAccountDto>, // TODO: add redirect_url to redirect the user after activation
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let token = query.into_inner().token;
 
     auth_service.activate_account(token).await?;
@@ -137,13 +131,12 @@ pub async fn activate_account(
     summary = "Request a password reset",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(auth_service, session))]
 pub async fn request_reset_password(
     auth_service: web::Data<Arc<dyn AuthService>>,
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     auth_service.request_password_reset(&user.email).await?;
@@ -157,14 +150,13 @@ pub async fn request_reset_password(
     summary = "Reset the user password",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(auth_service, session))]
 pub async fn reset_password(
     auth_service: web::Data<Arc<dyn AuthService>>,
     body: web::Json<ResetPasswordDto>,
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     let body = body.into_inner();
@@ -186,9 +178,8 @@ pub async fn reset_password(
     summary = "Logout the current user",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(session))]
 pub async fn logout(session: Session, peer_infos: PeerInfos) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     session.inner().clear();
 
     Ok(NoContent)

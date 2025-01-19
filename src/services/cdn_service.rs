@@ -23,10 +23,12 @@ impl CdnServiceImpl {
 
 #[async_trait]
 impl CdnService for CdnServiceImpl {
+    #[tracing::instrument(skip(self))]
     async fn get_by_hash(&self, hash: &str) -> Result<Vec<u8>, ImageError> {
         self.s3.get_file(hash).await
     }
 
+    #[tracing::instrument(skip(self))]
     async fn upload_file(&self, file: &mut TempFile, path: &str) -> Result<String, ImageError> {
         let mut file_content = Vec::new();
 

@@ -23,6 +23,7 @@ impl ProfileTagServiceImpl {
 
 #[async_trait]
 impl ProfileTagService for ProfileTagServiceImpl {
+    #[tracing::instrument(skip(self))]
     async fn get_by_id(&self, tag_id: Snowflake) -> Result<ProfileTag, ProfileTagError> {
         let mut conn = self.pool.acquire().await?;
 
@@ -31,6 +32,7 @@ impl ProfileTagService for ProfileTagServiceImpl {
         Ok(tag)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn get_by_ids(&self, tag_ids: Vec<Snowflake>) -> Result<Vec<ProfileTag>, ProfileTagError> {
         let mut conn = self.pool.acquire().await?;
 
@@ -39,6 +41,7 @@ impl ProfileTagService for ProfileTagServiceImpl {
         Ok(tags)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn get_all(&self) -> Result<Vec<ProfileTag>, ProfileTagError> {
         let mut conn = self.pool.acquire().await?;
 

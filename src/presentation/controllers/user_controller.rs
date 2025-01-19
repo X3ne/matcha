@@ -10,21 +10,17 @@ use geo_types::Point;
 use crate::domain::constants::PROFILE_IMAGES_PATH;
 use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::domain::services::cdn_service::CdnService;
-use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::domain::services::user_service::UserService;
 use crate::infrastructure::error::ApiError;
-use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
+use crate::infrastructure::models::user_profile::UserProfileInsert;
 use crate::infrastructure::services::iploc::locate_ip;
 use crate::presentation::dto::user_dto::{UpdateUserDto, UserDto};
 use crate::presentation::dto::user_profile::{
-    CompleteOnboardingForm, UpdateProfileDto, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto,
-    UserProfileTagParamsDto,
+    CompleteOnboardingForm, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto, UserProfileTagParamsDto,
 };
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
-use crate::shared::types::snowflake::Snowflake;
-use crate::trace_peer_infos;
 
 #[api_operation(
     tag = "users",
@@ -32,9 +28,8 @@ use crate::trace_peer_infos;
     summary = "Get the current user",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(session))]
 pub async fn get_me(session: Session, peer_infos: PeerInfos) -> Result<web::Json<UserDto>, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     Ok(web::Json(user.clone().into()))
@@ -46,14 +41,13 @@ pub async fn get_me(session: Session, peer_infos: PeerInfos) -> Result<web::Json
     summary = "Update the current user",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_service, session))]
 pub async fn update_me(
     user_service: web::Data<Arc<dyn UserService>>,
     body: web::Json<UpdateUserDto>,
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     let body = body.into_inner();
@@ -70,6 +64,7 @@ pub async fn update_me(
     summary = "Complete the onboarding process",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(user_profile_service, cdn_service, session))]
 pub async fn complete_onboarding(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     cdn_service: web::Data<Arc<dyn CdnService>>,
@@ -77,8 +72,6 @@ pub async fn complete_onboarding(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let user = session.authenticated_user()?;
 
     if form.pictures.len() > 5 {

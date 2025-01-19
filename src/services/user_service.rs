@@ -24,6 +24,7 @@ impl UserServiceImpl {
 
 #[async_trait]
 impl UserService for UserServiceImpl {
+    #[tracing::instrument(skip(self))]
     async fn get_by_id(&self, user_id: Snowflake) -> Result<User, UserError> {
         let mut conn = self.pool.acquire().await?;
 
@@ -32,6 +33,7 @@ impl UserService for UserServiceImpl {
         Ok(user)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn update(&self, user_id: Snowflake, user: &UserUpdate) -> Result<(), UserError> {
         let mut tx = self.pool.begin().await?;
 

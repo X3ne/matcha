@@ -33,6 +33,7 @@ impl Sender {
         Ok(Self { smtp_cfg, mailer })
     }
 
+    #[tracing::instrument(skip(self))]
     async fn send_mail(&self, to_email: &str, subject: &str, body_html: &str, body_txt: &str) -> Result<(), Error> {
         let from = format!("{} <{}>", self.smtp_cfg.email_from_name, self.smtp_cfg.email_from_email);
         let to = format!("<{}>", to_email);
@@ -69,6 +70,7 @@ impl Sender {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     fn get_template_paths(&self, template_name: &str) -> (PathBuf, PathBuf, PathBuf) {
         let template_dir = format!("{}/{}", TEMPLATE_DIR, template_name);
 
@@ -79,6 +81,7 @@ impl Sender {
         (html_path, subject_path, text_path)
     }
 
+    #[tracing::instrument(skip(self))]
     fn get_template_content(&self, template_path: PathBuf) -> Result<String, Error> {
         let content = fs::read_to_string(&template_path).map_err(|e| {
             tracing::error!("Failed to read template: {:?}", e);
@@ -88,6 +91,7 @@ impl Sender {
         Ok(content)
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn send_confirmation_mail(&self, user: &User, confirmation_url: String) -> Result<(), Error> {
         let (html_path, subject_path, text_path) = self.get_template_paths(ACCOUNT_CONFIRMATION_TEMPLATE);
 
@@ -110,6 +114,7 @@ impl Sender {
             .await
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn send_password_reset_mail(&self, email: &str, reset_token: &str) -> Result<(), Error> {
         let (html_path, subject_path, text_path) = self.get_template_paths(RESET_PASSWORD_TEMPLATE);
 

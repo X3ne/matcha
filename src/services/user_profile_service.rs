@@ -24,6 +24,7 @@ impl UserProfileServiceImpl {
 
 #[async_trait]
 impl UserProfileService for UserProfileServiceImpl {
+    #[tracing::instrument(skip(self))]
     async fn create(&self, profile: &UserProfileInsert) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
@@ -34,6 +35,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn get_by_id(&self, profile_id: Snowflake) -> Result<UserProfile, UserProfileError> {
         let mut conn = self.pool.acquire().await?;
 
@@ -42,6 +44,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(profile)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn get_by_user_id(&self, user_id: Snowflake) -> Result<UserProfile, UserProfileError> {
         let mut conn = self.pool.acquire().await?;
 
@@ -50,6 +53,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(profile)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn update(&self, id: Snowflake, profile: &UserProfileUpdate) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
@@ -60,6 +64,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn search(&self, params: UserProfileQueryParams) -> Result<Vec<UserProfile>, UserProfileError> {
         let mut conn = self.pool.acquire().await?;
 
@@ -68,6 +73,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(profiles)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn get_profile_tags(&self, profile_id: Snowflake) -> Result<Vec<ProfileTag>, UserProfileError> {
         let mut conn = self.pool.acquire().await?;
 
@@ -76,6 +82,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(tags)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn add_tag(&self, profile_id: Snowflake, tag_id: Snowflake) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
@@ -86,6 +93,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn remove_tag(&self, profile_id: Snowflake, tag_id: Snowflake) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
@@ -96,6 +104,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn bulk_add_tags(&self, profile_id: Snowflake, tag_ids: Vec<Snowflake>) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
@@ -106,6 +115,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn bulk_remove_tags(&self, profile_id: Snowflake, tag_ids: Vec<Snowflake>) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 

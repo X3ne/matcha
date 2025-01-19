@@ -11,6 +11,7 @@ pub struct PgUserRepository;
 
 #[async_trait]
 impl UserRepository<Postgres> for PgUserRepository {
+    #[tracing::instrument(skip(conn))]
     async fn insert<'a, A>(conn: A, user: &UserInsert) -> Result<User, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -40,6 +41,7 @@ impl UserRepository<Postgres> for PgUserRepository {
         Ok(result.into())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_id<'a, A>(conn: A, id: Snowflake) -> Result<User, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -61,6 +63,7 @@ impl UserRepository<Postgres> for PgUserRepository {
         Ok(user.into())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_email<'a, A>(conn: A, email: &str) -> Result<User, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -82,6 +85,7 @@ impl UserRepository<Postgres> for PgUserRepository {
         Ok(user.into())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_username<'a, A>(conn: A, username: &str) -> Result<User, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -103,6 +107,7 @@ impl UserRepository<Postgres> for PgUserRepository {
         Ok(user.into())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn update<'a, A>(conn: A, id: Snowflake, user: &UserUpdate) -> Result<(), Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -130,6 +135,7 @@ impl UserRepository<Postgres> for PgUserRepository {
         Ok(())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn update_password<'a, A>(conn: A, email: &str, password: &str) -> Result<(), Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -151,6 +157,7 @@ impl UserRepository<Postgres> for PgUserRepository {
         Ok(())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn activate<'a, A>(conn: A, token: String) -> Result<(), Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -171,6 +178,7 @@ impl UserRepository<Postgres> for PgUserRepository {
         Ok(())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn delete<'a, A>(conn: A, id: Snowflake) -> Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,

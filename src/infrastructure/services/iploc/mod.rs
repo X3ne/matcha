@@ -15,6 +15,7 @@ pub struct IpLocation {
     pub longitude: f64,
 }
 
+#[tracing::instrument]
 pub async fn locate_ip(ip: IpAddr) -> Result<IpLocation, IpLocError> {
     let client = reqwest::Client::new();
     let location = client

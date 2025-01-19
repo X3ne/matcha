@@ -7,7 +7,6 @@ use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::infrastructure::error::ApiError;
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
-use crate::trace_peer_infos;
 
 #[api_operation(
     tag = "tags",
@@ -15,13 +14,12 @@ use crate::trace_peer_infos;
     summary = "Get all profile tags",
     skip_args = "peer_infos"
 )]
+#[tracing::instrument(skip(profile_tag_service, session))]
 pub async fn get_all_tags(
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
-    _: Session,
+    session: Session,
     peer_infos: PeerInfos,
 ) -> Result<web::Json<Vec<ProfileTag>>, ApiError> {
-    trace_peer_infos!(peer_infos);
-
     let tags = profile_tag_service.get_all().await?;
 
     Ok(web::Json(tags))

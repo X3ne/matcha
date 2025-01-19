@@ -1,15 +1,5 @@
 use std::sync::Arc;
 
-use argon2::password_hash::rand_core::OsRng;
-use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
-use async_trait::async_trait;
-use oauth2::client::providers::ft::FtProvider;
-use oauth2::client::providers::ProviderKind;
-use oauth2::client::{CsrfToken, OAuth2Client, Url};
-use redis::AsyncCommands;
-use sqlx::PgPool;
-
 use crate::domain::constants::RESET_PASSWORD_TOKEN_TTL;
 use crate::domain::entities::user::User;
 use crate::domain::errors::auth_error::AuthError;
@@ -25,6 +15,16 @@ use crate::infrastructure::repositories::oauth_account_repo::PgOAuthAccountRepos
 use crate::infrastructure::repositories::oauth_provider_repo::PgOAuthProviderRepository;
 use crate::infrastructure::repositories::user_repo::PgUserRepository;
 use crate::shared::utils::generate_random_secure_string;
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use async_trait::async_trait;
+use oauth2::client::providers::ft::FtProvider;
+use oauth2::client::providers::ProviderKind;
+use oauth2::client::{CsrfToken, OAuth2Client, Url};
+use redis::AsyncCommands;
+use sqlx::PgPool;
+use tracing::Instrument;
 
 #[derive(Clone)]
 pub struct AuthServiceImpl {
@@ -57,6 +57,7 @@ impl AuthServiceImpl {
 
 #[async_trait]
 impl AuthService for AuthServiceImpl {
+    #[tracing::instrument(skip(self))]
     async fn register(&self, user: &mut UserInsert) -> Result<User, AuthError> {
         let password = match &user.password {
             Some(password) => password,
@@ -100,6 +101,7 @@ impl AuthService for AuthServiceImpl {
         Ok(user)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn login(&self, username: &str, password: &str) -> Result<User, AuthError> {
         let mut tx = self.pool.begin().await?;
 
@@ -133,6 +135,7 @@ impl AuthService for AuthServiceImpl {
         Ok(user)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn generate_oauth_url(&self, provider: ProviderKind) -> Result<(Url, CsrfToken), AuthError> {
         let (url, csrf_token) = match provider {
             ProviderKind::Ft => self.oauth2_client.authorize::<FtProvider>()?,
@@ -141,6 +144,7 @@ impl AuthService for AuthServiceImpl {
         Ok((url, csrf_token))
     }
 
+    #[tracing::instrument(skip(self))]
     async fn oauth_callback(&self, provider: ProviderKind, code: String, state: String) -> Result<User, AuthError> {
         let mut tx = self.pool.begin().await?;
 
@@ -221,6 +225,7 @@ impl AuthService for AuthServiceImpl {
         Err(AuthError::AccountNotActivated)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn activate_account(&self, token: String) -> Result<(), AuthError> {
         let mut tx = self.pool.begin().await?;
 
@@ -231,6 +236,7 @@ impl AuthService for AuthServiceImpl {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn request_password_reset(&self, email: &str) -> Result<(), AuthError> {
         let reset_token = generate_random_secure_string(32);
 
@@ -252,6 +258,7 @@ impl AuthService for AuthServiceImpl {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn reset_password(&self, token: &str, new_password: &str) -> Result<(), AuthError> {
         let mut conn = self.redis.get_multiplexed_async_connection().await?;
 

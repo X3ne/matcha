@@ -10,6 +10,7 @@ pub struct PgOAuthProviderRepository;
 
 #[async_trait]
 impl OAuthProviderRepository<Postgres> for PgOAuthProviderRepository {
+    #[tracing::instrument(skip(conn))]
     async fn insert<'a, A>(conn: A, provider: &OAuthProviderInsert) -> Result<OAuthProvider, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -35,6 +36,7 @@ impl OAuthProviderRepository<Postgres> for PgOAuthProviderRepository {
         Ok(OAuthProvider::from_db(&provider))
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_id<'a, A>(conn: A, id: Snowflake) -> Result<OAuthProvider, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -56,6 +58,7 @@ impl OAuthProviderRepository<Postgres> for PgOAuthProviderRepository {
         Ok(OAuthProvider::from_db(&provider))
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_name<'a, A>(conn: A, name: &str) -> Result<OAuthProvider, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -77,6 +80,7 @@ impl OAuthProviderRepository<Postgres> for PgOAuthProviderRepository {
         Ok(OAuthProvider::from_db(&provider))
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_all<'a, A>(conn: A) -> Result<Vec<OAuthProvider>, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -99,6 +103,7 @@ impl OAuthProviderRepository<Postgres> for PgOAuthProviderRepository {
             .collect())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn update<'a, A>(
         conn: A,
         provider_id: Snowflake,
@@ -127,6 +132,7 @@ impl OAuthProviderRepository<Postgres> for PgOAuthProviderRepository {
         Ok(OAuthProvider::from_db(&updated_provider))
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn delete<'a, A>(conn: A, id: Snowflake) -> Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,

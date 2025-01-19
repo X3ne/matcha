@@ -11,6 +11,7 @@ pub struct PgOAuthAccountRepository;
 
 #[async_trait]
 impl OAuthAccountRepository<Postgres> for PgOAuthAccountRepository {
+    #[tracing::instrument(skip(conn))]
     async fn insert<'a, A>(conn: A, account: &OAuthAccountInsert) -> Result<OAuthAccount, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -40,6 +41,7 @@ impl OAuthAccountRepository<Postgres> for PgOAuthAccountRepository {
         Ok(OAuthAccount::from_db(&account))
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_id<'a, A>(conn: A, id: Snowflake) -> Result<OAuthAccount, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -61,6 +63,7 @@ impl OAuthAccountRepository<Postgres> for PgOAuthAccountRepository {
         Ok(OAuthAccount::from_db(&account))
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_user_id<'a, A>(conn: A, user_id: Snowflake) -> Result<Vec<OAuthAccount>, sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -85,6 +88,7 @@ impl OAuthAccountRepository<Postgres> for PgOAuthAccountRepository {
             .collect())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_by_provider_user_and_provider<'a, A>(
         conn: A,
         provider_user_id: &str,
@@ -112,6 +116,7 @@ impl OAuthAccountRepository<Postgres> for PgOAuthAccountRepository {
         Ok(OAuthAccount::from_db(&account))
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn update<'a, A>(
         conn: A,
         account_id: Snowflake,
@@ -141,6 +146,7 @@ impl OAuthAccountRepository<Postgres> for PgOAuthAccountRepository {
         Ok(OAuthAccount::from_db(&updated_account))
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn delete<'a, A>(conn: A, id: Snowflake) -> Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
