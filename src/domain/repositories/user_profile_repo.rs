@@ -69,11 +69,7 @@ pub trait UserProfileRepository<Db>: Send + Sync {
     where
         A: Acquire<'a, Database = Db> + Send;
 
-    async fn update<'a, A>(
-        conn: A,
-        id: Snowflake,
-        profile: UserProfileUpdate,
-    ) -> sqlx::Result<UserProfile, sqlx::Error>
+    async fn update<'a, A>(conn: A, id: Snowflake, profile: &UserProfileUpdate) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
 

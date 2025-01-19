@@ -21,6 +21,8 @@ use crate::shared::utils::build_cdn_profile_image_uri;
 #[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
 #[serde(rename(deserialize = "CompleteOnboarding"))]
 pub struct CompleteOnboardingDto {
+    #[garde(length(min = 1, max = 25), alphanumeric)]
+    pub name: String,
     #[garde(length(min = 1, max = 150))]
     pub bio: Option<String>,
     #[garde(range(min = 18, max = 100))]
@@ -174,6 +176,25 @@ impl Into<UserProfileQueryParams> for UserProfileQueryParamsDto {
             sort_order: self.sort_order,
         }
     }
+}
+
+#[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
+#[serde(rename(deserialize = "UpdateProfile"))]
+pub struct UpdateProfileDto {
+    #[garde(length(min = 1, max = 25), alphanumeric)]
+    pub name: Option<String>,
+    #[garde(length(min = 1, max = 150))]
+    pub bio: Option<String>,
+    #[garde(range(min = 18, max = 100))]
+    pub age: Option<i32>,
+    #[garde(range(min = 0, max = MAX_PROFILE_IMAGES))]
+    pub avatar_index: Option<usize>,
+    #[garde(skip)]
+    pub gender: Option<Gender>,
+    #[garde(skip)]
+    pub sexual_orientation: Option<Orientation>,
+    #[garde(dive)]
+    pub location: Option<Location>,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent, Validate)]

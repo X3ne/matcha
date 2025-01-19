@@ -1,5 +1,6 @@
 use apistos::ApiComponent;
 use garde::Validate;
+use geo_types::Point;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -20,5 +21,11 @@ impl From<geo_types::Geometry<f64>> for Location {
             },
             _ => panic!("Only points are supported"), // TODO: handle error
         }
+    }
+}
+
+impl Into<Point> for Location {
+    fn into(self) -> Point<f64> {
+        Point::new(self.longitude, self.latitude)
     }
 }

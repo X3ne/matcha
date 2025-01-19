@@ -12,10 +12,11 @@ use crate::domain::services::cdn_service::CdnService;
 use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
-use crate::infrastructure::models::user_profile::UserProfileInsert;
+use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
 use crate::presentation::dto::user_dto::UserDto;
 use crate::presentation::dto::user_profile::{
-    CompleteOnboardingForm, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto, UserProfileTagParamsDto,
+    CompleteOnboardingForm, UpdateProfileDto, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto,
+    UserProfileTagParamsDto,
 };
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::snowflake::Snowflake;
@@ -77,7 +78,7 @@ pub async fn complete_onboarding(
     user_profile_service
         .create(&UserProfileInsert {
             user_id: user.id,
-            name: format!("{} {}", user.first_name, user.last_name),
+            name: onboarding.name,
             avatar_hash: picture_hashes.get(onboarding.avatar_index).cloned(),
             picture_hashes,
             bio: onboarding.bio,
@@ -109,6 +110,56 @@ pub async fn get_my_profile(
     profile_dto.append_tags(tags);
 
     Ok(web::Json(profile_dto))
+}
+
+#[api_operation(
+    tag = "users",
+    operation_id = "update_my_profile",
+    summary = "Update the current user profile"
+)]
+pub async fn update_my_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    body: web::Json<UpdateProfileDto>,
+    session: Session,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let body = body.into_inner();
+    body.validate()?;
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    if let Some(avatar_index) = body.avatar_index {
+        if avatar_index >= profile.picture_hashes.len() {
+            // can't pass garde context to validate this (https://github.com/jprochazk/garde/issues/104)
+            let mut report = Report::new();
+            report.append(Path::new("avatar_index"), Error::new("Invalid avatar index"));
+            return Err(ApiError::ValidationError(report));
+        }
+    }
+
+    let avatar_hash = match body.avatar_index {
+        Some(index) => profile.picture_hashes.get(index).cloned(),
+        None => None,
+    };
+
+    user_profile_service
+        .update(
+            profile.id,
+            &UserProfileUpdate {
+                name: body.name,
+                avatar_hash,
+                bio: body.bio,
+                age: body.age,
+                gender: body.gender,
+                sexual_orientation: body.sexual_orientation,
+                location: body.location.map(Into::into),
+                rating: None,
+            },
+        )
+        .await?;
+
+    Ok(NoContent)
 }
 
 #[api_operation(

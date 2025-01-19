@@ -39,7 +39,6 @@ pub struct UserProfileInsert {
 pub struct UserProfileUpdate {
     pub name: Option<String>,
     pub avatar_hash: Option<String>,
-    pub picture_hashes: Option<Vec<String>>,
     pub bio: Option<String>,
     pub age: Option<i32>,
     pub gender: Option<Gender>,

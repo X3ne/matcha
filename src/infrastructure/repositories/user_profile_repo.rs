@@ -1,3 +1,7 @@
+use async_trait::async_trait;
+use geozero::wkb;
+use sqlx::{Acquire, Error, Postgres, QueryBuilder};
+
 use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::repositories::repository::QueryParams;
@@ -5,9 +9,6 @@ use crate::domain::repositories::user_profile_repo::{UserProfileQueryParams, Use
 use crate::infrastructure::models::profile_tag::ProfileTagSqlx;
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileSqlx, UserProfileUpdate};
 use crate::shared::types::snowflake::Snowflake;
-use async_trait::async_trait;
-use geozero::wkb;
-use sqlx::{Acquire, Error, Postgres, QueryBuilder};
 
 pub struct PgUserProfileRepository;
 
@@ -117,11 +118,44 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         Ok(profile.into())
     }
 
-    async fn update<'a, A>(conn: A, id: Snowflake, profile: UserProfileUpdate) -> sqlx::Result<UserProfile, Error>
+    async fn update<'a, A>(conn: A, id: Snowflake, profile: &UserProfileUpdate) -> sqlx::Result<(), Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
     {
-        todo!()
+        let mut conn = conn.acquire().await?;
+
+        tracing::info!("Updating profile: {:?}", profile);
+
+        let geom: Option<geo_types::Geometry<f64>> = profile.location.map(Into::into);
+        let encode = geom.map(wkb::Encode);
+
+        sqlx::query!(
+            r#"
+            UPDATE user_profile
+            SET
+                name = COALESCE($2, name),
+                avatar_hash = COALESCE($3, avatar_hash),
+                bio = COALESCE($4, bio),
+                age = COALESCE($5, age),
+                gender = COALESCE($6, gender),
+                sexual_orientation = COALESCE($7, sexual_orientation),
+                location = COALESCE($8, location)
+            WHERE
+                id = $1
+            "#,
+            id.as_i64(),
+            profile.name,
+            profile.avatar_hash,
+            profile.bio,
+            profile.age,
+            profile.gender as _,
+            profile.sexual_orientation as _,
+            encode as _
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
     }
 
     async fn search<'a, A>(conn: A, params: UserProfileQueryParams) -> sqlx::Result<Vec<UserProfile>, Error>

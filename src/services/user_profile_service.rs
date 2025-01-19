@@ -7,7 +7,7 @@ use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::domain::repositories::user_profile_repo::{UserProfileQueryParams, UserProfileRepository};
 use crate::domain::services::user_profile_service::UserProfileService;
-use crate::infrastructure::models::user_profile::UserProfileInsert;
+use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
 use crate::infrastructure::repositories::user_profile_repo::PgUserProfileRepository;
 use crate::shared::types::snowflake::Snowflake;
 
@@ -48,6 +48,16 @@ impl UserProfileService for UserProfileServiceImpl {
         let profile = PgUserProfileRepository::get_by_user_id(&mut *conn, user_id).await?;
 
         Ok(profile)
+    }
+
+    async fn update(&self, id: Snowflake, profile: &UserProfileUpdate) -> Result<(), UserProfileError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserProfileRepository::update(&mut *tx, id, profile).await?;
+
+        tx.commit().await?;
+
+        Ok(())
     }
 
     async fn search(&self, params: UserProfileQueryParams) -> Result<Vec<UserProfile>, UserProfileError> {
