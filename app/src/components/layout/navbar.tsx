@@ -1,5 +1,6 @@
 'use client'
 
+import { NotificationDropdown } from '@/components/notification-dropdown'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -10,24 +11,24 @@ import {
 } from '@/components/ui/sheet'
 import { UserContext } from '@/providers/userProvider'
 import { Link } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
+import { Mail, Bell, Menu } from 'lucide-react'
 import { useState } from 'react'
 import { useContext } from 'react'
-import { FaBars, FaBell } from 'react-icons/fa6'
+import { FaRegHeart } from 'react-icons/fa'
 
 const Navbar = () => {
+  const navigate = useNavigate()
+
   const { user, logout } = useContext(UserContext)
-  const [isSheetOpen, setIsSheetOpen] = useState(false) // Sheet open state
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   const handleCloseSheet = () => {
     setIsSheetOpen(false) // Close the sheet
   }
 
-  // Desktop links (only for screens md and up)
   const desktopLoggedInLinks = (
     <ul className="hidden gap-8 md:flex">
-      <li>
-        <Link to="/message">Message</Link>
-      </li>
       <li>
         <Link to="/search">Search</Link>
       </li>
@@ -52,17 +53,8 @@ const Navbar = () => {
     </ul>
   )
 
-  // Mobile (Sheet) links are turned into full-width Buttons
   const mobileLoggedInLinks = (
     <>
-      <Button
-        asChild
-        variant="outline"
-        className="w-full"
-        onClick={handleCloseSheet}
-      >
-        <Link to="/message">Message</Link>
-      </Button>
       <Button
         asChild
         variant="outline"
@@ -93,24 +85,36 @@ const Navbar = () => {
     </>
   )
 
+  const handleMailClick = () => {
+    navigate({ to: '/messages' })
+  }
+
   return (
     <nav className="bg-white">
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-8 py-4 sm:px-6">
-        {/* Logo */}
-        <Link to="/search" className="text-3xl font-semibold">
-          Matcha
-        </Link>
+        <div className="flex gap-2">
+          <FaRegHeart className="self-center text-primary" size={23} />
+          <Link to="/search" className="text-2xl font-semibold">
+            Matcha
+          </Link>
+        </div>
 
         {user ? desktopLoggedInLinks : desktopGuestLinks}
 
         {user && (
           <div className="hidden gap-4 md:flex">
-            <button
-              className="relative rounded-full p-2 hover:bg-gray-200"
-              aria-label="Notifications"
-            >
-              <FaBell size={20} />
-            </button>
+            <div className="flex gap-0.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                aria-label="Messages"
+                onClick={handleMailClick}
+              >
+                <Mail className="!size-5" />
+              </Button>
+              <NotificationDropdown />
+            </div>
             <Button onClick={logout}>Logout</Button>
           </div>
         )}
@@ -122,7 +126,7 @@ const Navbar = () => {
                 className="rounded hover:bg-gray-200"
                 aria-label="Open Menu"
               >
-                <FaBars size={20} />
+                <Menu size={20} />
               </Button>
             </SheetTrigger>
 
@@ -137,11 +141,18 @@ const Navbar = () => {
                 {user && (
                   <div className="mb-10 mt-auto flex flex-col gap-4">
                     <Button
+                      className="relative rounded p-2 hover:bg-gray-200"
+                      aria-label="Messages"
+                      onClick={handleMailClick}
+                    >
+                      <Mail size={20} />
+                    </Button>
+                    <Button
                       className="relative p-2 text-left hover:bg-gray-200"
                       aria-label="Notifications"
                       onClick={handleCloseSheet}
                     >
-                      <FaBell size={20} />
+                      <Bell size={20} />
                     </Button>
                     <Button
                       onClick={() => {
