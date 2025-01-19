@@ -9,7 +9,6 @@ use crate::presentation::controllers::profile_controller::{
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         scope("/profiles")
-            .service(resource("/{profile_id}").route(web::get().to(get_user_profile_by_id)))
             .service(resource("/search").route(web::get().to(search_profiles)))
             .service(
                 resource("/@me")
@@ -25,6 +24,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                 resource("/@me/tags/bulk")
                     .route(web::put().to(bulk_add_tag_to_my_profile))
                     .route(web::delete().to(bulk_remove_tag_from_my_profile)),
-            ),
+            )
+            .service(resource("/{profile_id}").route(web::get().to(get_user_profile_by_id))),
     );
 }
