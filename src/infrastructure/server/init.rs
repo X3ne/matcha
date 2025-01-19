@@ -98,6 +98,7 @@ pub fn init_server(
                         .configure(|cfg| {
                             crate::presentation::routes::auth_route::config(cfg);
                             crate::presentation::routes::user_route::config(cfg);
+                            crate::presentation::routes::profile_route::config(cfg);
                             crate::presentation::routes::cdn_route::config(cfg);
                             crate::presentation::routes::tag_route::config(cfg);
                         }),
