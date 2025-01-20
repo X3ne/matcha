@@ -20,6 +20,8 @@ pub struct RegisterUserDto {
     pub last_name: String,
     #[garde(custom(validate_password))]
     pub password: String,
+    #[garde(matches(password))]
+    pub confirm_password: String,
 }
 
 impl Into<UserInsert> for RegisterUserDto {
@@ -59,5 +61,26 @@ pub struct OAuthResponseDto {
 #[derive(Deserialize, Debug, ApiComponent, JsonSchema)]
 #[serde(rename(deserialize = "ActivateAccount"))]
 pub struct ActivateAccountDto {
+    pub token: String,
+}
+
+#[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
+#[serde(rename(deserialize = "RequestResetPassword"))]
+pub struct RequestResetPasswordDto {
+    #[garde(email)]
+    pub email: String,
+}
+
+#[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
+#[garde(context(ValidatePasswordContext))]
+#[serde(rename(deserialize = "ResetPassword"))]
+pub struct ResetPasswordDto {
+    #[garde(email)]
+    pub email: String,
+    #[garde(custom(validate_password))]
+    pub password: String,
+    #[garde(matches(password))]
+    pub confirm_password: String,
+    #[garde(skip)]
     pub token: String,
 }

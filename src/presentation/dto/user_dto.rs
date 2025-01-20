@@ -53,13 +53,3 @@ impl Into<UserUpdate> for UpdateUserDto {
         }
     }
 }
-
-#[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
-#[garde(context(ValidatePasswordContext))]
-#[serde(rename(deserialize = "ResetPassword"))]
-pub struct ResetPasswordDto {
-    #[garde(custom(validate_password))]
-    pub password: String,
-    #[garde(skip)]
-    pub token: String,
-}

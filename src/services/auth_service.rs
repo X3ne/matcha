@@ -242,10 +242,10 @@ impl AuthService for AuthServiceImpl {
 
         let mut conn = self.redis.get_multiplexed_async_connection().await?;
 
-        let key = format!("password_reset:{}", reset_token);
-        conn.set_ex(&key, email, RESET_PASSWORD_TOKEN_TTL).await?;
+        let key = format!("password_reset:{}", email);
+        conn.set_ex(&key, reset_token.clone(), RESET_PASSWORD_TOKEN_TTL).await?;
 
-        let reset_url = format!("{}?token={}", reset_url, reset_token);
+        let reset_url = format!("{}?email={}&token={}", reset_url, email, reset_token);
 
         #[cfg(feature = "mailing")]
         self.mail_sender
@@ -260,13 +260,13 @@ impl AuthService for AuthServiceImpl {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn reset_password(&self, token: &str, new_password: &str) -> Result<(), AuthError> {
+    async fn reset_password(&self, email: &str, new_password: &str, token: &str) -> Result<(), AuthError> {
         let mut conn = self.redis.get_multiplexed_async_connection().await?;
 
-        let key = format!("password_reset:{}", token);
-        let email: String = conn.get(&key).await?;
+        let key = format!("password_reset:{}", email);
+        let s_token: String = conn.get(&key).await?;
 
-        if email.is_empty() {
+        if token.is_empty() || token != s_token {
             return Err(AuthError::InvalidCredentials);
         }
 

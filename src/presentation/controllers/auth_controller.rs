@@ -8,11 +8,12 @@ use oauth2::client::providers::ProviderKind;
 
 use crate::config::Config;
 use crate::domain::services::auth_service::AuthService;
+use crate::domain::services::user_service::UserService;
 use crate::infrastructure::error::ApiError;
 use crate::presentation::dto::auth_dto::{
-    ActivateAccountDto, LoginDto, OAuthCallbackQueryDto, OAuthResponseDto, RegisterUserDto,
+    ActivateAccountDto, LoginDto, OAuthCallbackQueryDto, OAuthResponseDto, RegisterUserDto, RequestResetPasswordDto,
+    ResetPasswordDto,
 };
-use crate::presentation::dto::user_dto::ResetPasswordDto;
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::utils::validation::ValidatePasswordContext;
@@ -130,17 +131,18 @@ pub async fn activate_account(
     summary = "Request a password reset",
     skip_args = "peer_infos"
 )]
-#[tracing::instrument(skip(auth_service, cfg, session))]
+#[tracing::instrument(skip(auth_service, cfg))]
 pub async fn request_reset_password(
     auth_service: web::Data<Arc<dyn AuthService>>,
     cfg: web::Data<Arc<Config>>,
-    session: Session,
+    body: web::Json<RequestResetPasswordDto>,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    let user = session.authenticated_user()?;
+    let body = body.into_inner();
+    body.validate()?;
 
     auth_service
-        .request_password_reset(&user.email, &cfg.reset_password_url)
+        .request_password_reset(&body.email, &cfg.reset_password_url)
         .await?;
 
     Ok(NoContent)
@@ -152,16 +154,18 @@ pub async fn request_reset_password(
     summary = "Reset the user password",
     skip_args = "peer_infos"
 )]
-#[tracing::instrument(skip(auth_service, session))]
+#[tracing::instrument(skip(auth_service, user_service))]
 pub async fn reset_password(
     auth_service: web::Data<Arc<dyn AuthService>>,
+    user_service: web::Data<Arc<dyn UserService>>,
     body: web::Json<ResetPasswordDto>,
-    session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    let user = session.authenticated_user()?;
-
     let body = body.into_inner();
+
+    // this can fail if the email is invalid but need to validate password strength
+    let user = user_service.get_by_email(&body.email).await?;
+
     body.validate_with(&ValidatePasswordContext {
         username: user.username.clone(),
         last_name: user.last_name.clone(),
@@ -169,7 +173,9 @@ pub async fn reset_password(
         email: user.email.clone(),
     })?;
 
-    auth_service.reset_password(&body.token, &body.password).await?;
+    auth_service
+        .reset_password(&body.email, &body.password, &body.token)
+        .await?;
 
     Ok(NoContent)
 }

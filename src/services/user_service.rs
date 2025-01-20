@@ -33,6 +33,14 @@ impl UserService for UserServiceImpl {
         Ok(user)
     }
 
+    async fn get_by_email(&self, email: &str) -> Result<User, UserError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let user = PgUserRepository::get_by_email(&mut *conn, email).await?;
+
+        Ok(user)
+    }
+
     #[tracing::instrument(skip(self))]
     async fn update(&self, user_id: Snowflake, user: &UserUpdate) -> Result<(), UserError> {
         let mut tx = self.pool.begin().await?;

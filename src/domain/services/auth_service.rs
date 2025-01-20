@@ -14,5 +14,5 @@ pub trait AuthService: 'static + Sync + Send {
     async fn oauth_callback(&self, provider: ProviderKind, code: String, state: String) -> Result<User, AuthError>;
     async fn activate_account(&self, token: String) -> Result<(), AuthError>;
     async fn request_password_reset(&self, email: &str, reset_url: &str) -> Result<(), AuthError>;
-    async fn reset_password(&self, token: &str, new_password: &str) -> Result<(), AuthError>;
+    async fn reset_password(&self, email: &str, new_password: &str, token: &str) -> Result<(), AuthError>;
 }
