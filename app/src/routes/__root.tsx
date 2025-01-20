@@ -13,7 +13,7 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { useEffect } from 'react'
 
-const AllowedRoutes = ['/login', '/register', '/error']
+const AllowedRoutes = ['/login', '/register']
 
 export const Route = createRootRoute({
   component: Root
@@ -57,6 +57,10 @@ function Root() {
     if (!user) {
       if (!AllowedRoutes.includes(location.pathname) && !isActivationRoute) {
         navigation({ to: '/login' })
+      }
+    } else {
+      if (AllowedRoutes.includes(location.pathname)) {
+        navigation({ to: '/search' })
       }
     }
   }, [user, isUserLoading, location.pathname, isError, navigation])
