@@ -53,4 +53,14 @@ impl S3Service {
 
         Ok(())
     }
+
+    pub async fn delete_file(&self, key: &str) -> Result<(), ImageError> {
+        let res = self.bucket.delete_object(key).await?;
+
+        if res.status_code() != 204 {
+            return Err(ImageError::DeleteError);
+        }
+
+        Ok(())
+    }
 }

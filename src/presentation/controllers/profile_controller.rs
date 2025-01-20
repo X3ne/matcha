@@ -1,20 +1,25 @@
 use std::sync::Arc;
 
+use actix_multipart::form::MultipartForm;
 use actix_web::web;
 use apistos::actix::NoContent;
 use apistos::api_operation;
 use futures::future::join_all;
-use garde::{Error, Path, Report, Validate};
+use garde::Validate;
 use geo_types::Point;
 
+use crate::domain::constants::PROFILE_IMAGES_PATH;
 use crate::domain::entities::profile_tag::ProfileTag;
+use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::domain::repositories::user_profile_repo::UserProfileQueryParams;
+use crate::domain::services::cdn_service::CdnService;
 use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::UserProfileUpdate;
 use crate::presentation::dto::user_profile::{
-    UpdateProfileDto, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto, UserProfileTagParamsDto,
+    UpdateProfileDto, UploadProfilePictureForm, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto,
+    UserProfileTagParamsDto,
 };
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
@@ -64,32 +69,17 @@ pub async fn update_my_profile(
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
 
-    if let Some(avatar_index) = body.avatar_index {
-        if avatar_index >= profile.picture_hashes.len() {
-            // can't pass garde context to validate this (https://github.com/jprochazk/garde/issues/104)
-            let mut report = Report::new();
-            report.append(Path::new("avatar_index"), Error::new("Invalid avatar index"));
-            return Err(ApiError::ValidationError(report));
-        }
-    }
-
-    let avatar_hash = match body.avatar_index {
-        Some(index) => profile.picture_hashes.get(index).cloned(),
-        None => None,
-    };
-
     user_profile_service
         .update(
             profile.id,
             &UserProfileUpdate {
                 name: body.name,
-                avatar_hash,
                 bio: body.bio,
                 age: body.age,
                 gender: body.gender,
                 sexual_orientation: body.sexual_orientation,
                 location: body.location.map(Into::into),
-                rating: None,
+                ..Default::default()
             },
         )
         .await?;
@@ -184,6 +174,125 @@ pub async fn search_profiles(
     }
 
     Ok(web::Json(profiles_dto))
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "upload_profile_picture",
+    summary = "Upload a picture to my profile",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, cdn_service, session))]
+pub async fn upload_profile_picture(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    cdn_service: web::Data<Arc<dyn CdnService>>,
+    MultipartForm(mut form): MultipartForm<UploadProfilePictureForm>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    if profile.picture_hashes.len() + 1 > 5 {
+        return Err(UserProfileError::MaxImages.into());
+    }
+
+    let content_type = form
+        .picture
+        .content_type
+        .clone()
+        .ok_or(ApiError::BadRequest("Missing content type".to_string()))?;
+
+    if content_type.type_() != mime::IMAGE {
+        return Err(ApiError::OnlyImagesAllowed);
+    }
+
+    let hash = cdn_service.upload_file(&mut form.picture, PROFILE_IMAGES_PATH).await?;
+
+    user_profile_service.add_pictures(profile.id, vec![hash]).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "delete_profile_picture",
+    summary = "Delete a picture from my profile",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, cdn_service, session))]
+pub async fn delete_profile_picture(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    cdn_service: web::Data<Arc<dyn CdnService>>,
+    picture_offset: web::Path<usize>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    let picture_offset = picture_offset.into_inner();
+
+    let picture_hash = profile
+        .picture_hashes
+        .get(picture_offset)
+        .cloned()
+        .ok_or(UserProfileError::InvalidImageOffset)?;
+
+    if profile.avatar_hash == Some(picture_hash.clone()) {
+        return Err(UserProfileError::CannotDeleteAvatar.into());
+    }
+
+    user_profile_service
+        .remove_pictures(profile.id, vec![picture_hash.clone()])
+        .await?;
+
+    let is_used = cdn_service.is_picture_hash_used(&picture_hash).await?;
+
+    if !is_used {
+        cdn_service
+            .delete_file(&format!("{}/{}", PROFILE_IMAGES_PATH, picture_hash))
+            .await?;
+    }
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "set_default_profile_picture",
+    summary = "Set a picture as default profile picture",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn set_default_profile_picture(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    picture_offset: web::Path<usize>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    let picture_offset = picture_offset.into_inner();
+
+    let picture_hash = profile
+        .picture_hashes
+        .get(picture_offset)
+        .cloned()
+        .ok_or(UserProfileError::InvalidImageOffset)?;
+
+    user_profile_service
+        .update(
+            profile.id,
+            &UserProfileUpdate {
+                avatar_hash: Some(picture_hash),
+                ..Default::default()
+            },
+        )
+        .await?;
+
+    Ok(NoContent)
 }
 
 #[api_operation(

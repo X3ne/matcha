@@ -8,6 +8,7 @@ pub enum ErrorCode {
     UnknownSession = 10004,
     UnknownTag = 10005,
     MaxImages = 30001,
+    CannotDeleteAvatar = 30002,
     Unauthorized = 40001,
     AccountNotActivated = 40002,
     UserEmailAlreadyExists = 40003,
@@ -19,6 +20,7 @@ pub enum ErrorCode {
     InvalidCredentials = 50002,
     InvalidMimeType = 50003,
     OnlyImagesAllowed = 50004,
+    InvalidImageOffset = 50005,
 }
 
 impl ErrorCode {
@@ -31,6 +33,7 @@ impl ErrorCode {
             ErrorCode::UnknownSession => "Unknown session",
             ErrorCode::UnknownTag => "Unknown tag",
             ErrorCode::MaxImages => "Maximum images reached",
+            ErrorCode::CannotDeleteAvatar => "Cannot delete avatar",
             ErrorCode::Unauthorized => "Unauthorized",
             ErrorCode::AccountNotActivated => "You need to verify your account to perform this action",
             ErrorCode::UserEmailAlreadyExists => "An user with this email already exists",
@@ -42,6 +45,7 @@ impl ErrorCode {
             ErrorCode::InvalidCredentials => "Invalid credentials",
             ErrorCode::InvalidMimeType => "Invalid mime type",
             ErrorCode::OnlyImagesAllowed => "Only images are allowed",
+            ErrorCode::InvalidImageOffset => "Invalid image offset",
         }
     }
 }

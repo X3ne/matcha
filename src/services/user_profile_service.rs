@@ -83,6 +83,32 @@ impl UserProfileService for UserProfileServiceImpl {
     }
 
     #[tracing::instrument(skip(self))]
+    async fn add_pictures(&self, profile_id: Snowflake, picture_hashes: Vec<String>) -> Result<(), UserProfileError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserProfileRepository::add_pictures(&mut *tx, profile_id, picture_hashes).await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn remove_pictures(
+        &self,
+        profile_id: Snowflake,
+        picture_hashes: Vec<String>,
+    ) -> Result<(), UserProfileError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserProfileRepository::remove_pictures(&mut *tx, profile_id, picture_hashes).await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
     async fn add_tag(&self, profile_id: Snowflake, tag_id: Snowflake) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 

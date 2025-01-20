@@ -196,14 +196,19 @@ pub struct UpdateProfileDto {
     pub bio: Option<String>,
     #[garde(range(min = 18, max = 100))]
     pub age: Option<i32>,
-    #[garde(range(min = 0, max = MAX_PROFILE_IMAGES))]
-    pub avatar_index: Option<usize>,
     #[garde(skip)]
     pub gender: Option<Gender>,
     #[garde(skip)]
     pub sexual_orientation: Option<Orientation>,
     #[garde(dive)]
     pub location: Option<Location>,
+}
+
+#[derive(Debug, MultipartForm)]
+#[multipart(duplicate_field = "deny")]
+pub struct UploadProfilePictureForm {
+    #[multipart(limit = "10MB")]
+    pub picture: TempFile,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent, Validate)]

@@ -1,23 +1,28 @@
-use actix_multipart::form::tempfile::TempFile;
-use async_trait::async_trait;
-use mime::Mime;
-use sha2::{Digest, Sha256};
 use std::io::Read;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use actix_multipart::form::tempfile::TempFile;
+use async_trait::async_trait;
+use mime::Mime;
+use sha2::{Digest, Sha256};
+use sqlx::PgPool;
+
+use crate::domain::repositories::user_profile_repo::UserProfileRepository;
 use crate::domain::services::cdn_service::CdnService;
+use crate::infrastructure::repositories::user_profile_repo::PgUserProfileRepository;
 use crate::infrastructure::s3::error::ImageError;
 use crate::infrastructure::s3::S3Service;
 
 #[derive(Clone)]
 pub struct CdnServiceImpl {
     pub s3: Arc<S3Service>,
+    pub pool: Arc<PgPool>,
 }
 
 impl CdnServiceImpl {
-    pub fn new(s3: Arc<S3Service>) -> Self {
-        CdnServiceImpl { s3 }
+    pub fn new(s3: Arc<S3Service>, pool: Arc<PgPool>) -> Self {
+        CdnServiceImpl { s3, pool }
     }
 }
 
@@ -58,5 +63,17 @@ impl CdnService for CdnServiceImpl {
             .await?;
 
         Ok(file_hash)
+    }
+
+    async fn delete_file(&self, path: &str) -> Result<(), ImageError> {
+        self.s3.delete_file(path).await
+    }
+
+    async fn is_picture_hash_used(&self, hash: &str) -> Result<bool, ImageError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let is_used = PgUserProfileRepository::is_profile_hash_used(&mut *conn, hash).await?;
+
+        Ok(is_used)
     }
 }

@@ -11,12 +11,16 @@ pub enum UserProfileError {
     NoProfile,
     #[error("Maximum number of profile images reached")]
     MaxImages,
+    #[error("Invalid image offset")]
+    InvalidImageOffset,
     #[error("Profile not found")]
     ProfileNotFound,
     #[error("This user already have a profile")]
     UserAlreadyHaveProfile,
     #[error("Profile already has this tag")]
     ProfileAlreadyHasTag,
+    #[error("Cannot delete avatar")]
+    CannotDeleteAvatar,
 }
 
 impl ApiErrorImpl for UserProfileError {
@@ -25,9 +29,11 @@ impl ApiErrorImpl for UserProfileError {
             UserProfileError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             UserProfileError::NoProfile => (StatusCode::NOT_FOUND, ErrorCode::UnknownProfile),
             UserProfileError::MaxImages => (StatusCode::CONFLICT, ErrorCode::MaxImages),
+            UserProfileError::InvalidImageOffset => (StatusCode::BAD_REQUEST, ErrorCode::InvalidImageOffset),
             UserProfileError::ProfileNotFound => (StatusCode::NOT_FOUND, ErrorCode::UnknownProfile),
             UserProfileError::UserAlreadyHaveProfile => (StatusCode::CONFLICT, ErrorCode::UserAlreadyHaveProfile),
             UserProfileError::ProfileAlreadyHasTag => (StatusCode::CONFLICT, ErrorCode::ProfileAlreadyHasTag),
+            UserProfileError::CannotDeleteAvatar => (StatusCode::BAD_REQUEST, ErrorCode::CannotDeleteAvatar),
         }
     }
 }

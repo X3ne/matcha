@@ -95,7 +95,10 @@ impl Container {
             pool: Arc::clone(&pool),
         });
 
-        let cdn_service = Arc::new(CdnServiceImpl { s3: Arc::clone(&s3) });
+        let cdn_service = Arc::new(CdnServiceImpl {
+            s3: Arc::clone(&s3),
+            pool: Arc::clone(&pool),
+        });
 
         Container {
             auth_service,

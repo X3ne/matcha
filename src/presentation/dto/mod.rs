@@ -1,4 +1,4 @@
-use crate::presentation::dto::user_profile::{CompleteOnboardingDto, CompleteOnboardingForm};
+use crate::presentation::dto::user_profile::{CompleteOnboardingDto, CompleteOnboardingForm, UploadProfilePictureForm};
 use crate::shared::types::location::Location;
 use apistos::reference_or::ReferenceOr;
 use apistos::{ApiComponent, TypedSchema};
@@ -50,6 +50,51 @@ impl ApiComponent for CompleteOnboardingForm {
                                 "#/components/schemas/{}",
                                 CompleteOnboardingDto::schema().unwrap().0
                             )),
+                        );
+                        map
+                    },
+                    ..Default::default()
+                })),
+                ..Default::default()
+            })),
+        ))
+    }
+}
+
+impl TypedSchema for UploadProfilePictureForm {
+    fn schema_type() -> InstanceType {
+        InstanceType::Object
+    }
+
+    fn format() -> Option<String> {
+        None
+    }
+}
+
+impl ApiComponent for UploadProfilePictureForm {
+    fn content_type() -> String {
+        "multipart/form-data".to_string()
+    }
+
+    fn child_schemas() -> Vec<(String, ReferenceOr<Schema>)> {
+        vec![]
+    }
+
+    fn schema() -> Option<(String, ReferenceOr<Schema>)> {
+        Some((
+            "UploadProfilePictureForm".to_string(),
+            ReferenceOr::Object(Schema::Object(SchemaObject {
+                instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Object))),
+                object: Some(Box::new(ObjectValidation {
+                    properties: {
+                        let mut map = Map::new();
+                        map.insert(
+                            "picture".to_string(),
+                            Schema::Object(SchemaObject {
+                                instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::String))),
+                                format: Some("binary".to_string()),
+                                ..Default::default()
+                            }),
                         );
                         map
                     },

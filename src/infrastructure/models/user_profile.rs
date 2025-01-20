@@ -35,7 +35,7 @@ pub struct UserProfileInsert {
     pub location: Point,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct UserProfileUpdate {
     pub name: Option<String>,
     pub avatar_hash: Option<String>,

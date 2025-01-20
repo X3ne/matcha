@@ -16,9 +16,7 @@ use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::UserProfileInsert;
 use crate::infrastructure::services::iploc::locate_ip;
 use crate::presentation::dto::user_dto::{UpdateUserDto, UserDto};
-use crate::presentation::dto::user_profile::{
-    CompleteOnboardingForm, UserProfileQueryParamsDto, UserProfileTagParamsDto,
-};
+use crate::presentation::dto::user_profile::CompleteOnboardingForm;
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 

@@ -82,6 +82,26 @@ pub trait UserProfileRepository<Db>: Send + Sync {
     where
         A: Acquire<'a, Database = Db> + Send;
 
+    async fn add_pictures<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        picture_hashes: Vec<String>,
+    ) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn remove_pictures<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        picture_hashes: Vec<String>,
+    ) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn is_profile_hash_used<'a, A>(conn: A, hash: &str) -> sqlx::Result<bool, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
     async fn add_tag<'a, A>(conn: A, profile_id: Snowflake, tag_id: Snowflake) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;

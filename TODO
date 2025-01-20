@@ -18,12 +18,14 @@ back:
   ✔ add s3 for images @done(25-01-17 17:17)
   ✔ add image upload @done(25-01-17 17:17) @done(25-01-17 17:17)
   ✔ rewrite tags api @done(25-01-19 03:47)
+  ☐ algorithm to recommend user profiles
   ☐ swipe system (like/dislike dislikes should not be shown again -> dislike in a timed redis)
-  ☐ upload/delete images
+  ✔ upload/delete images @done(25-01-20 20:05)
   ☐ add search radius to user settings
+  ✔ do not delete s3 file when same image hash is used @done(25-01-20 20:00)
+  ✔ prevent deleting profile image @done(25-01-20 20:05)
 
 bonuses:
   ✔ oauth2 @done(25-01-13 16:24)
   ✔ cross platform app @done(25-01-16 19:11)
   ☐ e2e encryption chat
-  ☐ vocal messages

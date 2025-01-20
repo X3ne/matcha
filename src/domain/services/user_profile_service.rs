@@ -15,6 +15,9 @@ pub trait UserProfileService: 'static + Sync + Send {
     async fn update(&self, id: Snowflake, profile: &UserProfileUpdate) -> Result<(), UserProfileError>;
     async fn search(&self, params: &UserProfileQueryParams) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn get_profile_tags(&self, profile_id: Snowflake) -> Result<Vec<ProfileTag>, UserProfileError>;
+    async fn add_pictures(&self, profile_id: Snowflake, picture_hashes: Vec<String>) -> Result<(), UserProfileError>;
+    async fn remove_pictures(&self, profile_id: Snowflake, picture_hashes: Vec<String>)
+        -> Result<(), UserProfileError>;
     async fn add_tag(&self, profile_id: Snowflake, tag_id: Snowflake) -> Result<(), UserProfileError>;
     async fn remove_tag(&self, profile_id: Snowflake, tag_id: Snowflake) -> Result<(), UserProfileError>;
     async fn bulk_add_tags(&self, profile_id: Snowflake, tag_ids: Vec<Snowflake>) -> Result<(), UserProfileError>;

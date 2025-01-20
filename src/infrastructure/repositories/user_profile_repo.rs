@@ -312,6 +312,80 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
     }
 
     #[tracing::instrument(skip(conn))]
+    async fn add_pictures<'a, A>(conn: A, profile_id: Snowflake, picture_hashes: Vec<String>) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE user_profile
+            SET picture_hashes = array_cat(picture_hashes, $2)
+            WHERE id = $1
+            "#,
+            profile_id.as_i64(),
+            &picture_hashes
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn remove_pictures<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        picture_hashes: Vec<String>,
+    ) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE user_profile
+            SET picture_hashes = (
+                SELECT array_agg(elem)
+                FROM unnest(picture_hashes) elem
+                WHERE elem <> ALL($2)
+            )
+            WHERE id = $1
+            "#,
+            profile_id.as_i64(),
+            &picture_hashes
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    async fn is_profile_hash_used<'a, A>(conn: A, hash: &str) -> sqlx::Result<bool, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let result = sqlx::query!(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM user_profile
+                WHERE avatar_hash = $1 OR $1 = ANY(picture_hashes)
+            )
+            "#,
+            hash
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+
+        Ok(result.exists.unwrap_or(false))
+    }
+
+    #[tracing::instrument(skip(conn))]
     async fn add_tag<'a, A>(conn: A, profile_id: Snowflake, tag_id: Snowflake) -> sqlx::Result<(), Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
