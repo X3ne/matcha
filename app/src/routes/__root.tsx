@@ -20,7 +20,7 @@ export const Route = createRootRoute({
 })
 
 function Root() {
-  const { user, isUserLoading } = useUser()
+  const { user, userProfile, isProfileLoading, isUserLoading } = useUser()
   const navigation = useNavigate()
   const location = useLocation()
 
@@ -43,13 +43,9 @@ function Root() {
 
   useEffect(() => {
     if (isError && location.pathname !== '/error') {
-      navigation({
-        to: '/error'
-      })
+      navigation({ to: '/error' })
     } else if (!isError && location.pathname === '/error') {
-      navigation({
-        to: '/'
-      })
+      navigation({ to: '/' })
     }
   }, [location, isError, navigation])
 
@@ -57,12 +53,20 @@ function Root() {
     if (isError || isUserLoading) return
     if (!user) {
       if (!AllowedRoutes.includes(location.pathname)) {
-        navigation({
-          to: '/login'
-        })
+        navigation({ to: '/login' })
       }
     }
   }, [user, isUserLoading, location, isError, navigation])
+
+  useEffect(() => {
+    if (isProfileLoading || isUserLoading) return
+
+    if (user && !userProfile) {
+      if (location.pathname !== '/onboarding') {
+        navigation({ to: '/onboarding' })
+      }
+    }
+  }, [user, userProfile, isProfileLoading, isUserLoading, location, navigation])
 
   return (
     <Layout>
