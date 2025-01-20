@@ -1,6 +1,7 @@
 'use client'
 
 import { NotificationDropdown } from '@/components/notification-dropdown'
+import { NotificationDropdownMobile } from '@/components/notification-dropdown-mobile'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -42,12 +43,12 @@ const Navbar = () => {
     <ul className="hidden gap-4 md:flex">
       <li>
         <Link to="/login">
-          <Button>Login</Button>
+          <Button size={'sm'}>Login</Button>
         </Link>
       </li>
       <li>
         <Link to="/register">
-          <Button>Register</Button>
+          <Button size={'sm'}>Register</Button>
         </Link>
       </li>
     </ul>
@@ -71,6 +72,15 @@ const Navbar = () => {
       >
         <Link to="/profile">Profile</Link>
       </Button>
+      <Button
+        asChild
+        variant="outline"
+        className="w-full"
+        onClick={handleCloseSheet}
+      >
+        <Link to="/messages">Messages</Link>
+      </Button>
+      <NotificationDropdownMobile />
     </>
   )
 
@@ -102,7 +112,7 @@ const Navbar = () => {
         {user ? desktopLoggedInLinks : desktopGuestLinks}
 
         {user && (
-          <div className="hidden gap-4 md:flex">
+          <div className="hidden items-center gap-4 md:flex">
             <div className="flex gap-0.5">
               <Button
                 variant="ghost"
@@ -115,7 +125,9 @@ const Navbar = () => {
               </Button>
               <NotificationDropdown />
             </div>
-            <Button onClick={logout}>Logout</Button>
+            <Button size={'sm'} onClick={logout}>
+              Logout
+            </Button>
           </div>
         )}
 
@@ -145,14 +157,14 @@ const Navbar = () => {
                       aria-label="Messages"
                       onClick={handleMailClick}
                     >
-                      <Mail size={20} />
+                      <Mail size={20} /> Messages
                     </Button>
                     <Button
                       className="relative p-2 text-left hover:bg-gray-200"
                       aria-label="Notifications"
                       onClick={handleCloseSheet}
                     >
-                      <Bell size={20} />
+                      <Bell size={20} /> Notifications
                     </Button>
                     <Button
                       onClick={() => {
