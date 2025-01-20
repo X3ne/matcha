@@ -35,7 +35,7 @@ function Profile() {
               <Avatar className="h-20 w-20">
                 <AvatarImage
                   className="object-cover"
-                  src={userProfile?.images?.[0]}
+                  src={import.meta.env.VITE_API_URL + userProfile?.avatar_url}
                   alt={userProfile?.name ?? 'Profile picture'}
                 />
                 <AvatarFallback>

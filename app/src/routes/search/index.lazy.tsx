@@ -280,7 +280,7 @@ function UserCard({ user }: { user: UserProfile }) {
       params={{ id: user.id }}
       className="motion-preset-slide-down mx-auto flex h-72 w-56 flex-col justify-end overflow-hidden rounded-xl shadow sm:mx-0"
       style={{
-        backgroundImage: `url(${user.avatar_url ? `/avatars/${user.avatar_url}` : 'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg'})`,
+        backgroundImage: `url(${user.avatar_url ? import.meta.env.VITE_API_URL + user.avatar_url : 'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg'})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
