@@ -1,4 +1,6 @@
 import api from '@/api'
+import { RegisterUser } from '@/api/spec'
+import { ApiError } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -9,50 +11,61 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
-import { Link } from '@tanstack/react-router'
+import { useMutation } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router' // Import useNavigate for redirection
 import React, { useState } from 'react'
 
 export function RegisterForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<'div'>) {
+  const { toast } = useToast()
+
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [password, setPassword] = useState('')
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    mutate: register,
+    isPending,
+    error
+  } = useMutation({
+    mutationFn: async (registerData: RegisterUser) =>
+      await api.v1.register(registerData),
+    onSuccess: () => {
+      toast({
+        title: 'Registration Successful',
+        description:
+          'Your account has been created successfully. Please check your email for a validation link.',
+        variant: 'default'
+      })
+    },
+    onError: (err) => {
+      console.log(err)
+      toast({
+        title: 'Registration Failed',
+        description: err.message || 'Something went wrong.',
+        variant: 'destructive'
+      })
+    }
+  })
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    try {
-      setLoading(true)
-      setError(null)
-
-      await api.v1.register({
-        email,
-        username,
-        first_name: firstName,
-        last_name: lastName,
-        password
-      })
-
-      console.log('Registered user:', {
-        email,
-        username,
-        first_name: firstName,
-        last_name: lastName,
-        password
-      })
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong.')
-    } finally {
-      setLoading(false)
+    const registerData: RegisterUser = {
+      email,
+      username,
+      first_name: firstName,
+      last_name: lastName,
+      password
     }
+
+    register(registerData)
   }
 
   return (
@@ -122,11 +135,15 @@ export function RegisterForm({
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                Sign up
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? 'Signing up...' : 'Sign up'}
               </Button>
 
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && (
+                <p className="text-sm text-red-500">
+                  {error.message || 'Something went wrong.'}
+                </p>
+              )}
 
               <div className="text-center text-sm">
                 Already have an account?{' '}
