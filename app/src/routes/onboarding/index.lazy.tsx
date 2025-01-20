@@ -13,15 +13,29 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/components/ui/use-toast'
+import { useUser } from '@/hooks/useUser'
 import { createLazyFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
 
 export const Route = createLazyFileRoute('/onboarding/')({
   component: OnboardingPage
 })
 
 export default function OnboardingPage() {
-  // Required fields
+  const { toast } = useToast()
+
+  const navigate = useNavigate()
+  const { user, userProfile } = useUser()
+
+  useEffect(() => {
+    console.log('userProfile', userProfile)
+    if (userProfile) {
+      navigate({ to: '/search' })
+    }
+  }, [userProfile, navigate])
+
   const [formData, setFormData] = useState<{
     age: string
     biography: string
@@ -78,6 +92,7 @@ export default function OnboardingPage() {
       const profileObj = {
         bio: formData.biography,
         age: Number(formData.age),
+        name: `${user?.first_name}${user?.last_name}`,
         avatar_index: 0,
         gender: formData.gender,
         sexual_orientation: formData.sexualOrientation,
@@ -103,6 +118,13 @@ export default function OnboardingPage() {
         const errorText = await response.text()
         throw new Error(`Error ${response.status}: ${errorText}`)
       }
+      toast({
+        title: 'Profile Created',
+        description:
+          'Your profile has been created successfully. You can now start matching with other users.',
+        variant: 'default'
+      })
+      window.location.href = '/search'
     } catch (err: any) {
       setErrorMessage(err.message || String(err))
     } finally {

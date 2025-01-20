@@ -1,6 +1,5 @@
 import api from '@/api'
 import { RegisterUser } from '@/api/spec'
-import { ApiError } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import {
   Card,
