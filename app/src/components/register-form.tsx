@@ -61,7 +61,8 @@ export function RegisterForm({
       username,
       first_name: firstName,
       last_name: lastName,
-      password
+      password,
+      confirm_password: password
     }
 
     register(registerData)
