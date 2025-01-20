@@ -92,7 +92,7 @@ export default function OnboardingPage() {
       const profileObj = {
         bio: formData.biography,
         age: Number(formData.age),
-        name: `${user?.first_name}${user?.last_name}`,
+        name: `${user?.first_name} ${user?.last_name}`,
         avatar_index: 0,
         gender: formData.gender,
         sexual_orientation: formData.sexualOrientation,
