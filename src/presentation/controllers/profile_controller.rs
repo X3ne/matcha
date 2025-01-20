@@ -1,5 +1,13 @@
 use std::sync::Arc;
 
+use actix_web::web;
+use apistos::actix::NoContent;
+use apistos::api_operation;
+use futures::future::join_all;
+use garde::{Error, Path, Report, Validate};
+use geo_types::Point;
+
+use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::repositories::user_profile_repo::UserProfileQueryParams;
 use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
@@ -12,11 +20,6 @@ use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::types::snowflake::Snowflake;
 use crate::shared::utils::approx_distance_km;
-use actix_web::web;
-use apistos::actix::NoContent;
-use apistos::api_operation;
-use garde::{Error, Path, Report, Validate};
-use geo_types::Point;
 
 #[api_operation(
     tag = "profiles",
@@ -139,6 +142,7 @@ pub async fn search_profiles(
 ) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
     let user = session.authenticated_user()?;
     let user_profile = user_profile_service.get_by_user_id(user.id).await?;
+    let user_tags = user_profile_service.get_profile_tags(user_profile.id).await?;
 
     let params = params.into_inner();
     params.validate()?;
@@ -153,13 +157,23 @@ pub async fn search_profiles(
         search_params.location = Some(point);
     }
 
+    if search_params.tag_ids.is_none() {
+        search_params.tag_ids = Some(user_tags.iter().map(|tag| tag.id).collect());
+    }
+
     let profiles = user_profile_service.search(&search_params).await?;
 
-    let mut profiles_dto: Vec<UserProfileDto> = vec![];
+    let tag_futures: Vec<_> = profiles
+        .iter()
+        .map(|profile| user_profile_service.get_profile_tags(profile.id))
+        .collect();
 
-    for profile in profiles {
-        // TODO: this is slow and should be optimized
-        let tags = user_profile_service.get_profile_tags(profile.id).await?;
+    let tags_results: Vec<Result<Vec<ProfileTag>, _>> = join_all(tag_futures).await;
+
+    let mut profiles_dto = Vec::new();
+
+    for (profile, tags_result) in profiles.into_iter().zip(tags_results) {
+        let tags = tags_result.unwrap_or_else(|_| vec![]);
         let approx_distance = approx_distance_km(&user_profile.location, &profile.location);
 
         let mut profile_dto: UserProfileDto = profile.into();

@@ -4,8 +4,9 @@ use sqlx::{Acquire, Error, Postgres, QueryBuilder};
 
 use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::entities::user_profile::UserProfile;
-use crate::domain::repositories::repository::QueryParams;
-use crate::domain::repositories::user_profile_repo::{UserProfileQueryParams, UserProfileRepository};
+use crate::domain::repositories::user_profile_repo::{
+    UserProfileQueryParams, UserProfileRepository, UserProfileSortBy,
+};
 use crate::infrastructure::models::profile_tag::ProfileTagSqlx;
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileSqlx, UserProfileUpdate};
 use crate::shared::types::snowflake::Snowflake;
@@ -169,13 +170,33 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
     {
         let mut conn = conn.acquire().await?;
 
-        let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-            "SELECT DISTINCT up.* FROM user_profile up
-            LEFT JOIN join_user_profile_tag jpt ON up.id = jpt.user_profile_id
-            LEFT JOIN profile_tag pt ON jpt.profile_tag_id = pt.id
-            WHERE 1=1",
+        let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new("SELECT up.*, ");
+
+        // calculate distance between profile and provided location
+        if let Some(location) = params.location {
+            let location: geo_types::Geometry<f64> = location.into();
+            query_builder.push("ST_Distance(up.location::geography, ST_SetSRID(ST_GeomFromEWKB(");
+            query_builder.push_bind(wkb::Encode(location));
+            query_builder.push("), 4326)::geography) AS distance, ");
+        } else {
+            query_builder.push("NULL AS distance, ");
+        }
+
+        // count common tags
+        if params.tag_ids.is_some() {
+            query_builder.push("COUNT(DISTINCT pt.id) AS common_tags_count ");
+        } else {
+            query_builder.push("0 AS common_tags_count ");
+        }
+
+        query_builder.push(
+            " FROM user_profile up
+        LEFT JOIN join_user_profile_tag jpt ON up.id = jpt.user_profile_id
+        LEFT JOIN profile_tag pt ON jpt.profile_tag_id = pt.id
+        WHERE 1=1",
         );
 
+        // filters
         if let Some(min_age) = params.min_age {
             query_builder.push(" AND up.age >= ");
             query_builder.push_bind(min_age);
@@ -193,38 +214,68 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
             query_builder.push_bind(max_fame);
         }
 
+        // filtering within radius
         if let Some(location) = params.location {
             if let Some(radius) = params.radius_km {
-                let geom: geo_types::Geometry<f64> = location.into();
+                let location: geo_types::Geometry<f64> = location.into();
                 query_builder.push(" AND ST_DWithin(up.location::geography, ST_SetSRID(ST_GeomFromEWKB(");
-                query_builder.push_bind(wkb::Encode(geom));
+                query_builder.push_bind(wkb::Encode(location));
                 query_builder.push("), 4326)::geography, ");
                 query_builder.push_bind(radius * 1000.0);
                 query_builder.push(")");
             }
         }
 
+        // filtering by tags
         if let Some(tags) = &params.tag_ids {
             query_builder.push(" AND pt.id = ANY(");
-            query_builder.push_bind(tags.iter().map(|tag_id| tag_id.to_string()).collect::<Vec<_>>());
+            query_builder.push_bind(tags.iter().map(|tag_id| tag_id.as_i64()).collect::<Vec<_>>());
             query_builder.push(")");
         }
 
-        if let Some(sort_by) = &params.sort_by {
-            query_builder.push(&format!(" ORDER BY up.{}", sort_by.to_string()));
-        }
+        query_builder.push(" GROUP BY up.id");
 
-        if let Some(sort_order) = &params.sort_order {
-            if params.sort_by.is_none() {
-                query_builder.push(" ORDER BY up.id");
+        match params.sort_by {
+            Some(UserProfileSortBy::Distance) => {
+                query_builder.push(" ORDER BY distance");
+                if let Some(sort_order) = &params.sort_order {
+                    query_builder.push(&format!(" {}", sort_order.to_string()));
+                } else {
+                    query_builder.push(" ASC");
+                }
             }
-            query_builder.push(&format!(" {}", sort_order.to_string()));
+            Some(UserProfileSortBy::Age) => {
+                query_builder.push(" ORDER BY up.age");
+                if let Some(sort_order) = &params.sort_order {
+                    query_builder.push(&format!(" {}", sort_order.to_string()));
+                } else {
+                    query_builder.push(" ASC");
+                }
+            }
+            Some(UserProfileSortBy::FameRating) => {
+                query_builder.push(" ORDER BY up.fame_rating");
+                if let Some(sort_order) = &params.sort_order {
+                    query_builder.push(&format!(" {}", sort_order.to_string()));
+                } else {
+                    query_builder.push(" DESC");
+                }
+            }
+            Some(UserProfileSortBy::Tags) => {
+                query_builder.push(" ORDER BY common_tags_count");
+                if let Some(sort_order) = &params.sort_order {
+                    query_builder.push(&format!(" {}", sort_order.to_string()));
+                } else {
+                    query_builder.push(" DESC");
+                }
+            }
+            _ => {}
         }
 
+        // pagination
         query_builder.push(" LIMIT ");
-        query_builder.push_bind(params.limit());
+        query_builder.push_bind(params.limit.unwrap_or(50));
         query_builder.push(" OFFSET ");
-        query_builder.push_bind(params.offset());
+        query_builder.push_bind(params.offset.unwrap_or(0));
 
         tracing::debug!("Generated SQL Query: {}", query_builder.sql());
 

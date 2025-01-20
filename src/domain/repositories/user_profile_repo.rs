@@ -28,6 +28,7 @@ pub struct UserProfileQueryParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, ApiComponent)]
+#[serde(rename_all = "snake_case")]
 pub enum UserProfileSortBy {
     Age,
     FameRating,
