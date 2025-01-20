@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 import { useMutation } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router' // Import useNavigate for redirection
+import { Link } from '@tanstack/react-router'
 import React, { useState } from 'react'
 
 export function RegisterForm({

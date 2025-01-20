@@ -24,7 +24,9 @@ const OnboardingIndexLazyImport = createFileRoute('/onboarding/')()
 const MessagesIndexLazyImport = createFileRoute('/messages/')()
 const LoginIndexLazyImport = createFileRoute('/login/')()
 const ErrorIndexLazyImport = createFileRoute('/error/')()
+const ProfileUsernameLazyImport = createFileRoute('/profile/$username')()
 const ProfileIdLazyImport = createFileRoute('/profile/$id')()
+const ActivationTokenLazyImport = createFileRoute('/activation/$token')()
 
 // Create/Update Routes
 
@@ -82,11 +84,27 @@ const ErrorIndexLazyRoute = ErrorIndexLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/error/index.lazy').then((d) => d.Route))
 
+const ProfileUsernameLazyRoute = ProfileUsernameLazyImport.update({
+  id: '/profile/$username',
+  path: '/profile/$username',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/profile/$username.lazy').then((d) => d.Route),
+)
+
 const ProfileIdLazyRoute = ProfileIdLazyImport.update({
   id: '/profile/$id',
   path: '/profile/$id',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/profile/$id.lazy').then((d) => d.Route))
+
+const ActivationTokenLazyRoute = ActivationTokenLazyImport.update({
+  id: '/activation/$token',
+  path: '/activation/$token',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/activation/$token.lazy').then((d) => d.Route),
+)
 
 // Populate the FileRoutesByPath interface
 
@@ -99,11 +117,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyImport
       parentRoute: typeof rootRoute
     }
+    '/activation/$token': {
+      id: '/activation/$token'
+      path: '/activation/$token'
+      fullPath: '/activation/$token'
+      preLoaderRoute: typeof ActivationTokenLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/profile/$id': {
       id: '/profile/$id'
       path: '/profile/$id'
       fullPath: '/profile/$id'
       preLoaderRoute: typeof ProfileIdLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/profile/$username': {
+      id: '/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof ProfileUsernameLazyImport
       parentRoute: typeof rootRoute
     }
     '/error/': {
@@ -162,7 +194,9 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
+  '/activation/$token': typeof ActivationTokenLazyRoute
   '/profile/$id': typeof ProfileIdLazyRoute
+  '/profile/$username': typeof ProfileUsernameLazyRoute
   '/error': typeof ErrorIndexLazyRoute
   '/login': typeof LoginIndexLazyRoute
   '/messages': typeof MessagesIndexLazyRoute
@@ -174,7 +208,9 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
+  '/activation/$token': typeof ActivationTokenLazyRoute
   '/profile/$id': typeof ProfileIdLazyRoute
+  '/profile/$username': typeof ProfileUsernameLazyRoute
   '/error': typeof ErrorIndexLazyRoute
   '/login': typeof LoginIndexLazyRoute
   '/messages': typeof MessagesIndexLazyRoute
@@ -187,7 +223,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexLazyRoute
+  '/activation/$token': typeof ActivationTokenLazyRoute
   '/profile/$id': typeof ProfileIdLazyRoute
+  '/profile/$username': typeof ProfileUsernameLazyRoute
   '/error/': typeof ErrorIndexLazyRoute
   '/login/': typeof LoginIndexLazyRoute
   '/messages/': typeof MessagesIndexLazyRoute
@@ -201,7 +239,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/activation/$token'
     | '/profile/$id'
+    | '/profile/$username'
     | '/error'
     | '/login'
     | '/messages'
@@ -212,7 +252,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/activation/$token'
     | '/profile/$id'
+    | '/profile/$username'
     | '/error'
     | '/login'
     | '/messages'
@@ -223,7 +265,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/activation/$token'
     | '/profile/$id'
+    | '/profile/$username'
     | '/error/'
     | '/login/'
     | '/messages/'
@@ -236,7 +280,9 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
+  ActivationTokenLazyRoute: typeof ActivationTokenLazyRoute
   ProfileIdLazyRoute: typeof ProfileIdLazyRoute
+  ProfileUsernameLazyRoute: typeof ProfileUsernameLazyRoute
   ErrorIndexLazyRoute: typeof ErrorIndexLazyRoute
   LoginIndexLazyRoute: typeof LoginIndexLazyRoute
   MessagesIndexLazyRoute: typeof MessagesIndexLazyRoute
@@ -248,7 +294,9 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
+  ActivationTokenLazyRoute: ActivationTokenLazyRoute,
   ProfileIdLazyRoute: ProfileIdLazyRoute,
+  ProfileUsernameLazyRoute: ProfileUsernameLazyRoute,
   ErrorIndexLazyRoute: ErrorIndexLazyRoute,
   LoginIndexLazyRoute: LoginIndexLazyRoute,
   MessagesIndexLazyRoute: MessagesIndexLazyRoute,
@@ -269,7 +317,9 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/activation/$token",
         "/profile/$id",
+        "/profile/$username",
         "/error/",
         "/login/",
         "/messages/",
@@ -282,8 +332,14 @@ export const routeTree = rootRoute
     "/": {
       "filePath": "index.lazy.tsx"
     },
+    "/activation/$token": {
+      "filePath": "activation/$token.lazy.tsx"
+    },
     "/profile/$id": {
       "filePath": "profile/$id.lazy.tsx"
+    },
+    "/profile/$username": {
+      "filePath": "profile/$username.lazy.tsx"
     },
     "/error/": {
       "filePath": "error/index.lazy.tsx"
