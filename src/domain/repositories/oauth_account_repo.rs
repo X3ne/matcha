@@ -7,6 +7,7 @@ use crate::infrastructure::models::oauth::{OAuthAccountInsert, OAuthAccountUpdat
 use crate::shared::types::snowflake::Snowflake;
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait OAuthAccountRepository<Db>: Send + Sync {
     async fn insert<'a, A>(conn: A, account: &OAuthAccountInsert) -> sqlx::Result<OAuthAccount, sqlx::Error>
     where

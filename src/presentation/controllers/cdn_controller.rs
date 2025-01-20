@@ -12,14 +12,14 @@ use crate::shared::types::peer_infos::PeerInfos;
     tag = "cdn",
     operation_id = "get_profile_image",
     summary = "Get a profile image",
-    skip_args = "peer_infos"
+    skip_args = "_peer_infos"
 )]
-#[tracing::instrument(skip(cdn_service, session))]
+#[tracing::instrument(skip(cdn_service, _session))]
 pub async fn get_profile_image(
     cdn_service: web::Data<Arc<dyn CdnService>>,
     hash: web::Path<String>,
-    session: Session,
-    peer_infos: PeerInfos,
+    _session: Session,
+    _peer_infos: PeerInfos,
 ) -> Result<HttpResponse, ApiError> {
     let hash = hash.into_inner();
     let image = cdn_service

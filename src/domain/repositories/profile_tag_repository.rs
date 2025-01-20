@@ -6,6 +6,7 @@ use crate::infrastructure::models::profile_tag::ProfileTagInsert;
 use crate::shared::types::snowflake::Snowflake;
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait ProfileTagRepository<Db>: Send + Sync {
     async fn insert<'a, A>(conn: A, tag: &ProfileTagInsert) -> sqlx::Result<ProfileTag, sqlx::Error>
     where

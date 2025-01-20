@@ -5,17 +5,21 @@ use std::net::IpAddr;
 
 #[derive(ApiHeader, JsonSchema, Debug)]
 #[openapi_header(name = "X-Product", description = "The product name", required = true)]
+#[allow(dead_code)]
 pub struct Product(String);
 
 #[derive(ApiHeader, JsonSchema, Debug)]
 #[openapi_header(name = "X-Matcha-Version", description = "The version of the product")]
+#[allow(dead_code)]
 pub struct Version(String);
 
 #[derive(ApiHeader, JsonSchema, Debug)]
 #[openapi_header(name = "X-Platform", description = "The platform of the product")]
+#[allow(dead_code)]
 pub struct Platform(String);
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct PeerInfos {
     pub ip_address: Option<IpAddr>,
     pub user_agent: Option<String>,
@@ -53,24 +57,3 @@ impl From<HttpRequest> for PeerInfos {
         }
     }
 }
-
-// impl JsonSchema for crate::presentation::extractors::auth_extractor::Session {
-//     fn schema_name() -> String {
-//         "Session".to_string()
-//     }
-//
-//     fn json_schema(_: &mut SchemaGenerator) -> Schema {
-//         let schema = SchemaObject {
-//             instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::String))),
-//             format: Some("session".to_string()),
-//             string: Some(Default::default()),
-//             metadata: Some(Box::new(Metadata {
-//                 description: Some("The session cookie".to_string()),
-//                 examples: vec![Value::String("session=123456".to_string())],
-//                 ..Default::default()
-//             })),
-//             ..Default::default()
-//         };
-//         schema.into()
-//     }
-// }

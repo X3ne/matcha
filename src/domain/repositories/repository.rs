@@ -9,6 +9,7 @@ pub struct ResultPaging<T> {
 pub const DEFAULT_OFFSET: Option<i64> = Some(0);
 pub const DEFAULT_LIMIT: Option<i64> = Some(25);
 
+#[allow(dead_code)]
 pub trait QueryParams: Send + Sync {
     fn limit(&self) -> i64;
     fn offset(&self) -> i64;

@@ -153,7 +153,7 @@ impl OAuthAccountRepository<Postgres> for PgOAuthAccountRepository {
     {
         let mut conn = conn.acquire().await?;
 
-        let deleted_account = sqlx::query_as!(
+        sqlx::query_as!(
             OAuthAccountDb,
             r#"
             DELETE FROM oauth_account

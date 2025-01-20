@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sqlx::{Acquire, Executor, Postgres};
+use sqlx::{Acquire, Postgres};
 
 use crate::domain::entities::oauth_provider::OAuthProvider;
 use crate::domain::repositories::oauth_provider_repo::OAuthProviderRepository;

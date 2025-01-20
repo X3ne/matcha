@@ -10,7 +10,6 @@ use crate::infrastructure::s3::error::ImageError;
 
 pub struct S3Service {
     bucket: Box<Bucket>,
-    config: S3Config,
 }
 
 impl S3Service {
@@ -29,7 +28,7 @@ impl S3Service {
 
         let bucket = Bucket::new(&config.bucket_name, region.clone(), credentials.clone())?.with_path_style();
 
-        Ok(Self { bucket, config })
+        Ok(Self { bucket })
     }
 
     pub async fn get_file(&self, key: &str) -> Result<Vec<u8>, ImageError> {

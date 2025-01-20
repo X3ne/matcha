@@ -74,31 +74,19 @@ impl Container {
         );
 
         // Services
-        let auth_service = Arc::new(AuthServiceImpl {
-            pool: Arc::clone(&pool),
-            redis: Arc::clone(&redis),
-            oauth2_client: Arc::clone(&oauth_client),
+        let auth_service = Arc::new(AuthServiceImpl::new(
+            Arc::clone(&pool),
+            Arc::clone(&redis),
+            Arc::clone(&oauth_client),
             #[cfg(feature = "mailing")]
-            mail_sender: Arc::clone(&mail_sender),
-            service_base_url: service_base_url.to_string(),
-        });
+            Arc::clone(&mail_sender),
+            service_base_url.to_string(),
+        ));
 
-        let user_service = Arc::new(UserServiceImpl {
-            pool: Arc::clone(&pool),
-        });
-
-        let user_profile_service = Arc::new(UserProfileServiceImpl {
-            pool: Arc::clone(&pool),
-        });
-
-        let profile_tag_service = Arc::new(ProfileTagServiceImpl {
-            pool: Arc::clone(&pool),
-        });
-
-        let cdn_service = Arc::new(CdnServiceImpl {
-            s3: Arc::clone(&s3),
-            pool: Arc::clone(&pool),
-        });
+        let user_service = Arc::new(UserServiceImpl::new(Arc::clone(&pool)));
+        let user_profile_service = Arc::new(UserProfileServiceImpl::new(Arc::clone(&pool)));
+        let profile_tag_service = Arc::new(ProfileTagServiceImpl::new(Arc::clone(&pool)));
+        let cdn_service = Arc::new(CdnServiceImpl::new(Arc::clone(&s3), Arc::clone(&pool)));
 
         Container {
             auth_service,

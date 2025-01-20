@@ -12,13 +12,13 @@ use crate::shared::types::peer_infos::PeerInfos;
     tag = "tags",
     operation_id = "get_all_tags",
     summary = "Get all profile tags",
-    skip_args = "peer_infos"
+    skip_args = "_peer_infos"
 )]
-#[tracing::instrument(skip(profile_tag_service, session))]
+#[tracing::instrument(skip(profile_tag_service, _session))]
 pub async fn get_all_tags(
     profile_tag_service: web::Data<Arc<dyn ProfileTagService>>,
-    session: Session,
-    peer_infos: PeerInfos,
+    _session: Session,
+    _peer_infos: PeerInfos,
 ) -> Result<web::Json<Vec<ProfileTag>>, ApiError> {
     let tags = profile_tag_service.get_all().await?;
 

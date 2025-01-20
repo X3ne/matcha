@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use crate::domain::entities::user::User;
 use crate::infrastructure::models::user::UserUpdate;
 use crate::shared::types::snowflake::Snowflake;
-use crate::shared::utils::validation::{validate_password, ValidatePasswordContext};
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent)]
 #[serde(rename(deserialize = "User"))]

@@ -7,6 +7,7 @@ use crate::infrastructure::services::iploc::error::IpLocError;
 pub mod error;
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct IpLocation {
     pub country: String,
     pub region: String,

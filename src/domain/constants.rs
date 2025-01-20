@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub const TEMPLATE_DIR: &str = "templates/email";
 pub const RESET_PASSWORD_TEMPLATE: &str = "reset_password";
 pub const ACCOUNT_CONFIRMATION_TEMPLATE: &str = "account_confirmation";

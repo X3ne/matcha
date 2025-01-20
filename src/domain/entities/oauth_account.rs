@@ -2,6 +2,7 @@ use crate::infrastructure::models::oauth::OAuthAccountSqlx;
 use crate::shared::types::snowflake::Snowflake;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct OAuthAccount {
     pub id: Snowflake,
     pub user_id: Snowflake,

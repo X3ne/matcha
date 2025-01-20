@@ -22,6 +22,7 @@ pub struct Session {
     user: Option<User>,
 }
 
+#[allow(dead_code)]
 impl Session {
     pub fn inner(&self) -> &ActixSession {
         &self.inner

@@ -6,6 +6,7 @@ use crate::infrastructure::models::oauth::{OAuthProviderInsert, OAuthProviderUpd
 use crate::shared::types::snowflake::Snowflake;
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait OAuthProviderRepository<Db> {
     async fn insert<'a, A>(conn: A, provider: &OAuthProviderInsert) -> sqlx::Result<OAuthProvider, sqlx::Error>
     where

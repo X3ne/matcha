@@ -33,6 +33,7 @@ impl UserService for UserServiceImpl {
         Ok(user)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn get_by_email(&self, email: &str) -> Result<User, UserError> {
         let mut conn = self.pool.acquire().await?;
 

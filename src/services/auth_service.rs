@@ -27,6 +27,7 @@ use crate::infrastructure::repositories::user_repo::PgUserRepository;
 use crate::shared::utils::generate_random_secure_string;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct AuthServiceImpl {
     pub pool: Arc<PgPool>,
     pub redis: Arc<redis::Client>,
@@ -82,19 +83,21 @@ impl AuthService for AuthServiceImpl {
 
         let user = PgUserRepository::insert(&mut *tx, user).await?;
 
-        let confirmation_url = format!(
-            "{}/v1/auth/activate?token={}",
-            self.service_base_url, user.activation_token
-        );
-
         #[cfg(feature = "mailing")]
-        self.mail_sender
-            .send_confirmation_mail(&user, confirmation_url)
-            .await
-            .map_err(|e| {
-                tracing::error!("Error sending confirmation mail: {:?}", e);
-                AuthError::MailError
-            })?;
+        {
+            let confirmation_url = format!(
+                "{}/v1/auth/activate?token={}",
+                self.service_base_url, user.activation_token
+            );
+
+            self.mail_sender
+                .send_confirmation_mail(&user, confirmation_url)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Error sending confirmation mail: {:?}", e);
+                    AuthError::MailError
+                })?;
+        }
 
         tx.commit().await?;
 
@@ -157,7 +160,7 @@ impl AuthService for AuthServiceImpl {
             PgOAuthAccountRepository::get_by_provider_user_and_provider(&mut *tx, &oauth_user.id.to_string(), provider)
                 .await;
 
-        let user = match provider_account {
+        let _user = match provider_account {
             Ok(account) => {
                 let user = PgUserRepository::get_by_id(&mut *tx, account.user_id).await?;
 
@@ -206,19 +209,21 @@ impl AuthService for AuthServiceImpl {
             }
         };
 
-        let confirmation_url = format!(
-            "{}/v1/auth/activate?token={}",
-            self.service_base_url, user.activation_token
-        );
-
         #[cfg(feature = "mailing")]
-        self.mail_sender
-            .send_confirmation_mail(&user, confirmation_url)
-            .await
-            .map_err(|e| {
-                tracing::error!("Error sending confirmation mail: {:?}", e);
-                AuthError::MailError
-            })?;
+        {
+            let confirmation_url = format!(
+                "{}/v1/auth/activate?token={}",
+                self.service_base_url, _user.activation_token
+            );
+
+            self.mail_sender
+                .send_confirmation_mail(&_user, confirmation_url)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Error sending confirmation mail: {:?}", e);
+                    AuthError::MailError
+                })?;
+        }
 
         // Send error to client to ask for validation
         tx.commit().await?;
@@ -245,16 +250,18 @@ impl AuthService for AuthServiceImpl {
         let key = format!("password_reset:{}", email);
         conn.set_ex(&key, reset_token.clone(), RESET_PASSWORD_TOKEN_TTL).await?;
 
-        let reset_url = format!("{}?email={}&token={}", reset_url, email, reset_token);
-
         #[cfg(feature = "mailing")]
-        self.mail_sender
-            .send_password_reset_mail(email, reset_url)
-            .await
-            .map_err(|e| {
-                tracing::error!("Error sending confirmation mail: {:?}", e);
-                AuthError::MailError
-            })?;
+        {
+            let reset_url = format!("{}?email={}&token={}", reset_url, email, reset_token);
+
+            self.mail_sender
+                .send_password_reset_mail(email, reset_url)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Error sending confirmation mail: {:?}", e);
+                    AuthError::MailError
+                })?;
+        }
 
         Ok(())
     }

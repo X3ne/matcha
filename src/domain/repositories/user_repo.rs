@@ -23,6 +23,7 @@ impl QueryParams for UserQueryParams {
 }
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait UserRepository<Db>: Send + Sync {
     async fn insert<'a, A>(conn: A, user: &UserInsert) -> sqlx::Result<User, sqlx::Error>
     where
