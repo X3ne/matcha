@@ -280,7 +280,7 @@ function UserCard({ user }: { user: UserProfile }) {
       params={{ id: user.id }}
       className="motion-preset-slide-down mx-auto flex h-72 w-56 flex-col justify-end overflow-hidden rounded-xl shadow sm:mx-0"
       style={{
-        backgroundImage: `url(${user.avatar_hash ? `/avatars/${user.avatar_hash}` : 'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg'})`,
+        backgroundImage: `url(${user.avatar_url ? `/avatars/${user.avatar_url}` : 'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg'})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
@@ -293,14 +293,14 @@ function UserCard({ user }: { user: UserProfile }) {
             </h2>
             <ul className="gap flex flex-col gap-1">
               <li className="flex items-center gap-1">
-                <FaMapMarkerAlt size={12} />
-                <p className="text-xs font-light">
-                  Lyon {/* {user.location} */}
+                <FaMapMarkerAlt size={10} />
+                <p className="text-[8px] font-light">
+                  {user.approx_distance_km} kilometers away
                 </p>
               </li>
               <li className="flex items-center gap-1">
-                <FaFire size={12} />
-                <p className="text-xs font-light">
+                <FaFire size={10} />
+                <p className="text-[8px] font-light">
                   10 {/* {user.fame_rating} */}
                 </p>
               </li>
@@ -324,7 +324,7 @@ function UserCard({ user }: { user: UserProfile }) {
             <Badge
               key={index}
               variant="secondary"
-              className="rounded-full border border-white/20 bg-black/80 py-1 text-[8px] font-normal text-white hover:bg-black/80"
+              className="rounded-full border border-white/20 bg-black/80 py-1 text-[6px] font-normal text-white hover:bg-black/80"
             >
               {tag.name}
             </Badge>
