@@ -56,7 +56,7 @@ export default function TagSelector({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
+        <Button size={'sm'} variant="outline" className="w-full">
           Select Interests
         </Button>
       </DialogTrigger>

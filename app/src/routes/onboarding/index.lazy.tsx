@@ -17,7 +17,8 @@ import { useToast } from '@/components/ui/use-toast'
 import { useUser } from '@/hooks/useUser'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { Trash } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
 
 export const Route = createLazyFileRoute('/onboarding/')({
   component: OnboardingPage
@@ -25,9 +26,10 @@ export const Route = createLazyFileRoute('/onboarding/')({
 
 export default function OnboardingPage() {
   const { toast } = useToast()
-
   const navigate = useNavigate()
   const { user, userProfile } = useUser()
+
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => {
     console.log('userProfile', userProfile)
@@ -53,7 +55,7 @@ export default function OnboardingPage() {
 
   const [pictures, setPictures] = useState<
     { file: File | null; preview: string }[]
-  >(Array(5).fill({ file: null, preview: '' }))
+  >(Array.from({ length: 5 }, () => ({ file: null, preview: '' })))
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -97,7 +99,7 @@ export default function OnboardingPage() {
         gender: formData.gender,
         sexual_orientation: formData.sexualOrientation,
         location: location || null,
-        tag_ids: []
+        tag_ids: selectedTags.map((tag) => tag)
       }
 
       fd.append(
@@ -118,12 +120,14 @@ export default function OnboardingPage() {
         const errorText = await response.text()
         throw new Error(`Error ${response.status}: ${errorText}`)
       }
+
       toast({
         title: 'Profile Created',
         description:
           'Your profile has been created successfully. You can now start matching with other users.',
         variant: 'default'
       })
+
       window.location.href = '/search'
     } catch (err: any) {
       setErrorMessage(err.message || String(err))
@@ -164,6 +168,26 @@ export default function OnboardingPage() {
         alert('Unable to retrieve location.')
       }
     )
+  }
+
+  function handleDeleteClick(index: number) {
+    return (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation()
+
+      setPictures((prev) => {
+        const copy = [...prev]
+        const pic = copy[index]
+        if (pic.preview) {
+          URL.revokeObjectURL(pic.preview)
+        }
+        copy[index] = { file: null, preview: '' }
+        return copy
+      })
+
+      if (fileInputRefs.current[index]) {
+        fileInputRefs.current[index]!.value = ''
+      }
+    }
   }
 
   function toggleTag(tag: string) {
@@ -258,7 +282,11 @@ export default function OnboardingPage() {
 
               <div className="flex flex-col gap-1">
                 <Label>Your Location</Label>
-                <Button variant="outline" onClick={handleGetLocation}>
+                <Button
+                  size={'sm'}
+                  variant="outline"
+                  onClick={handleGetLocation}
+                >
                   Get My Location
                 </Button>
                 {location && (
@@ -287,28 +315,38 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="grid h-fit flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid h-fit w-fit grid-cols-1 gap-4 sm:grid-cols-2">
               {pictures.map((pic, index) => (
                 <div
                   key={index}
-                  className="flex h-36 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed p-2 text-center"
-                  onClick={() =>
-                    document.getElementById(`file-input-${index}`)?.click()
-                  }
+                  className={`flex h-36 w-36 cursor-pointer flex-col items-center justify-center rounded-md ${
+                    pic.preview ? '' : 'border-2 border-dashed'
+                  } text-center`}
+                  onClick={() => fileInputRefs.current[index]?.click()}
                 >
                   {pic.preview ? (
-                    <img
-                      src={pic.preview}
-                      alt={`Picture ${index + 1}`}
-                      className="h-full w-full rounded object-cover"
-                    />
+                    <div className="relative">
+                      <img
+                        src={pic.preview}
+                        alt={`Picture ${index + 1}`}
+                        className="h-36 w-full rounded-md object-cover"
+                      />
+                      <Button
+                        size="icon"
+                        className="absolute right-1 top-1 h-6 w-6 rounded-full"
+                        aria-label="Delete Picture"
+                        onClick={handleDeleteClick(index)}
+                      >
+                        <Trash className="!size-3" />
+                      </Button>
+                    </div>
                   ) : (
                     <span className="text-sm text-gray-500">
                       Picture {index + 1}
                     </span>
                   )}
                   <input
-                    id={`file-input-${index}`}
+                    ref={(el) => (fileInputRefs.current[index] = el)}
                     type="file"
                     accept="image/*"
                     className="hidden"
