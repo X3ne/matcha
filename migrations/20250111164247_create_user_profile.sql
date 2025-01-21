@@ -51,6 +51,8 @@ CREATE TABLE join_user_profile_tag
     UNIQUE (user_profile_id, profile_tag_id)
 );
 
+CREATE INDEX idx_join_user_profile_tag_user_profile_id ON join_user_profile_tag (user_profile_id);
+
 CREATE TABLE profile_view
 (
     id                BIGINT PRIMARY KEY NOT NULL UNIQUE,
@@ -60,6 +62,8 @@ CREATE TABLE profile_view
     UNIQUE (user_profile_id, viewer_profile_id)
 );
 
+CREATE INDEX idx_profile_view_user_profile_id ON profile_view (user_profile_id);
+
 CREATE TABLE profile_like
 (
     id                    BIGINT PRIMARY KEY NOT NULL UNIQUE,
@@ -68,3 +72,5 @@ CREATE TABLE profile_like
     liked_at              TIMESTAMP          NOT NULL DEFAULT NOW(),
     UNIQUE (user_profile_id, liked_user_profile_id)
 );
+
+CREATE INDEX idx_profile_like_user_profile_id ON profile_like (user_profile_id);

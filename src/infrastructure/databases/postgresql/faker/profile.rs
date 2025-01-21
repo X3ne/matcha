@@ -45,6 +45,7 @@ impl UserProfileSqlx {
         let age = rng.gen_range(18..50);
         let now = Utc::now().naive_utc();
         let location = random_location_around(DEFAULT_LATITUDE, DEFAULT_LONGITUDE, 20.0);
+        let rating = rng.gen_range(0..100);
 
         Self {
             id,
@@ -59,7 +60,7 @@ impl UserProfileSqlx {
             location: Decode {
                 geometry: Some(location.into()),
             },
-            rating: 0,
+            rating,
             created_at: now,
             updated_at: now,
         }
@@ -68,8 +69,8 @@ impl UserProfileSqlx {
     pub async fn insert(&self, pool: &PgPool) {
         sqlx::query!(
             r#"
-            INSERT INTO user_profile (id, user_id, name, avatar_hash, bio, age, gender, sexual_orientation, location)
-            VALUES ($1, $2, $3, $4, $5, $6, $7::gender, $8::sexual_orientation, $9::geometry)
+            INSERT INTO user_profile (id, user_id, name, avatar_hash, bio, age, rating, gender, sexual_orientation, location)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry)
             "#,
             self.id.as_i64(),
             self.user_id.as_i64(),
@@ -77,6 +78,7 @@ impl UserProfileSqlx {
             self.avatar_hash,
             self.bio,
             self.age,
+            self.rating,
             self.gender as _,
             self.sexual_orientation as _,
             wkb::Encode(self.location.geometry.clone().unwrap()) as _
