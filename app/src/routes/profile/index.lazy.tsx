@@ -65,14 +65,14 @@ function Profile() {
                     <Edit className="h-4 w-4" /> Edit Profile
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-4xl">
-                  <DialogHeader>
+                <DialogContent className="!p-0 sm:max-w-3xl">
+                  <DialogHeader className="p-6 pb-0">
                     <DialogTitle>Edit Profile</DialogTitle>
                     <DialogDescription className="text-xs">
                       Update your profile information
                     </DialogDescription>
                   </DialogHeader>
-                  <ScrollArea className="mt-4 max-h-[60vh]">
+                  <ScrollArea className="mt-4 max-h-[60vh] px-6 pb-6">
                     <div className="">
                       <EditProfileForm />
                     </div>

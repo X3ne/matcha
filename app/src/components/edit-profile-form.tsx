@@ -1,6 +1,8 @@
+import api, { UploadProfilePictureForm } from '@/api'
 import { Orientation, Gender, Location } from '@/api/spec'
 import TagSelector from '@/components/tag-selector'
 import { Button } from '@/components/ui/button'
+import { DialogClose } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -11,11 +13,21 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { UserContext } from '@/providers/userProvider'
-import { useContext, useState, useEffect } from 'react'
+import { useToast } from '@/components/ui/use-toast'
+import { useUser } from '@/hooks/useUser'
+import { useMutation } from '@tanstack/react-query'
+import { Trash } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+
+interface PictureInfo {
+  file: File | null
+  preview: string
+  offset: number | null
+}
 
 export function EditProfileForm() {
-  const { user, userProfile } = useContext(UserContext)
+  const { toast } = useToast()
+  const { user, userProfile, refreshUser, refreshUserProfile } = useUser()
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -29,82 +41,169 @@ export function EditProfileForm() {
 
   const [location, setLocation] = useState<Location | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [pictures, setPictures] = useState<
-    { file: File | null; preview: string }[]
-  >(Array(5).fill({ file: null, preview: '' }))
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [isModified, setIsModified] = useState(false)
 
+  const [pictures, setPictures] = useState<PictureInfo[]>(
+    Array(5).fill({ file: null, preview: '', offset: null })
+  )
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  const [previousPictureUrls, setPreviousPictureUrls] = useState<string[]>([])
+
   useEffect(() => {
-    if (user && userProfile) {
-      setFormData({
-        firstName: user.first_name,
-        lastName: user.last_name,
-        email: user.email,
-        age: userProfile.age.toString(),
-        biography: userProfile.bio || '',
-        gender: userProfile.gender,
-        sexualOrientation: userProfile.sexual_orientation
-      })
-      setSelectedTags(userProfile.tags.map((tag) => tag.name))
+    if (!userProfile) return
+
+    setPreviousPictureUrls(userProfile.picture_urls)
+
+    const urls = [...userProfile.picture_urls]
+    const avatarIndex = urls.indexOf(
+      userProfile.avatar_url
+        ? userProfile.avatar_url
+        : userProfile.picture_urls[0]
+    )
+    if (avatarIndex > -1) {
+      const [avatar] = urls.splice(avatarIndex, 1)
+      urls.unshift(avatar)
     }
+
+    const maxPictures = 5
+    const newPictures = urls.slice(0, maxPictures).map((url, i) => ({
+      file: null,
+      preview: import.meta.env.VITE_API_URL + url,
+      offset: i
+    }))
+    while (newPictures.length < maxPictures) {
+      newPictures.push({ file: null, preview: '', offset: null })
+    }
+
+    setPictures(newPictures)
+
+    setFormData({
+      firstName: user?.first_name || '',
+      lastName: user?.last_name || '',
+      email: user?.email || '',
+      age: userProfile.age?.toString() || '',
+      biography: userProfile.bio || '',
+      gender: userProfile.gender,
+      sexualOrientation: userProfile.sexual_orientation
+    })
+
+    setSelectedTags(userProfile.tags.map((tag) => tag.name))
   }, [user, userProfile])
 
-  async function handleSubmit() {
-    setIsSubmitting(true)
-    setErrorMessage('')
-
-    try {
-      const fd = new FormData()
-
-      pictures.forEach(({ file }) => {
-        if (file) {
-          fd.append('pictures', file)
+  useEffect(() => {
+    return () => {
+      pictures.forEach((pic) => {
+        if (pic.file && pic.preview) {
+          URL.revokeObjectURL(pic.preview)
         }
       })
+    }
+  }, [pictures])
 
-      const profileObj = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+  const { mutate: updateEverything, isPending: isSubmitting } = useMutation({
+    mutationFn: async () => {
+      const userData = {
         email: formData.email,
-        bio: formData.biography,
-        age: Number(formData.age),
+        first_name: formData.firstName,
+        last_name: formData.lastName
+      }
+
+      const profileData = {
+        age: Number(formData.age) || null,
+        name: `${formData.firstName} ${formData.lastName}`,
+        bio: formData.biography || null,
         gender: formData.gender,
         sexual_orientation: formData.sexualOrientation,
-        location: location || null,
-        tag_ids: selectedTags
+        location: location || null
       }
 
-      fd.append(
-        'profile',
-        new Blob([JSON.stringify(profileObj)], { type: 'application/json' })
-      )
-
-      const response = await fetch(
-        'https://api.example.com/v1/users/@me/profile', // Guessed endpoint
-        {
-          method: 'PUT',
-          credentials: 'include',
-          body: fd
-        }
-      )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Error ${response.status}: ${errorText}`)
-      }
-
-      alert('Profile updated successfully!')
-      setIsModified(false) // Reset modification flag after successful update
-    } catch (err: any) {
+      await api.v1.updateMe(userData)
+      await api.v1.updateMyProfile(profileData)
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Profile updated!',
+        description: 'Your profile has been successfully updated.'
+      })
+      setIsModified(false)
+      refreshUser()
+      refreshUserProfile()
+    },
+    onError: (err: any) => {
       setErrorMessage(
         err.message || 'An error occurred while updating the profile.'
       )
-    } finally {
-      setIsSubmitting(false)
     }
+  })
+
+  const uploadMutation = useMutation<
+    void,
+    unknown,
+    { file: File; index: number }
+  >({
+    mutationFn: async ({ file }) => {
+      const data: UploadProfilePictureForm = { picture: file }
+      return await api.v1.uploadProfilePicture(data)
+    },
+
+    onSuccess: async (_, { index }) => {
+      await refreshUserProfile()
+
+      if (!userProfile) return
+      const newUrls = userProfile.picture_urls
+      const oldSet = new Set(previousPictureUrls)
+      let newlyAddedUrl: string | null = null
+
+      for (const url of newUrls) {
+        if (!oldSet.has(url)) {
+          newlyAddedUrl = url
+          break
+        }
+      }
+      if (!newlyAddedUrl) return
+
+      const newOffset = userProfile.picture_urls.indexOf(newlyAddedUrl)
+
+      if (index === 0 && newOffset !== -1) {
+        await api.v1.setDefaultProfilePicture(newOffset)
+        await refreshUserProfile()
+      }
+    },
+
+    onError: (err: any) => {
+      console.error(err)
+      toast({
+        title: 'Upload failed',
+        description:
+          err.message || 'Something went wrong uploading the picture.',
+        variant: 'destructive'
+      })
+    }
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (offset: number) => {
+      return api.v1.deleteProfilePicture(offset)
+    },
+    onSuccess: async () => {
+      await refreshUserProfile()
+    },
+    onError: (err: any) => {
+      console.error(err)
+      toast({
+        title: 'Delete failed',
+        description:
+          err.message || 'Something went wrong deleting the picture.',
+        variant: 'destructive'
+      })
+    }
+  })
+
+  function handleSubmit() {
+    setErrorMessage('')
+    updateEverything()
   }
 
   function handleGetLocation() {
@@ -137,7 +236,7 @@ export function EditProfileForm() {
             firstName: user?.first_name || '',
             lastName: user?.last_name || '',
             email: user?.email || '',
-            age: userProfile?.age.toString() || '',
+            age: userProfile?.age?.toString() || '',
             biography: userProfile?.bio || '',
             gender: userProfile?.gender || Gender.Male,
             sexualOrientation:
@@ -160,7 +259,7 @@ export function EditProfileForm() {
             firstName: user?.first_name || '',
             lastName: user?.last_name || '',
             email: user?.email || '',
-            age: userProfile?.age.toString() || '',
+            age: userProfile?.age?.toString() || '',
             biography: userProfile?.bio || '',
             gender: userProfile?.gender || Gender.Male,
             sexualOrientation:
@@ -171,6 +270,58 @@ export function EditProfileForm() {
     })
   }
 
+  function handlePictureChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setPictures((prev) => {
+      const copy = [...prev]
+      if (copy[index].file && copy[index].preview) {
+        URL.revokeObjectURL(copy[index].preview)
+      }
+      copy[index] = {
+        file,
+        preview: URL.createObjectURL(file),
+        offset: copy[index].offset
+      }
+      return copy
+    })
+    setIsModified(true)
+
+    uploadMutation.mutate({ file, index })
+  }
+
+  function handleDeleteClick(index: number) {
+    return (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation()
+
+      setPictures((prev) => {
+        const copy = [...prev]
+        const pic = copy[index]
+
+        if (pic.file && pic.preview) {
+          URL.revokeObjectURL(pic.preview)
+        }
+        copy[index] = { file: null, preview: '', offset: null }
+        return copy
+      })
+
+      if (fileInputRefs.current[index]) {
+        fileInputRefs.current[index]!.value = ''
+      }
+
+      const offset = pictures[index].offset
+      if (offset !== null && offset !== undefined) {
+        deleteMutation.mutate(offset)
+      }
+
+      setIsModified(true)
+    }
+  }
+
   function toggleTag(tag: string) {
     setSelectedTags((prev) => {
       const updatedTags = prev.includes(tag)
@@ -178,32 +329,18 @@ export function EditProfileForm() {
         : [...prev, tag]
       setIsModified(
         JSON.stringify(updatedTags.sort()) !==
-          JSON.stringify(userProfile?.tags.map((tag) => tag.name).sort() || [])
+          JSON.stringify(userProfile?.tags.map((tg) => tg.name).sort() || [])
       )
       return updatedTags
     })
   }
 
-  function handlePictureChange(
-    e: React.ChangeEvent<HTMLInputElement>,
-    index: number
-  ) {
-    const file = e.target.files?.[0]
-    if (file) {
-      const preview = URL.createObjectURL(file)
-      setPictures((prev) => {
-        const copy = [...prev]
-        copy[index] = { file, preview }
-        setIsModified(true)
-        return copy
-      })
-    }
-  }
-
   return (
     <>
       <div className="mx-px flex flex-col gap-6 md:flex-row">
+        {/* Left side: form fields */}
         <div className="flex-1 space-y-4">
+          {/* First Name */}
           <div>
             <Label htmlFor="firstName">First Name</Label>
             <Input
@@ -214,6 +351,7 @@ export function EditProfileForm() {
             />
           </div>
 
+          {/* Last Name */}
           <div>
             <Label htmlFor="lastName">Last Name</Label>
             <Input
@@ -224,6 +362,7 @@ export function EditProfileForm() {
             />
           </div>
 
+          {/* Email */}
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -235,6 +374,7 @@ export function EditProfileForm() {
             />
           </div>
 
+          {/* Gender */}
           <div>
             <Label htmlFor="gender">Gender</Label>
             <Select
@@ -251,6 +391,7 @@ export function EditProfileForm() {
             </Select>
           </div>
 
+          {/* Sexual Orientation */}
           <div>
             <Label htmlFor="sexualOrientation">Preferred Partners</Label>
             <Select
@@ -270,6 +411,7 @@ export function EditProfileForm() {
             </Select>
           </div>
 
+          {/* Age */}
           <div>
             <Label htmlFor="age">Age</Label>
             <Input
@@ -281,6 +423,7 @@ export function EditProfileForm() {
             />
           </div>
 
+          {/* Biography */}
           <div>
             <Label htmlFor="biography">Biography</Label>
             <Textarea
@@ -291,6 +434,7 @@ export function EditProfileForm() {
             />
           </div>
 
+          {/* Interests / Tags */}
           <div>
             <Label>Interests</Label>
             <TagSelector selectedTags={selectedTags} onToggleTag={toggleTag} />
@@ -306,9 +450,10 @@ export function EditProfileForm() {
             </div>
           </div>
 
+          {/* Location */}
           <div className="flex flex-col gap-1">
             <Label>Your Location</Label>
-            <Button variant="outline" onClick={handleGetLocation}>
+            <Button size="sm" variant="outline" onClick={handleGetLocation}>
               Update My Location
             </Button>
             {location && (
@@ -318,27 +463,46 @@ export function EditProfileForm() {
             )}
           </div>
         </div>
-        <div className="grid h-fit flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
+
+        {/* Right side: pictures grid */}
+        <div className="grid h-fit w-fit grid-cols-1 gap-4 sm:grid-cols-2">
           {pictures.map((pic, index) => (
             <div
               key={index}
-              className="flex h-36 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed p-2 text-center"
+              className={`flex h-36 w-36 cursor-pointer flex-col items-center justify-center rounded-md ${
+                pic.preview
+                  ? ''
+                  : index === 0
+                    ? 'border-2 border-dashed border-primary'
+                    : 'border-2 border-dashed'
+              } text-center`}
               onClick={() =>
                 document.getElementById(`file-input-${index}`)?.click()
               }
             >
               {pic.preview ? (
-                <img
-                  src={pic.preview}
-                  alt={`Picture ${index + 1}`}
-                  className="h-full w-full rounded object-cover"
-                />
+                <div className="relative">
+                  <img
+                    src={pic.preview}
+                    alt={`Picture ${index + 1}`}
+                    className="h-36 w-full rounded-md object-cover"
+                  />
+                  <Button
+                    size="icon"
+                    className="absolute right-1 top-1 h-6 w-6 rounded-full"
+                    aria-label="Delete Picture"
+                    onClick={handleDeleteClick(index)}
+                  >
+                    <Trash className="!size-3" />
+                  </Button>
+                </div>
               ) : (
                 <span className="text-sm text-gray-500">
                   Picture {index + 1}
                 </span>
               )}
               <input
+                ref={(el) => (fileInputRefs.current[index] = el)}
                 id={`file-input-${index}`}
                 type="file"
                 accept="image/*"
@@ -349,14 +513,19 @@ export function EditProfileForm() {
           ))}
         </div>
       </div>
-      <Button
-        className="mt-6 w-full"
-        onClick={handleSubmit}
-        disabled={isSubmitting || !isModified}
-      >
-        Save Changes
-      </Button>
 
+      {/* Save Changes Button */}
+      <DialogClose asChild>
+        <Button
+          className="mt-6 w-full"
+          onClick={handleSubmit}
+          disabled={isSubmitting || !isModified}
+        >
+          Save Changes
+        </Button>
+      </DialogClose>
+
+      {/* Error Message */}
       {errorMessage && (
         <p className="mt-2 text-center text-xs text-red-600">{errorMessage}</p>
       )}

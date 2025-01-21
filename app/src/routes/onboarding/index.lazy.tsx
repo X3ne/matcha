@@ -320,7 +320,11 @@ export default function OnboardingPage() {
                 <div
                   key={index}
                   className={`flex h-36 w-36 cursor-pointer flex-col items-center justify-center rounded-md ${
-                    pic.preview ? '' : 'border-2 border-dashed'
+                    pic.preview
+                      ? ''
+                      : index === 0
+                        ? 'border-2 border-dashed border-primary'
+                        : 'border-2 border-dashed'
                   } text-center`}
                   onClick={() => fileInputRefs.current[index]?.click()}
                 >
