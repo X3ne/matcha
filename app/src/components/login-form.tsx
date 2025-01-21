@@ -14,7 +14,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogClose
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -66,25 +67,25 @@ export function LoginForm({
     handleCredentialsLogin({ username, password })
   }
 
-  // const { mutate: handlePasswordReset, isPending: isResetLoading } =
-  //   useMutation<void, Error, string>({
-  //     mutationFn: async (email) => {
-  //       await api.v1.resetPassword({ email })
-  //     },
-  //     onSuccess: () => {
-  //       toast({
-  //         title: 'Reset link sent!',
-  //         description: 'Please check your email.'
-  //       })
-  //     },
-  //     onError: (err) => {
-  //       console.error('Reset password error:', err)
-  //     }
-  //   })
+  const { mutate: handlePasswordReset, isPending: isResetLoading } =
+    useMutation<void, Error, string>({
+      mutationFn: async (email) => {
+        await api.v1.requestResetPassword({ email })
+      },
+      onSuccess: () => {
+        toast({
+          title: 'Reset link sent!',
+          description: 'Please check your email.'
+        })
+      },
+      onError: (err) => {
+        console.error('Reset password error:', err)
+      }
+    })
 
   const onSubmitReset = (e: React.FormEvent<HTMLFormElement>) => {
-    // e.preventDefault()
-    // handlePasswordReset(resetEmail)
+    e.preventDefault()
+    handlePasswordReset(resetEmail)
     toast({
       title: 'Reset link sent!',
       description: 'Please check your email.'
@@ -167,13 +168,16 @@ export function LoginForm({
                           />
                         </div>
                         <DialogFooter>
-                          <Button
-                            type="submit"
-                            // disabled={isResetLoading}
-                            className="w-full"
-                          >
-                            Send Reset Link
-                          </Button>
+                          <DialogClose asChild>
+                            <Button
+                              type="button"
+                              onClick={() => handlePasswordReset(resetEmail)}
+                              disabled={isResetLoading}
+                              className="w-full"
+                            >
+                              Send Reset Link
+                            </Button>
+                          </DialogClose>
                         </DialogFooter>
                       </form>
                     </DialogContent>
