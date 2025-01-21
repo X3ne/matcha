@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { ListFilter } from 'lucide-react'
@@ -37,9 +37,7 @@ function Search() {
   const [sortOption, setSortOption] = useState<UserProfileSortBy>(
     UserProfileSortBy.Distance
   )
-
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-
   const [isAdvancedSearch, setIsAdvancedSearch] = useState(false)
 
   const [filters, setFilters] = useState({
@@ -76,14 +74,6 @@ function Search() {
     })
   }
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [name]: value
-    }))
-  }
-
   const handleAdvancedSearchToggle = () => {
     setFilters({
       age: '',
@@ -99,11 +89,19 @@ function Search() {
     setIsAdvancedSearch((prev) => !prev)
   }
 
-  const { data: users = [], refetch } = useQuery({
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch
+  } = useInfiniteQuery({
     queryKey: ['users', activeFilters, sortOption],
-    retry: false,
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 0 }) => {
       const query: Record<string, any> = {
+        offset: pageParam,
         limit: 25,
         sort_by: sortOption,
         sort_order: SortOrder.Asc,
@@ -121,7 +119,6 @@ function Search() {
         ...(activeFilters.commonTags.length > 0 && {
           common_tags: activeFilters.commonTags
         }),
-
         ...(activeFilters.minAge && {
           min_age: parseInt(activeFilters.minAge)
         }),
@@ -142,19 +139,30 @@ function Search() {
       const response = await api.v1.searchProfile(query)
       return response.data
     },
-    enabled: true
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 25) {
+        return undefined
+      }
+      const totalFetchedSoFar = allPages.reduce(
+        (acc, page) => acc + page.length,
+        0
+      )
+      return totalFetchedSoFar
+    }
   })
 
   useEffect(() => {
     refetch()
-  }, [sortOption, refetch])
+  }, [sortOption, activeFilters, refetch])
 
   const applyFilters = () => {
     setActiveFilters(filters)
-    refetch()
     setIsDialogOpen(false)
     console.log('Filters applied:', filters, 'Sorting applied:', sortOption)
   }
+
+  const allUsers: UserProfile[] = data?.pages.flatMap((page) => page) || []
 
   return (
     <div className="container w-full px-0">
@@ -195,7 +203,6 @@ function Search() {
 
             {!isAdvancedSearch && (
               <div className="space-y-4">
-                {/* Single Age slider */}
                 <div>
                   <p className="mb-2 text-sm font-medium">Age</p>
                   <Slider
@@ -263,16 +270,14 @@ function Search() {
                     onToggleTag={handleToggleMultipleTag}
                   />
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {filters.multipleTags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                    {filters.multipleTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -335,16 +340,16 @@ function Search() {
                     min={0}
                     max={300}
                     step={5}
-                    onValueChange={(vals) => {
+                    onValueChange={(val) => {
                       setFilters((prev) => ({
                         ...prev,
-                        radius_km: vals[0].toString()
+                        radius_km: val[0].toString()
                       }))
                     }}
                     className={cn('w-full')}
                   />
                   <p className="mt-1 text-xs">
-                    {filters.radius_km || 0} km max
+                    Max Distance: {filters.radius_km || '0'} km
                   </p>
                 </div>
 
@@ -355,16 +360,14 @@ function Search() {
                     onToggleTag={handleToggleMultipleTag}
                   />
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {filters.multipleTags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                    {filters.multipleTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -380,11 +383,30 @@ function Search() {
         </Dialog>
       </div>
 
-      <div className="flex w-full flex-wrap justify-between gap-6">
-        {users.map((user) => (
-          <UserCard key={user.id} user={user} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : isError ? (
+        <div>Something went wrong. Please try again.</div>
+      ) : (
+        <>
+          <div className="flex w-full flex-wrap justify-between gap-6">
+            {allUsers.map((user) => (
+              <UserCard key={user.id} user={user} />
+            ))}
+          </div>
+
+          {hasNextPage && (
+            <div className="mt-6 flex justify-center">
+              <Button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
@@ -395,7 +417,6 @@ function UserCard({ user }: { user: UserProfile }) {
   const handleLikeClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
-
     setIsConfettiActive(true)
     setTimeout(() => {
       setIsConfettiActive(false)
