@@ -1,4 +1,4 @@
-import { Tag } from '@/api/spec'
+import { ProfileTag } from '@/api/spec'
 import { EditProfileForm } from '@/components/edit-profile-form'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -11,10 +11,21 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { UserContext } from '@/providers/userProvider'
 import { createLazyFileRoute } from '@tanstack/react-router'
-import { Heart, Mail, MapPin, Flame, Edit, Activity } from 'lucide-react'
+import {
+  Heart,
+  Mail,
+  MapPin,
+  Flame,
+  Edit,
+  Activity,
+  Eye,
+  MessageSquare,
+  ThumbsUp,
+  ThumbsDown
+} from 'lucide-react'
 import { useContext, useState } from 'react'
 
 export const Route = createLazyFileRoute('/profile/')({
@@ -25,6 +36,103 @@ function Profile() {
   const { user, userProfile } = useContext(UserContext)
   const [isActivityOpen, setIsActivityOpen] = useState(false)
   const [isEditProfileOpen, setEditProfileOpen] = useState(false)
+
+  type Notification = {
+    id: string
+    type: 'like' | 'view' | 'message' | 'match' | 'unlike'
+    content: string
+    timestamp: string
+  }
+
+  const mockNotifications: Notification[] = [
+    {
+      id: '1',
+      type: 'like',
+      content: 'John Doe liked your profile',
+      timestamp: '2023-04-20T10:30:00Z'
+    },
+    {
+      id: '2',
+      type: 'view',
+      content: 'Emma Doe viewed your profile',
+      timestamp: '2023-04-19T15:45:00Z'
+    },
+    {
+      id: '3',
+      type: 'message',
+      content: 'You have a new message from Sarah',
+      timestamp: '2023-04-18T09:15:00Z'
+    },
+    {
+      id: '4',
+      type: 'match',
+      content: 'You and Emily are a match!',
+      timestamp: '2023-04-17T14:20:00Z'
+    },
+    {
+      id: '5',
+      type: 'unlike',
+      content: 'Mike unliked your profile',
+      timestamp: '2023-04-16T11:10:00Z'
+    },
+    {
+      id: '5',
+      type: 'unlike',
+      content: 'Mike unliked your profile',
+      timestamp: '2023-04-16T11:10:00Z'
+    },
+    {
+      id: '5',
+      type: 'unlike',
+      content: 'Mike unliked your profile',
+      timestamp: '2023-04-16T11:10:00Z'
+    },
+    {
+      id: '5',
+      type: 'unlike',
+      content: 'Mike unliked your profile',
+      timestamp: '2023-04-16T11:10:00Z'
+    },
+    {
+      id: '5',
+      type: 'unlike',
+      content: 'Mike unliked your profile',
+      timestamp: '2023-04-16T11:10:00Z'
+    },
+    {
+      id: '5',
+      type: 'unlike',
+      content: 'Mike unliked your profile',
+      timestamp: '2023-04-16T11:10:00Z'
+    },
+    {
+      id: '5',
+      type: 'unlike',
+      content: 'Mike unliked your profile',
+      timestamp: '2023-04-16T11:10:00Z'
+    },
+    {
+      id: '5',
+      type: 'unlike',
+      content: 'Mike unliked your profile',
+      timestamp: '2023-04-16T11:10:00Z'
+    }
+  ]
+
+  const NotificationIcon = ({ type }: { type: Notification['type'] }) => {
+    switch (type) {
+      case 'like':
+        return <Heart className="h-4 w-4 text-red-500" />
+      case 'view':
+        return <Eye className="h-4 w-4 text-blue-500" />
+      case 'message':
+        return <MessageSquare className="h-4 w-4 text-green-500" />
+      case 'match':
+        return <ThumbsUp className="h-4 w-4 text-purple-500" />
+      case 'unlike':
+        return <ThumbsDown className="h-4 w-4 text-yellow-500" />
+    }
+  }
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
@@ -92,39 +200,31 @@ function Profile() {
                       Recent profile views and likes
                     </DialogDescription>
                   </DialogHeader>
-                  <ScrollArea className="mt-4 max-h-[60vh]">
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="mb-2 text-sm font-semibold">
-                          Profile Views
-                        </h4>
-                        {/* {userProfile?.views.map((view) => (
-                          <div
-                            key={view.id}
-                            className="mb-2 flex items-center justify-between text-xs"
-                          >
-                            <span>{view.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(view.date).toLocaleString()}
-                            </span>
+                  <ScrollArea className="mt-4 max-h-[80vh]">
+                    {mockNotifications.length === 0 ? (
+                      <p className="py-4 text-center text-gray-500">
+                        No notifications
+                      </p>
+                    ) : (
+                      mockNotifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={'flex items-start py-3'}
+                        >
+                          <div className="mr-3 flex-shrink-0">
+                            <NotificationIcon type={notification.type} />
                           </div>
-                        ))} */}
-                      </div>
-                      <div>
-                        <h4 className="mb-2 text-sm font-semibold">Likes</h4>
-                        {/* {userProfile?.likes.map((like) => (
-                          <div
-                            key={like.id}
-                            className="mb-2 flex items-center justify-between text-xs"
-                          >
-                            <span>{like.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(like.date).toLocaleString()}
-                            </span>
+                          <div className="flex-grow">
+                            <p className="text-sm">{notification.content}</p>
+                            <p className="mt-1 text-xs text-gray-500">
+                              {new Date(
+                                notification.timestamp
+                              ).toLocaleString()}
+                            </p>
                           </div>
-                        ))} */}
-                      </div>
-                    </div>
+                        </div>
+                      ))
+                    )}
                   </ScrollArea>
                 </DialogContent>
               </Dialog>
@@ -161,7 +261,7 @@ function Profile() {
           <div className="text-center md:text-left">
             <h3 className="mb-2 font-semibold">Interests</h3>
             <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-              {userProfile?.tags?.map((tag: Tag) => (
+              {userProfile?.tags?.map((tag: ProfileTag) => (
                 <div
                   key={tag.id}
                   className="inline-flex items-center rounded-full border border-white/20 bg-black/80 px-2.5 py-1 text-[8px] font-normal text-white"
@@ -174,17 +274,18 @@ function Profile() {
 
           <div className="text-center md:text-left">
             <h3 className="mb-2 font-semibold">Photos</h3>
-            <ScrollArea className="flex space-x-2 overflow-x-auto pb-2">
-              {/* {userProfile?.images
-                ?.slice(1)
-                .map((imgUrl, i) => (
+            <ScrollArea className="">
+              <div className="flex gap-2 pb-3">
+                {userProfile?.picture_urls.map((imgUrl, i) => (
                   <img
                     key={i}
-                    className="h-28 w-28 rounded-md object-cover"
-                    src={imgUrl}
+                    className="h-32 w-32 rounded-md object-cover"
+                    src={import.meta.env.VITE_API_URL + imgUrl}
                     alt={`Additional photo ${i + 1}`}
                   />
-                ))} */}
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </div>
         </CardContent>
