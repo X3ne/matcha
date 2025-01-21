@@ -1,6 +1,6 @@
 import api from '@/api'
+import { ProfileTag } from '@/api/spec'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -88,29 +88,30 @@ function Profile() {
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow md:max-w-2xl">
+      <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow md:max-w-xl">
         <CardContent className="space-y-8 p-6">
           <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between md:space-x-4">
             <div className="flex flex-col items-center md:flex-row md:items-center md:space-x-4">
-              <Avatar className="mx-auto h-20 w-20">
+              <Avatar className="h-20 w-20 border border-gray-300">
                 <AvatarImage
                   className="object-cover"
-                  src="https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg"
-                  alt={userProfile?.name}
+                  src={import.meta.env.VITE_API_URL + userProfile?.avatar_url}
+                  alt={userProfile?.name ?? 'Profile picture'}
                 />
                 <AvatarFallback>
-                  {/* {userProfile?.name
-                    .split(' ')
+                  {userProfile?.name
+                    ?.split(' ')
                     .map((n) => n[0])
-                    .join('')} */}
+                    .join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="text-center md:text-left">
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-medium">
                   {userProfile?.name}, {userProfile?.age}
                 </h2>
-                <p className="text-xs text-gray-500">
-                  {/* {userProfile?.gender} • {userProfile?.sexualPreferences} */}
+                <p className="text-[10px] text-gray-500">
+                  {/* Last seen: {new Date(userProfile?.lastOnline).toLocaleString()} */}
+                  Last seen: 2 hours ago
                 </p>
                 <div className="mt-2">
                   {/* {!userProfile?.isOnline && (
@@ -135,7 +136,7 @@ function Profile() {
                     : ''
                 }`}
               >
-                <Heart className="h-4 w-4" />
+                <Heart className="h-4 w-4" /> Like
                 {/* {userProfile?.isLikedByCurrentUser ? 'Unlike' : 'Like'} */}
               </Button>
               {/* Dialog for Report */}
@@ -194,49 +195,49 @@ function Profile() {
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-around gap-2 text-center text-xs text-gray-500">
+          <div className="flex flex-wrap justify-around gap-2 text-center text-xs text-gray-600">
             <div>
-              <MapPin className="mr-1 inline-block h-4 w-4" />
-              <span>{userProfile?.approx_distance_km} away</span>
+              <MapPin className="mr-1 inline-block h-4 w-4 text-primary" />
+              <span>{userProfile?.approx_distance_km} km away</span>
             </div>
             <div>
-              <Eye className="mr-1 inline-block h-4 w-4" />
+              <Eye className="mr-1 inline-block h-4 w-4 text-primary" />
               {/* <span>{userProfile?.profileViewCount} views</span> */}
               <span>166 views</span>
             </div>
             <div>
-              <Heart className="mr-1 inline-block h-4 w-4" />
+              <Heart className="mr-1 inline-block h-4 w-4 text-primary" />
               {/* <span>{userProfile?.likeCount} likes</span> */}
               <span>22 likes</span>
             </div>
             <div>
-              <Flame className="mr-1 inline-block h-4 w-4" />
+              <Flame className="mr-1 inline-block h-4 w-4 text-primary" />
               {/* <span>{userProfile?.fameRating} fame</span> */}
               <span>10 fame</span>
             </div>
           </div>
 
           <div className="text-center md:text-left">
-            <h3 className="mb-2 font-semibold">About Me</h3>
-            <p className="text-sm">{userProfile?.bio}</p>
+            <h3 className="mb-2 font-medium">About Me</h3>
+            <p className="text-sm text-gray-600">{userProfile?.bio}</p>
           </div>
 
           <div className="text-center md:text-left">
-            <h3 className="mb-2 font-semibold">Interests</h3>
+            <h3 className="mb-2 font-medium">Interests</h3>
             <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-              {/* {userProfile?.interests.map((interest, index) => (
+              {userProfile?.tags?.map((tag: ProfileTag) => (
                 <div
-                  key={index}
+                  key={tag.id}
                   className="inline-flex items-center rounded-full border border-white/20 bg-black/80 px-2.5 py-1 text-[8px] font-normal text-white"
                 >
-                  {interest}
+                  {tag.name}
                 </div>
-              ))} */}
+              ))}
             </div>
           </div>
 
           <div className="text-center md:text-left">
-            <h3 className="mb-2 font-semibold">Photos</h3>
+            <h3 className="mb-2 font-medium">Photos</h3>
             <ScrollArea className="">
               <div className="flex gap-2 pb-3">
                 {userProfile?.picture_urls.map((imgUrl, i) => (

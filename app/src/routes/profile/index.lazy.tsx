@@ -17,7 +17,6 @@ import { createLazyFileRoute } from '@tanstack/react-router'
 import {
   Heart,
   Mail,
-  MapPin,
   Flame,
   Edit,
   Activity,
@@ -74,48 +73,6 @@ function Profile() {
       type: 'unlike',
       content: 'Mike unliked your profile',
       timestamp: '2023-04-16T11:10:00Z'
-    },
-    {
-      id: '5',
-      type: 'unlike',
-      content: 'Mike unliked your profile',
-      timestamp: '2023-04-16T11:10:00Z'
-    },
-    {
-      id: '5',
-      type: 'unlike',
-      content: 'Mike unliked your profile',
-      timestamp: '2023-04-16T11:10:00Z'
-    },
-    {
-      id: '5',
-      type: 'unlike',
-      content: 'Mike unliked your profile',
-      timestamp: '2023-04-16T11:10:00Z'
-    },
-    {
-      id: '5',
-      type: 'unlike',
-      content: 'Mike unliked your profile',
-      timestamp: '2023-04-16T11:10:00Z'
-    },
-    {
-      id: '5',
-      type: 'unlike',
-      content: 'Mike unliked your profile',
-      timestamp: '2023-04-16T11:10:00Z'
-    },
-    {
-      id: '5',
-      type: 'unlike',
-      content: 'Mike unliked your profile',
-      timestamp: '2023-04-16T11:10:00Z'
-    },
-    {
-      id: '5',
-      type: 'unlike',
-      content: 'Mike unliked your profile',
-      timestamp: '2023-04-16T11:10:00Z'
     }
   ]
 
@@ -136,11 +93,11 @@ function Profile() {
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow md:max-w-2xl">
+      <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow md:max-w-xl">
         <CardContent className="space-y-8 p-6">
           <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between md:space-x-4">
             <div className="flex flex-col items-center md:flex-row md:items-center md:space-x-4">
-              <Avatar className="h-20 w-20">
+              <Avatar className="h-20 w-20 border">
                 <AvatarImage
                   className="object-cover"
                   src={import.meta.env.VITE_API_URL + userProfile?.avatar_url}
@@ -154,11 +111,12 @@ function Profile() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-medium">
                   {userProfile?.name}, {userProfile?.age}
                 </h2>
-                <p className="text-xs text-gray-500">
-                  {userProfile?.gender} • {userProfile?.sexual_orientation}
+                <p className="text-[11px] text-gray-500">
+                  {/* {userProfile?.gender} • {userProfile?.sexual_orientation} */}
+                  @{user?.username}
                 </p>
               </div>
             </div>
@@ -231,35 +189,35 @@ function Profile() {
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-around gap-2 text-center text-xs text-gray-500">
+          <div className="flex flex-wrap justify-around gap-2 text-center text-xs text-gray-600">
             <div>
-              <MapPin className="mr-1 inline-block h-4 w-4" />
-              {/* <span>{userProfile?.location}</span> */}
-              <span>Lyon</span>
-            </div>
-            <div>
-              <Mail className="mr-1 inline-block h-4 w-4" />
+              <Mail className="mr-1 inline-block h-4 w-4 text-primary" />
               <span>{user?.email}</span>
             </div>
             <div>
-              <Heart className="mr-1 inline-block h-4 w-4" />
+              <Eye className="mr-1 inline-block h-4 w-4 text-primary" />
+              {/* <span>{userProfile?.profileViewCount} views</span> */}
+              <span>166 views</span>
+            </div>
+            <div>
+              <Heart className="mr-1 inline-block h-4 w-4 text-primary" />
               {/* <span>{userProfile?.likeCount} likes</span> */}
               <span>20 likes</span>
             </div>
             <div>
-              <Flame className="mr-1 inline-block h-4 w-4" />
+              <Flame className="mr-1 inline-block h-4 w-4 text-primary" />
               {/* <span>{userProfile?.fameRating} fame</span> */}
               <span>56 fame</span>
             </div>
           </div>
 
           <div className="text-center md:text-left">
-            <h3 className="mb-2 font-semibold">About Me</h3>
-            <p className="text-sm">{userProfile?.bio}</p>
+            <h3 className="mb-2 font-medium">About Me</h3>
+            <p className="text-sm text-gray-600">{userProfile?.bio}</p>
           </div>
 
           <div className="text-center md:text-left">
-            <h3 className="mb-2 font-semibold">Interests</h3>
+            <h3 className="mb-2 font-medium">Interests</h3>
             <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
               {userProfile?.tags?.map((tag: ProfileTag) => (
                 <div
@@ -273,7 +231,7 @@ function Profile() {
           </div>
 
           <div className="text-center md:text-left">
-            <h3 className="mb-2 font-semibold">Photos</h3>
+            <h3 className="mb-2 font-medium">Photos</h3>
             <ScrollArea className="">
               <div className="flex gap-2 pb-3">
                 {userProfile?.picture_urls.map((imgUrl, i) => (

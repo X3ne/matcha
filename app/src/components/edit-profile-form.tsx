@@ -444,7 +444,7 @@ export function EditProfileForm() {
                   key={tag}
                   className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
                 >
-                  #{tag}
+                  {tag}
                 </span>
               ))}
             </div>

@@ -1,6 +1,5 @@
 import api from '@/api'
 import { UserProfileSortBy, UserProfile, SortOrder } from '@/api/spec'
-// Import the TagSelector component
 import TagSelector from '@/components/tag-selector'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,7 +12,6 @@ import {
   DialogTrigger,
   DialogFooter
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -26,47 +24,38 @@ import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { createLazyFileRoute } from '@tanstack/react-router'
+import { ListFilter } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { FaMapMarkerAlt } from 'react-icons/fa'
-import { FaHeart, FaFire, FaFilter } from 'react-icons/fa6'
+import { FaHeart, FaFire } from 'react-icons/fa6'
 
 export const Route = createLazyFileRoute('/search/')({
   component: Search
 })
 
 function Search() {
-  // Which sorting method is selected?
   const [sortOption, setSortOption] = useState<UserProfileSortBy>(
     UserProfileSortBy.Distance
   )
 
-  // Whether the dialog with filters is open
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  // Whether we're in "advanced search" mode vs "basic search"
   const [isAdvancedSearch, setIsAdvancedSearch] = useState(false)
 
-  /**
-   * Filters state. Notice:
-   * - `commonTags` and `multipleTags` are now arrays of strings
-   *   (instead of comma-separated strings)
-   */
   const [filters, setFilters] = useState({
     age: '',
     radius_km: '',
     fameRating: '',
-    commonTags: [] as string[], // For basic search
+    commonTags: [] as string[],
     minAge: '',
     maxAge: '',
     minFame: '',
     maxFame: '',
-    multipleTags: [] as string[] // For advanced search
+    multipleTags: [] as string[]
   })
 
-  // The filters we actually apply when "Apply Filters" is clicked
   const [activeFilters, setActiveFilters] = useState(filters)
 
-  // Helper for toggling a tag in the `commonTags` array (basic)
   const handleToggleCommonTag = (tag: string) => {
     setFilters((prev) => {
       const alreadySelected = prev.commonTags.includes(tag)
@@ -77,7 +66,6 @@ function Search() {
     })
   }
 
-  // Helper for toggling a tag in the `multipleTags` array (advanced)
   const handleToggleMultipleTag = (tag: string) => {
     setFilters((prev) => {
       const alreadySelected = prev.multipleTags.includes(tag)
@@ -88,7 +76,6 @@ function Search() {
     })
   }
 
-  // Input change handler (for text fields only)
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFilters((prevFilters) => ({
@@ -97,7 +84,6 @@ function Search() {
     }))
   }
 
-  // Toggles between basic and advanced search and resets all fields
   const handleAdvancedSearchToggle = () => {
     setFilters({
       age: '',
@@ -113,7 +99,6 @@ function Search() {
     setIsAdvancedSearch((prev) => !prev)
   }
 
-  // Query: fetch user profiles with current active filters + sort
   const { data: users = [], refetch } = useQuery({
     queryKey: ['users', activeFilters, sortOption],
     retry: false,
@@ -122,7 +107,6 @@ function Search() {
         limit: 25,
         sort_by: sortOption,
         sort_order: SortOrder.Asc,
-        // Basic search: single values
         ...(activeFilters.age && {
           min_age: parseInt(activeFilters.age),
           max_age: parseInt(activeFilters.age)
@@ -134,12 +118,10 @@ function Search() {
         ...(activeFilters.radius_km && {
           radius_km: parseInt(activeFilters.radius_km)
         }),
-        // Basic search: tags (commonTags)
         ...(activeFilters.commonTags.length > 0 && {
           common_tags: activeFilters.commonTags
         }),
 
-        // Advanced search: range values
         ...(activeFilters.minAge && {
           min_age: parseInt(activeFilters.minAge)
         }),
@@ -152,7 +134,6 @@ function Search() {
         ...(activeFilters.maxFame && {
           max_fame_rating: parseInt(activeFilters.maxFame)
         }),
-        // Advanced search: multipleTags
         ...(activeFilters.multipleTags.length > 0 && {
           tag_ids: activeFilters.multipleTags
         })
@@ -164,12 +145,10 @@ function Search() {
     enabled: true
   })
 
-  // Refetch whenever the user changes the sort dropdown
   useEffect(() => {
     refetch()
   }, [sortOption, refetch])
 
-  // Apply current filters to the "activeFilters" and close the dialog
   const applyFilters = () => {
     setActiveFilters(filters)
     refetch()
@@ -180,7 +159,6 @@ function Search() {
   return (
     <div className="container w-full px-0">
       <div className="mb-4 flex justify-between">
-        {/* Sorting dropdown */}
         <Select
           onValueChange={(value) => {
             setSortOption(value as UserProfileSortBy)
@@ -198,15 +176,14 @@ function Search() {
           </SelectContent>
         </Select>
 
-        {/* Filter Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="secondary" onClick={() => setIsDialogOpen(true)}>
-              <FaFilter /> Filter
+            <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
+              <ListFilter /> Filter
             </Button>
           </DialogTrigger>
 
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Filter Users</DialogTitle>
               <DialogDescription className="text-xs">
@@ -216,7 +193,6 @@ function Search() {
               </DialogDescription>
             </DialogHeader>
 
-            {/* BASIC SEARCH */}
             {!isAdvancedSearch && (
               <div className="space-y-4">
                 {/* Single Age slider */}
@@ -240,7 +216,6 @@ function Search() {
                   </p>
                 </div>
 
-                {/* Single Fame slider */}
                 <div>
                   <p className="mb-2 text-sm font-medium">Fame Rating</p>
                   <Slider
@@ -261,7 +236,6 @@ function Search() {
                   </p>
                 </div>
 
-                {/* Single Distance slider */}
                 <div>
                   <p className="mb-2 text-sm font-medium">Distance (km)</p>
                   <Slider
@@ -282,7 +256,6 @@ function Search() {
                   </p>
                 </div>
 
-                {/* TagSelector for basic tags (commonTags) */}
                 <div>
                   <p className="mb-2 text-sm font-medium">Multiple Tags</p>
                   <TagSelector
@@ -305,10 +278,8 @@ function Search() {
               </div>
             )}
 
-            {/* ADVANCED SEARCH */}
             {isAdvancedSearch && (
               <div className="space-y-4">
-                {/* Double Age slider */}
                 <div>
                   <p className="mb-2 text-sm font-medium">Age Range</p>
                   <Slider
@@ -333,7 +304,6 @@ function Search() {
                   </p>
                 </div>
 
-                {/* Double Fame slider */}
                 <div>
                   <p className="mb-2 text-sm font-medium">Fame Rating Range</p>
                   <Slider
@@ -358,7 +328,6 @@ function Search() {
                   </p>
                 </div>
 
-                {/* Single Distance slider */}
                 <div>
                   <p className="mb-2 text-sm font-medium">Distance (km)</p>
                   <Slider
@@ -379,7 +348,6 @@ function Search() {
                   </p>
                 </div>
 
-                {/* TagSelector for advanced tags (multipleTags) */}
                 <div>
                   <p className="mb-2 text-sm font-medium">Multiple Tags</p>
                   <TagSelector
@@ -412,7 +380,6 @@ function Search() {
         </Dialog>
       </div>
 
-      {/* Render the fetched user list */}
       <div className="flex w-full flex-wrap justify-between gap-6">
         {users.map((user) => (
           <UserCard key={user.id} user={user} />
@@ -422,10 +389,6 @@ function Search() {
   )
 }
 
-/**
- * Card component for displaying each user.
- * This remains unchanged from your original code.
- */
 function UserCard({ user }: { user: UserProfile }) {
   const [isConfettiActive, setIsConfettiActive] = useState(false)
 
