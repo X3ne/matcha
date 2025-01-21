@@ -18,6 +18,7 @@ import { Route as rootRoute } from './routes/__root'
 
 const IndexLazyImport = createFileRoute('/')()
 const SearchIndexLazyImport = createFileRoute('/search/')()
+const ResetPasswordIndexLazyImport = createFileRoute('/reset-password/')()
 const RegisterIndexLazyImport = createFileRoute('/register/')()
 const ProfileIndexLazyImport = createFileRoute('/profile/')()
 const OnboardingIndexLazyImport = createFileRoute('/onboarding/')()
@@ -41,6 +42,14 @@ const SearchIndexLazyRoute = SearchIndexLazyImport.update({
   path: '/search/',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/search/index.lazy').then((d) => d.Route))
+
+const ResetPasswordIndexLazyRoute = ResetPasswordIndexLazyImport.update({
+  id: '/reset-password/',
+  path: '/reset-password/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/reset-password/index.lazy').then((d) => d.Route),
+)
 
 const RegisterIndexLazyRoute = RegisterIndexLazyImport.update({
   id: '/register/',
@@ -180,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterIndexLazyImport
       parentRoute: typeof rootRoute
     }
+    '/reset-password/': {
+      id: '/reset-password/'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/search/': {
       id: '/search/'
       path: '/search'
@@ -203,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingIndexLazyRoute
   '/profile': typeof ProfileIndexLazyRoute
   '/register': typeof RegisterIndexLazyRoute
+  '/reset-password': typeof ResetPasswordIndexLazyRoute
   '/search': typeof SearchIndexLazyRoute
 }
 
@@ -217,6 +234,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingIndexLazyRoute
   '/profile': typeof ProfileIndexLazyRoute
   '/register': typeof RegisterIndexLazyRoute
+  '/reset-password': typeof ResetPasswordIndexLazyRoute
   '/search': typeof SearchIndexLazyRoute
 }
 
@@ -232,6 +250,7 @@ export interface FileRoutesById {
   '/onboarding/': typeof OnboardingIndexLazyRoute
   '/profile/': typeof ProfileIndexLazyRoute
   '/register/': typeof RegisterIndexLazyRoute
+  '/reset-password/': typeof ResetPasswordIndexLazyRoute
   '/search/': typeof SearchIndexLazyRoute
 }
 
@@ -248,6 +267,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/register'
+    | '/reset-password'
     | '/search'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -261,6 +281,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/register'
+    | '/reset-password'
     | '/search'
   id:
     | '__root__'
@@ -274,6 +295,7 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/profile/'
     | '/register/'
+    | '/reset-password/'
     | '/search/'
   fileRoutesById: FileRoutesById
 }
@@ -289,6 +311,7 @@ export interface RootRouteChildren {
   OnboardingIndexLazyRoute: typeof OnboardingIndexLazyRoute
   ProfileIndexLazyRoute: typeof ProfileIndexLazyRoute
   RegisterIndexLazyRoute: typeof RegisterIndexLazyRoute
+  ResetPasswordIndexLazyRoute: typeof ResetPasswordIndexLazyRoute
   SearchIndexLazyRoute: typeof SearchIndexLazyRoute
 }
 
@@ -303,6 +326,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingIndexLazyRoute: OnboardingIndexLazyRoute,
   ProfileIndexLazyRoute: ProfileIndexLazyRoute,
   RegisterIndexLazyRoute: RegisterIndexLazyRoute,
+  ResetPasswordIndexLazyRoute: ResetPasswordIndexLazyRoute,
   SearchIndexLazyRoute: SearchIndexLazyRoute,
 }
 
@@ -326,6 +350,7 @@ export const routeTree = rootRoute
         "/onboarding/",
         "/profile/",
         "/register/",
+        "/reset-password/",
         "/search/"
       ]
     },
@@ -358,6 +383,9 @@ export const routeTree = rootRoute
     },
     "/register/": {
       "filePath": "register/index.lazy.tsx"
+    },
+    "/reset-password/": {
+      "filePath": "reset-password/index.lazy.tsx"
     },
     "/search/": {
       "filePath": "search/index.lazy.tsx"

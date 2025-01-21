@@ -13,7 +13,7 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { useEffect } from 'react'
 
-const AllowedRoutes = ['/login', '/register']
+const AllowedRoutes = ['/login', '/register', '/reset-password']
 
 export const Route = createRootRoute({
   component: Root
