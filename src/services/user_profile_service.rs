@@ -10,6 +10,7 @@ use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
 use crate::infrastructure::repositories::user_profile_repo::PgUserProfileRepository;
 use crate::shared::types::snowflake::Snowflake;
+use crate::shared::utils::fame::FameCalculator;
 
 #[derive(Clone)]
 pub struct UserProfileServiceImpl {
@@ -153,10 +154,17 @@ impl UserProfileService for UserProfileServiceImpl {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn add_like(&self, profile_id: Snowflake, liked_profile_id: Snowflake) -> Result<(), UserProfileError> {
+    async fn add_like(&self, profile: &UserProfile, liked_profile_id: Snowflake) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
-        PgUserProfileRepository::add_like(&mut *tx, profile_id, liked_profile_id).await?;
+        let liked_profile = PgUserProfileRepository::get_by_id(&mut *tx, liked_profile_id).await?;
+
+        PgUserProfileRepository::add_like(&mut *tx, profile.id, liked_profile_id).await?;
+
+        let fame_multiplier = FameCalculator::calculate_fame_multiplier(profile.rating);
+        let fame_increase = FameCalculator::calculate_fame(liked_profile.rating, fame_multiplier);
+
+        PgUserProfileRepository::increase_fame_rating(&mut *tx, liked_profile_id, fame_increase).await?;
 
         tx.commit().await?;
 
@@ -167,7 +175,14 @@ impl UserProfileService for UserProfileServiceImpl {
     async fn remove_like(&self, profile_id: Snowflake, liked_profile_id: Snowflake) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
+        let liked_profile = PgUserProfileRepository::get_by_id(&mut *tx, liked_profile_id).await?;
+
         PgUserProfileRepository::remove_like(&mut *tx, profile_id, liked_profile_id).await?;
+
+        let fame_multiplier = FameCalculator::calculate_fame_multiplier(liked_profile.rating);
+        let fame_decrease = FameCalculator::calculate_fame(liked_profile.rating, fame_multiplier);
+
+        PgUserProfileRepository::decrease_fame_rating(&mut *tx, liked_profile_id, fame_decrease).await?;
 
         tx.commit().await?;
 

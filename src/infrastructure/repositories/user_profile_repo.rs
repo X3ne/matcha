@@ -698,4 +698,46 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         Ok(profiles.into_iter().map(|profile| profile.into()).collect())
     }
+
+    async fn increase_fame_rating<'a, A>(conn: A, profile_id: Snowflake, rating: i32) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE user_profile
+            SET rating = rating + $2
+            WHERE id = $1
+            "#,
+            profile_id.as_i64(),
+            rating
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    async fn decrease_fame_rating<'a, A>(conn: A, profile_id: Snowflake, rating: i32) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE user_profile
+            SET rating = rating - $2
+            WHERE id = $1
+            "#,
+            profile_id.as_i64(),
+            rating
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
 }

@@ -454,7 +454,7 @@ pub async fn like_user_profile(
     let profile_id = profile_id.into_inner();
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
-    let _ = user_profile_service.add_like(profile.id, profile_id).await?;
+    let _ = user_profile_service.add_like(&profile, profile_id).await?;
 
     Ok(NoContent)
 }

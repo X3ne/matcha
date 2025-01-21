@@ -1,3 +1,4 @@
+pub mod fame;
 pub mod validation;
 
 use geo::{Distance, Haversine};
