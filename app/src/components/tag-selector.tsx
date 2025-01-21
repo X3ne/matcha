@@ -1,6 +1,5 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -76,7 +75,7 @@ export default function TagSelector({
                 }`}
                 onClick={() => onToggleTag(tag)}
               >
-                #{tag}
+                {tag}
               </div>
             ))}
           </div>

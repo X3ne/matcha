@@ -1,5 +1,7 @@
 import api from '@/api'
 import { UserProfileSortBy, UserProfile, SortOrder } from '@/api/spec'
+// Import the TagSelector component
+import TagSelector from '@/components/tag-selector'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,9 +21,11 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
+import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
-import { createLazyFileRoute } from '@tanstack/react-router'
 import { Link } from '@tanstack/react-router'
+import { createLazyFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { FaMapMarkerAlt } from 'react-icons/fa'
 import { FaHeart, FaFire, FaFilter } from 'react-icons/fa6'
@@ -31,26 +35,61 @@ export const Route = createLazyFileRoute('/search/')({
 })
 
 function Search() {
+  // Which sorting method is selected?
   const [sortOption, setSortOption] = useState<UserProfileSortBy>(
     UserProfileSortBy.Distance
   )
+
+  // Whether the dialog with filters is open
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  // Whether we're in "advanced search" mode vs "basic search"
   const [isAdvancedSearch, setIsAdvancedSearch] = useState(false)
+
+  /**
+   * Filters state. Notice:
+   * - `commonTags` and `multipleTags` are now arrays of strings
+   *   (instead of comma-separated strings)
+   */
   const [filters, setFilters] = useState({
     age: '',
-    location: '',
+    radius_km: '',
     fameRating: '',
-    commonTags: '',
+    commonTags: [] as string[], // For basic search
     minAge: '',
     maxAge: '',
     minFame: '',
     maxFame: '',
-    multipleTags: ''
+    multipleTags: [] as string[] // For advanced search
   })
 
+  // The filters we actually apply when "Apply Filters" is clicked
   const [activeFilters, setActiveFilters] = useState(filters)
 
-  const handleFilterChange = (e) => {
+  // Helper for toggling a tag in the `commonTags` array (basic)
+  const handleToggleCommonTag = (tag: string) => {
+    setFilters((prev) => {
+      const alreadySelected = prev.commonTags.includes(tag)
+      const newTags = alreadySelected
+        ? prev.commonTags.filter((t) => t !== tag)
+        : [...prev.commonTags, tag]
+      return { ...prev, commonTags: newTags }
+    })
+  }
+
+  // Helper for toggling a tag in the `multipleTags` array (advanced)
+  const handleToggleMultipleTag = (tag: string) => {
+    setFilters((prev) => {
+      const alreadySelected = prev.multipleTags.includes(tag)
+      const newTags = alreadySelected
+        ? prev.multipleTags.filter((t) => t !== tag)
+        : [...prev.multipleTags, tag]
+      return { ...prev, multipleTags: newTags }
+    })
+  }
+
+  // Input change handler (for text fields only)
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFilters((prevFilters) => ({
       ...prevFilters,
@@ -58,21 +97,23 @@ function Search() {
     }))
   }
 
+  // Toggles between basic and advanced search and resets all fields
   const handleAdvancedSearchToggle = () => {
     setFilters({
       age: '',
-      location: '',
+      radius_km: '',
       fameRating: '',
-      commonTags: '',
+      commonTags: [],
       minAge: '',
       maxAge: '',
       minFame: '',
       maxFame: '',
-      multipleTags: ''
+      multipleTags: []
     })
     setIsAdvancedSearch((prev) => !prev)
   }
 
+  // Query: fetch user profiles with current active filters + sort
   const { data: users = [], refetch } = useQuery({
     queryKey: ['users', activeFilters, sortOption],
     retry: false,
@@ -80,37 +121,40 @@ function Search() {
       const query: Record<string, any> = {
         limit: 25,
         sort_by: sortOption,
+        sort_order: SortOrder.Asc,
+        // Basic search: single values
         ...(activeFilters.age && {
           min_age: parseInt(activeFilters.age),
           max_age: parseInt(activeFilters.age)
         }),
-        sort_order: SortOrder.Desc,
         ...(activeFilters.fameRating && {
           min_fame_rating: parseInt(activeFilters.fameRating),
           max_fame_rating: parseInt(activeFilters.fameRating)
         }),
-        ...(activeFilters.location && { location: activeFilters.location }),
-        ...(activeFilters.commonTags && {
+        ...(activeFilters.radius_km && {
+          radius_km: parseInt(activeFilters.radius_km)
+        }),
+        // Basic search: tags (commonTags)
+        ...(activeFilters.commonTags.length > 0 && {
           common_tags: activeFilters.commonTags
-            .split(',')
-            .map((tag) => tag.trim())
+        }),
+
+        // Advanced search: range values
+        ...(activeFilters.minAge && {
+          min_age: parseInt(activeFilters.minAge)
         }),
         ...(activeFilters.maxAge && {
           max_age: parseInt(activeFilters.maxAge)
         }),
-        ...(activeFilters.minAge && {
-          min_age: parseInt(activeFilters.minAge)
+        ...(activeFilters.minFame && {
+          min_fame_rating: parseInt(activeFilters.minFame)
         }),
         ...(activeFilters.maxFame && {
           max_fame_rating: parseInt(activeFilters.maxFame)
         }),
-        ...(activeFilters.minFame && {
-          min_fame_rating: parseInt(activeFilters.minFame)
-        }),
-        ...(activeFilters.multipleTags && {
+        // Advanced search: multipleTags
+        ...(activeFilters.multipleTags.length > 0 && {
           tag_ids: activeFilters.multipleTags
-            .split(',')
-            .map((tag) => tag.trim())
         })
       }
 
@@ -120,10 +164,12 @@ function Search() {
     enabled: true
   })
 
+  // Refetch whenever the user changes the sort dropdown
   useEffect(() => {
     refetch()
   }, [sortOption, refetch])
 
+  // Apply current filters to the "activeFilters" and close the dialog
   const applyFilters = () => {
     setActiveFilters(filters)
     refetch()
@@ -134,6 +180,7 @@ function Search() {
   return (
     <div className="container w-full px-0">
       <div className="mb-4 flex justify-between">
+        {/* Sorting dropdown */}
         <Select
           onValueChange={(value) => {
             setSortOption(value as UserProfileSortBy)
@@ -151,6 +198,7 @@ function Search() {
           </SelectContent>
         </Select>
 
+        {/* Filter Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="secondary" onClick={() => setIsDialogOpen(true)}>
@@ -164,81 +212,193 @@ function Search() {
               <DialogDescription className="text-xs">
                 {isAdvancedSearch
                   ? 'Advanced criteria: set ranges and multiple tags.'
-                  : 'Basic filters: single age, location, etc.'}
+                  : 'Basic filters: single age, radius, etc.'}
               </DialogDescription>
             </DialogHeader>
 
+            {/* BASIC SEARCH */}
             {!isAdvancedSearch && (
               <div className="space-y-4">
-                <Input
-                  name="age"
-                  value={filters.age}
-                  onChange={handleFilterChange}
-                  placeholder="Enter age"
-                />
-                <Input
-                  name="fameRating"
-                  value={filters.fameRating}
-                  onChange={handleFilterChange}
-                  placeholder="Enter fame rating"
-                />
-                <Input
-                  name="location"
-                  value={filters.location}
-                  onChange={handleFilterChange}
-                  placeholder="Enter location"
-                />
-                <Input
-                  name="commonTags"
-                  value={filters.commonTags}
-                  onChange={handleFilterChange}
-                  placeholder="Interest tags (comma-separated)"
-                />
+                {/* Single Age slider */}
+                <div>
+                  <p className="mb-2 text-sm font-medium">Age</p>
+                  <Slider
+                    value={[parseInt(filters.age) || 25]}
+                    min={18}
+                    max={99}
+                    step={1}
+                    onValueChange={(val) => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        age: val[0].toString()
+                      }))
+                    }}
+                    className={cn('w-full')}
+                  />
+                  <p className="mt-1 text-xs">
+                    Selected Age: {filters.age || '25'}
+                  </p>
+                </div>
+
+                {/* Single Fame slider */}
+                <div>
+                  <p className="mb-2 text-sm font-medium">Fame Rating</p>
+                  <Slider
+                    value={[parseInt(filters.fameRating) || 0]}
+                    min={0}
+                    max={1000}
+                    step={1}
+                    onValueChange={(val) => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        fameRating: val[0].toString()
+                      }))
+                    }}
+                    className={cn('w-full')}
+                  />
+                  <p className="mt-1 text-xs">
+                    Selected Fame: {filters.fameRating || '0'}
+                  </p>
+                </div>
+
+                {/* Single Distance slider */}
+                <div>
+                  <p className="mb-2 text-sm font-medium">Distance (km)</p>
+                  <Slider
+                    value={[parseInt(filters.radius_km) || 0]}
+                    min={0}
+                    max={300}
+                    step={5}
+                    onValueChange={(val) => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        radius_km: val[0].toString()
+                      }))
+                    }}
+                    className={cn('w-full')}
+                  />
+                  <p className="mt-1 text-xs">
+                    Max Distance: {filters.radius_km || '0'} km
+                  </p>
+                </div>
+
+                {/* TagSelector for basic tags (commonTags) */}
+                <div>
+                  <p className="mb-2 text-sm font-medium">Multiple Tags</p>
+                  <TagSelector
+                    selectedTags={filters.multipleTags}
+                    onToggleTag={handleToggleMultipleTag}
+                  />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {filters.multipleTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
+            {/* ADVANCED SEARCH */}
             {isAdvancedSearch && (
               <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    name="minAge"
-                    value={filters.minAge}
-                    onChange={handleFilterChange}
-                    placeholder="Min Age"
+                {/* Double Age slider */}
+                <div>
+                  <p className="mb-2 text-sm font-medium">Age Range</p>
+                  <Slider
+                    value={[
+                      parseInt(filters.minAge) || 18,
+                      parseInt(filters.maxAge) || 30
+                    ]}
+                    min={18}
+                    max={99}
+                    step={1}
+                    onValueChange={(vals) => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        minAge: vals[0].toString(),
+                        maxAge: vals[1].toString()
+                      }))
+                    }}
+                    className={cn('w-full')}
                   />
-                  <Input
-                    name="maxAge"
-                    value={filters.maxAge}
-                    onChange={handleFilterChange}
-                    placeholder="Max Age"
-                  />
+                  <p className="mt-1 text-xs">
+                    {filters.minAge || 18} - {filters.maxAge || 30} yrs
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  <Input
-                    name="minFame"
-                    value={filters.minFame}
-                    onChange={handleFilterChange}
-                    placeholder="Min Fame"
+
+                {/* Double Fame slider */}
+                <div>
+                  <p className="mb-2 text-sm font-medium">Fame Rating Range</p>
+                  <Slider
+                    value={[
+                      parseInt(filters.minFame) || 0,
+                      parseInt(filters.maxFame) || 100
+                    ]}
+                    min={0}
+                    max={1000}
+                    step={1}
+                    onValueChange={(vals) => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        minFame: vals[0].toString(),
+                        maxFame: vals[1].toString()
+                      }))
+                    }}
+                    className={cn('w-full')}
                   />
-                  <Input
-                    name="maxFame"
-                    value={filters.maxFame}
-                    onChange={handleFilterChange}
-                    placeholder="Max Fame"
-                  />
+                  <p className="mt-1 text-xs">
+                    {filters.minFame || 0} - {filters.maxFame || 100}
+                  </p>
                 </div>
-                <Input
-                  name="location"
-                  value={filters.location}
-                  onChange={handleFilterChange}
-                  placeholder="Location"
-                />
-                <Input
-                  name="multipleTags"
-                  value={filters.multipleTags}
-                  onChange={handleFilterChange}
-                  placeholder="Interest tags (comma-separated)"
-                />
+
+                {/* Single Distance slider */}
+                <div>
+                  <p className="mb-2 text-sm font-medium">Distance (km)</p>
+                  <Slider
+                    value={[parseInt(filters.radius_km) || 0]}
+                    min={0}
+                    max={300}
+                    step={5}
+                    onValueChange={(vals) => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        radius_km: vals[0].toString()
+                      }))
+                    }}
+                    className={cn('w-full')}
+                  />
+                  <p className="mt-1 text-xs">
+                    {filters.radius_km || 0} km max
+                  </p>
+                </div>
+
+                {/* TagSelector for advanced tags (multipleTags) */}
+                <div>
+                  <p className="mb-2 text-sm font-medium">Multiple Tags</p>
+                  <TagSelector
+                    selectedTags={filters.multipleTags}
+                    onToggleTag={handleToggleMultipleTag}
+                  />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {filters.multipleTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -252,6 +412,7 @@ function Search() {
         </Dialog>
       </div>
 
+      {/* Render the fetched user list */}
       <div className="flex w-full flex-wrap justify-between gap-6">
         {users.map((user) => (
           <UserCard key={user.id} user={user} />
@@ -261,6 +422,10 @@ function Search() {
   )
 }
 
+/**
+ * Card component for displaying each user.
+ * This remains unchanged from your original code.
+ */
 function UserCard({ user }: { user: UserProfile }) {
   const [isConfettiActive, setIsConfettiActive] = useState(false)
 
@@ -280,7 +445,11 @@ function UserCard({ user }: { user: UserProfile }) {
       params={{ id: user.id }}
       className="motion-preset-slide-down mx-auto flex h-72 w-56 flex-col justify-end overflow-hidden rounded-xl shadow sm:mx-0"
       style={{
-        backgroundImage: `url(${user.avatar_url ? import.meta.env.VITE_API_URL + user.avatar_url : 'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg'})`,
+        backgroundImage: `url(${
+          user.avatar_url
+            ? import.meta.env.VITE_API_URL + user.avatar_url
+            : 'https://bonnierpublications.com/app/uploads/2022/05/woman-1-480x630.jpg'
+        })`,
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
@@ -300,9 +469,7 @@ function UserCard({ user }: { user: UserProfile }) {
               </li>
               <li className="flex items-center gap-1">
                 <FaFire size={10} />
-                <p className="text-[8px] font-light">
-                  10 {/* {user.fame_rating} */}
-                </p>
+                <p className="text-[8px] font-light">{user.fame_rating}</p>
               </li>
             </ul>
           </div>
@@ -319,6 +486,7 @@ function UserCard({ user }: { user: UserProfile }) {
             <FaHeart color="white" />
           </Button>
         </div>
+
         <div className="mt-2 flex flex-wrap gap-1 px-4 pb-4">
           {user.tags.slice(0, 2).map((tag, index) => (
             <Badge
@@ -335,4 +503,4 @@ function UserCard({ user }: { user: UserProfile }) {
   )
 }
 
-export default UserCard
+export default Search
