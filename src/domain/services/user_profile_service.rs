@@ -22,4 +22,19 @@ pub trait UserProfileService: 'static + Sync + Send {
     async fn remove_tag(&self, profile_id: Snowflake, tag_id: Snowflake) -> Result<(), UserProfileError>;
     async fn bulk_add_tags(&self, profile_id: Snowflake, tag_ids: Vec<Snowflake>) -> Result<(), UserProfileError>;
     async fn bulk_remove_tags(&self, profile_id: Snowflake, tag_ids: Vec<Snowflake>) -> Result<(), UserProfileError>;
+    async fn add_like(&self, profile_id: Snowflake, liked_profile_id: Snowflake) -> Result<(), UserProfileError>;
+    async fn remove_like(&self, profile_id: Snowflake, liked_profile_id: Snowflake) -> Result<(), UserProfileError>;
+    async fn is_profile_liked(
+        &self,
+        profile_id: Snowflake,
+        liked_profile_id: Snowflake,
+    ) -> Result<bool, UserProfileError>;
+    async fn is_profile_matched(
+        &self,
+        profile_id: Snowflake,
+        matched_profile_id: Snowflake,
+    ) -> Result<bool, UserProfileError>;
+    async fn get_my_likes(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
+    async fn get_profile_likes(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
+    async fn get_matches(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
 }

@@ -21,6 +21,8 @@ pub enum UserProfileError {
     ProfileAlreadyHasTag,
     #[error("Cannot delete avatar")]
     CannotDeleteAvatar,
+    #[error("Profile already liked")]
+    ProfileAlreadyLiked,
 }
 
 impl ApiErrorImpl for UserProfileError {
@@ -34,6 +36,7 @@ impl ApiErrorImpl for UserProfileError {
             UserProfileError::UserAlreadyHaveProfile => (StatusCode::CONFLICT, ErrorCode::UserAlreadyHaveProfile),
             UserProfileError::ProfileAlreadyHasTag => (StatusCode::CONFLICT, ErrorCode::ProfileAlreadyHasTag),
             UserProfileError::CannotDeleteAvatar => (StatusCode::BAD_REQUEST, ErrorCode::CannotDeleteAvatar),
+            UserProfileError::ProfileAlreadyLiked => (StatusCode::CONFLICT, ErrorCode::ProfileAlreadyLiked),
         }
     }
 }
@@ -50,6 +53,10 @@ impl From<sqlx::Error> for UserProfileError {
                         "join_user_profile_tag_user_profile_id_profile_tag_id_key" => {
                             UserProfileError::ProfileAlreadyHasTag
                         }
+                        "profile_like_user_profile_id_liked_user_profile_id_key" => {
+                            UserProfileError::ProfileAlreadyLiked
+                        }
+                        "profile_like_liked_user_profile_id_fkey" => UserProfileError::ProfileNotFound,
                         _ => UserProfileError::DatabaseError,
                     }
                 } else {

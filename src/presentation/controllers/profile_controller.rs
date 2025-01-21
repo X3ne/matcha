@@ -18,8 +18,8 @@ use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::UserProfileUpdate;
 use crate::presentation::dto::user_profile::{
-    UpdateProfileDto, UploadProfilePictureForm, UserProfileBulkTagsDto, UserProfileDto, UserProfileQueryParamsDto,
-    UserProfileTagParamsDto,
+    UpdateProfileDto, UploadProfilePictureForm, UserProfileBulkTagsDto, UserProfileDto, UserProfileMeta,
+    UserProfileQueryParamsDto, UserProfileTagParamsDto,
 };
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
@@ -101,18 +101,25 @@ pub async fn get_user_profile_by_id(
     peer_infos: PeerInfos,
 ) -> Result<web::Json<UserProfileDto>, ApiError> {
     let user = session.authenticated_user()?;
-    let user_profile = user_profile_service.get_by_user_id(user.id).await?;
-
     let profile_id = profile_id.into_inner();
 
-    let profile = user_profile_service.get_by_id(profile_id).await?;
-    let tags = user_profile_service.get_profile_tags(profile.id).await?;
+    let (user_profile, profile_data, tags) = tokio::try_join!(
+        user_profile_service.get_by_user_id(user.id),
+        user_profile_service.get_by_id(profile_id),
+        user_profile_service.get_profile_tags(profile_id),
+    )?;
 
-    let approx_distance = approx_distance_km(&user_profile.location, &profile.location);
+    let (is_liked, is_a_match) = tokio::try_join!(
+        user_profile_service.is_profile_liked(user_profile.id, profile_data.id),
+        user_profile_service.is_profile_matched(user_profile.id, profile_data.id),
+    )?;
 
-    let mut profile: UserProfileDto = profile.into();
+    let approx_distance = approx_distance_km(&user_profile.location, &profile_data.location);
+
+    let mut profile: UserProfileDto = profile_data.into();
     profile.append_tags(tags);
     profile.set_approx_distance(approx_distance);
+    profile.set_meta(UserProfileMeta { is_liked, is_a_match });
 
     Ok(web::Json(profile))
 }
@@ -130,12 +137,12 @@ pub async fn search_profiles(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+    let params = params.into_inner();
+    params.validate()?;
+
     let user = session.authenticated_user()?;
     let user_profile = user_profile_service.get_by_user_id(user.id).await?;
     let user_tags = user_profile_service.get_profile_tags(user_profile.id).await?;
-
-    let params = params.into_inner();
-    params.validate()?;
 
     let mut search_params: UserProfileQueryParams = params.into();
     if search_params.location.is_none() {
@@ -166,9 +173,15 @@ pub async fn search_profiles(
         let tags = tags_result.unwrap_or_else(|_| vec![]);
         let approx_distance = approx_distance_km(&user_profile.location, &profile.location);
 
+        let (is_liked, is_a_match) = tokio::try_join!(
+            user_profile_service.is_profile_liked(user_profile.id, profile.id),
+            user_profile_service.is_profile_matched(user_profile.id, profile.id),
+        )?;
+
         let mut profile_dto: UserProfileDto = profile.into();
         profile_dto.append_tags(tags);
         profile_dto.set_approx_distance(approx_distance);
+        profile_dto.set_meta(UserProfileMeta { is_liked, is_a_match });
 
         profiles_dto.push(profile_dto);
     }
@@ -309,9 +322,10 @@ pub async fn add_tag_to_my_profile(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    let user = session.authenticated_user()?;
-
     let params = params.into_inner();
+    params.validate()?;
+
+    let user = session.authenticated_user()?;
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
     let tag = profile_tag_service.get_by_id(params.tag_id).await?;
@@ -335,9 +349,10 @@ pub async fn remove_tag_from_my_profile(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    let user = session.authenticated_user()?;
-
     let params = params.into_inner();
+    params.validate()?;
+
+    let user = session.authenticated_user()?;
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
     let tag = profile_tag_service.get_by_id(params.tag_id).await?;
@@ -361,9 +376,10 @@ pub async fn bulk_add_tag_to_my_profile(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    let user = session.authenticated_user()?;
-
     let body = body.into_inner();
+    body.validate()?;
+
+    let user = session.authenticated_user()?;
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
     let _ = profile_tag_service.get_by_ids(body.tag_ids.clone()).await?;
@@ -387,9 +403,10 @@ pub async fn bulk_remove_tag_from_my_profile(
     session: Session,
     peer_infos: PeerInfos,
 ) -> Result<NoContent, ApiError> {
-    let user = session.authenticated_user()?;
-
     let body = body.into_inner();
+    body.validate()?;
+
+    let user = session.authenticated_user()?;
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
     let _ = profile_tag_service.get_by_ids(body.tag_ids.clone()).await?;
@@ -397,4 +414,90 @@ pub async fn bulk_remove_tag_from_my_profile(
     user_profile_service.bulk_remove_tags(profile.id, body.tag_ids).await?;
 
     Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "get_my_profile_likes",
+    summary = "Get the current user profile likes",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn get_my_profile_likes(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let profiles = user_profile_service.get_profile_likes(profile.id).await?;
+
+    Ok(web::Json(profiles.into_iter().map(Into::into).collect()))
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "like_user_profile",
+    summary = "Like a user profile",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn like_user_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_id: web::Path<Snowflake>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let profile_id = profile_id.into_inner();
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let _ = user_profile_service.add_like(profile.id, profile_id).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "remove_user_profile_like",
+    summary = "Remove a like from a user profile",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn remove_user_profile_like(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_id: web::Path<Snowflake>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let profile_id = profile_id.into_inner();
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let _ = user_profile_service.remove_like(profile.id, profile_id).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "get_my_profile_matches",
+    summary = "Get the current user profile matches",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn get_my_profile_matches(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let profiles = user_profile_service.get_matches(profile.id).await?;
+
+    Ok(web::Json(profiles.into_iter().map(Into::into).collect()))
 }

@@ -151,4 +151,77 @@ impl UserProfileService for UserProfileServiceImpl {
 
         Ok(())
     }
+
+    #[tracing::instrument(skip(self))]
+    async fn add_like(&self, profile_id: Snowflake, liked_profile_id: Snowflake) -> Result<(), UserProfileError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserProfileRepository::add_like(&mut *tx, profile_id, liked_profile_id).await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn remove_like(&self, profile_id: Snowflake, liked_profile_id: Snowflake) -> Result<(), UserProfileError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserProfileRepository::remove_like(&mut *tx, profile_id, liked_profile_id).await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn is_profile_liked(
+        &self,
+        profile_id: Snowflake,
+        liked_profile_id: Snowflake,
+    ) -> Result<bool, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let is_liked = PgUserProfileRepository::is_like_exists(&mut *conn, profile_id, liked_profile_id).await?;
+
+        Ok(is_liked)
+    }
+
+    async fn is_profile_matched(
+        &self,
+        profile_id: Snowflake,
+        matched_profile_id: Snowflake,
+    ) -> Result<bool, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let is_matched = PgUserProfileRepository::is_match_exists(&mut *conn, profile_id, matched_profile_id).await?;
+
+        Ok(is_matched)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn get_my_likes(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let profiles = PgUserProfileRepository::get_my_likes(&mut *conn, profile_id).await?;
+
+        Ok(profiles)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn get_profile_likes(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let profiles = PgUserProfileRepository::get_profile_likes(&mut *conn, profile_id).await?;
+
+        Ok(profiles)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn get_matches(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let profiles = PgUserProfileRepository::get_matches(&mut *conn, profile_id).await?;
+
+        Ok(profiles)
+    }
 }

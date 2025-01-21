@@ -62,9 +62,9 @@ CREATE TABLE profile_view
 
 CREATE TABLE profile_like
 (
-    id               BIGINT PRIMARY KEY NOT NULL UNIQUE,
-    user_profile_id  BIGINT             NOT NULL REFERENCES user_profile (id) ON DELETE CASCADE,
-    liker_profile_id BIGINT             NOT NULL REFERENCES user_profile (id) ON DELETE CASCADE,
-    liked_at         TIMESTAMP          NOT NULL DEFAULT NOW(),
-    UNIQUE (user_profile_id, liker_profile_id)
+    id                    BIGINT PRIMARY KEY NOT NULL UNIQUE,
+    user_profile_id       BIGINT             NOT NULL REFERENCES user_profile (id) ON DELETE CASCADE,
+    liked_user_profile_id BIGINT             NOT NULL REFERENCES user_profile (id) ON DELETE CASCADE,
+    liked_at              TIMESTAMP          NOT NULL DEFAULT NOW(),
+    UNIQUE (user_profile_id, liked_user_profile_id)
 );

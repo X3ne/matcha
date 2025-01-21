@@ -125,4 +125,48 @@ pub trait UserProfileRepository<Db>: Send + Sync {
     ) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
+
+    async fn add_like<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        liked_profile_id: Snowflake,
+    ) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn remove_like<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        liked_profile_id: Snowflake,
+    ) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn is_like_exists<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        liked_profile_id: Snowflake,
+    ) -> sqlx::Result<bool, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn is_match_exists<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        matched_profile_id: Snowflake,
+    ) -> sqlx::Result<bool, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn get_my_likes<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn get_profile_likes<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn get_matches<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
 }

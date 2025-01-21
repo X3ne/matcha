@@ -66,6 +66,17 @@ pub struct UserProfileDto {
     pub tags: Vec<ProfileTag>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub approx_distance_km: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub meta: Option<UserProfileMeta>,
+}
+
+#[derive(Serialize, Deserialize, Debug, ApiComponent, JsonSchema, Default)]
+#[serde(rename(deserialize = "UserProfileMeta"))]
+pub struct UserProfileMeta {
+    #[serde(default)]
+    pub is_liked: bool,
+    #[serde(default)]
+    pub is_a_match: bool,
 }
 
 impl From<UserProfile> for UserProfileDto {
@@ -86,6 +97,7 @@ impl From<UserProfile> for UserProfileDto {
             rating: user.rating,
             tags: vec![],
             approx_distance_km: None,
+            meta: None,
         }
     }
 }
@@ -97,6 +109,10 @@ impl UserProfileDto {
 
     pub fn set_approx_distance(&mut self, distance: f64) {
         self.approx_distance_km = Some(distance as u64);
+    }
+
+    pub fn set_meta(&mut self, meta: UserProfileMeta) {
+        self.meta = Some(meta);
     }
 }
 

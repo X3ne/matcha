@@ -363,6 +363,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         Ok(())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn is_profile_hash_used<'a, A>(conn: A, hash: &str) -> sqlx::Result<bool, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -482,5 +483,219 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         .await?;
 
         Ok(())
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn add_like<'a, A>(conn: A, profile_id: Snowflake, liked_profile_id: Snowflake) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let like_id = Snowflake::new();
+
+        sqlx::query!(
+            r#"
+            INSERT INTO profile_like (id, user_profile_id, liked_user_profile_id)
+            VALUES ($1, $2, $3)
+            "#,
+            like_id.as_i64(),
+            profile_id.as_i64(),
+            liked_profile_id.as_i64()
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn remove_like<'a, A>(conn: A, profile_id: Snowflake, liked_profile_id: Snowflake) -> Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let result = sqlx::query!(
+            r#"
+            DELETE FROM profile_like
+            WHERE user_profile_id = $1 AND liked_user_profile_id = $2
+            RETURNING user_profile_id
+            "#,
+            profile_id.as_i64(),
+            liked_profile_id.as_i64()
+        )
+        .fetch_optional(&mut *conn)
+        .await?;
+
+        if result.is_none() {
+            return Err(Error::RowNotFound);
+        }
+
+        Ok(())
+    }
+
+    async fn is_like_exists<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        liked_profile_id: Snowflake,
+    ) -> sqlx::Result<bool, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let result = sqlx::query!(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM profile_like
+                WHERE user_profile_id = $1 AND liked_user_profile_id = $2
+            )
+            "#,
+            profile_id.as_i64(),
+            liked_profile_id.as_i64()
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+
+        Ok(result.exists.unwrap_or(false))
+    }
+
+    async fn is_match_exists<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        matched_profile_id: Snowflake,
+    ) -> sqlx::Result<bool, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let result = sqlx::query!(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM profile_like pl1
+                JOIN profile_like pl2 ON pl1.user_profile_id = pl2.liked_user_profile_id AND pl1.liked_user_profile_id = pl2.user_profile_id
+                WHERE pl1.user_profile_id = $1 AND pl1.liked_user_profile_id = $2
+            )
+            "#,
+            profile_id.as_i64(),
+            matched_profile_id.as_i64()
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+
+        Ok(result.exists.unwrap_or(false))
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn get_my_likes<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let profiles = sqlx::query_as!(
+            UserProfileSqlx,
+            r#"
+            SELECT
+                up.id,
+                up.user_id,
+                up.name,
+                up.avatar_hash,
+                up.picture_hashes,
+                up.bio,
+                up.age,
+                up.gender AS "gender: _",
+                up.sexual_orientation AS "sexual_orientation: _",
+                up.location AS "location!: _",
+                up.rating,
+                up.created_at,
+                up.updated_at
+            FROM user_profile up
+            JOIN profile_like pl ON up.id = pl.liked_user_profile_id
+            WHERE pl.user_profile_id = $1
+            "#,
+            profile_id.as_i64()
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        Ok(profiles.into_iter().map(|profile| profile.into()).collect())
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn get_profile_likes<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let profiles = sqlx::query_as!(
+            UserProfileSqlx,
+            r#"
+            SELECT
+                up.id,
+                up.user_id,
+                up.name,
+                up.avatar_hash,
+                up.picture_hashes,
+                up.bio,
+                up.age,
+                up.gender AS "gender: _",
+                up.sexual_orientation AS "sexual_orientation: _",
+                up.location AS "location!: _",
+                up.rating,
+                up.created_at,
+                up.updated_at
+            FROM user_profile up
+            JOIN profile_like pl ON up.id = pl.user_profile_id
+            WHERE pl.liked_user_profile_id = $1
+            "#,
+            profile_id.as_i64()
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        Ok(profiles.into_iter().map(|profile| profile.into()).collect())
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn get_matches<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let profiles = sqlx::query_as!(
+            UserProfileSqlx,
+            r#"
+            SELECT
+                up.id,
+                up.user_id,
+                up.name,
+                up.avatar_hash,
+                up.picture_hashes,
+                up.bio,
+                up.age,
+                up.gender AS "gender: _",
+                up.sexual_orientation AS "sexual_orientation: _",
+                up.location AS "location!: _",
+                up.rating,
+                up.created_at,
+                up.updated_at
+            FROM user_profile up
+            JOIN profile_like pl1 ON up.id = pl1.user_profile_id
+            JOIN profile_like pl2 ON up.id = pl2.liked_user_profile_id
+            WHERE pl1.liked_user_profile_id = $1 AND pl2.user_profile_id = $1
+            "#,
+            profile_id.as_i64()
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        Ok(profiles.into_iter().map(|profile| profile.into()).collect())
     }
 }
