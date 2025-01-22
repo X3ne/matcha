@@ -1,6 +1,7 @@
 pub mod fame;
 pub mod validation;
 
+use chrono::Datelike;
 use geo::{Distance, Haversine};
 use rand::rngs::OsRng;
 use rand::RngCore;
@@ -22,4 +23,9 @@ pub fn approx_distance_km(geom1: &geo_types::Geometry<f64>, geom2: &geo_types::G
         (geo_types::Geometry::Point(p1), geo_types::Geometry::Point(p2)) => Haversine::distance(*p1, *p2) / 1000.0,
         _ => panic!("Only Point geometries are supported for now"),
     }
+}
+
+pub fn calculate_age(birth_date: chrono::NaiveDate) -> i32 {
+    let now = chrono::Utc::now().naive_utc();
+    now.year() - birth_date.year()
 }

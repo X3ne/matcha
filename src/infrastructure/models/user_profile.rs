@@ -1,10 +1,12 @@
-use crate::domain::entities::user_profile::UserProfile;
-use crate::shared::types::snowflake::Snowflake;
-use crate::shared::types::user_profile::{Gender, Orientation};
 use geo_types::Point;
 use geozero::wkb;
 use sqlx::types::BigDecimal;
 use sqlx::FromRow;
+
+use crate::domain::entities::user_profile::UserProfile;
+use crate::shared::types::snowflake::Snowflake;
+use crate::shared::types::user_profile::{Gender, Orientation};
+use crate::shared::utils::calculate_age;
 
 #[derive(FromRow, Debug)]
 pub struct UserProfileSqlx {
@@ -14,7 +16,6 @@ pub struct UserProfileSqlx {
     pub avatar_hash: Option<String>,
     pub picture_hashes: Vec<String>,
     pub bio: Option<String>,
-    pub age: i32,
     pub birth_date: chrono::NaiveDate,
     pub gender: Gender,
     pub sexual_orientation: Orientation,
@@ -33,7 +34,6 @@ pub struct RecommendedUserProfile {
     pub avatar_hash: Option<String>,
     pub picture_hashes: Vec<String>,
     pub bio: Option<String>,
-    pub age: i32,
     pub birth_date: chrono::NaiveDate,
     pub gender: Gender,
     pub sexual_orientation: Orientation,
@@ -57,7 +57,7 @@ impl Into<UserProfile> for RecommendedUserProfile {
             avatar_hash: self.avatar_hash,
             picture_hashes: self.picture_hashes,
             bio: self.bio,
-            age: self.age,
+            age: calculate_age(self.birth_date),
             birth_date: self.birth_date,
             gender: self.gender,
             sexual_orientation: self.sexual_orientation,

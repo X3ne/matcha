@@ -28,8 +28,6 @@ CREATE TABLE user_profile
     avatar_hash        VARCHAR(255),
     picture_hashes     VARCHAR(255)[]        NOT NULL DEFAULT '{}',
     bio                TEXT,
-    age                INTEGER               NOT NULL
-        CONSTRAINT user_profile_age_check CHECK (age >= 18),
     birth_date         DATE                  NOT NULL
         CONSTRAINT user_profile_birthdate_check CHECK (birth_date <= NOW()::DATE - INTERVAL '18 years'),
     gender             GENDER                NOT NULL,

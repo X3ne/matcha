@@ -1,6 +1,7 @@
 use crate::infrastructure::models::user_profile::UserProfileSqlx;
 use crate::shared::types::snowflake::Snowflake;
 use crate::shared::types::user_profile::{Gender, Orientation};
+use crate::shared::utils::calculate_age;
 
 #[derive(Debug, Clone)]
 pub struct UserProfile {
@@ -30,7 +31,7 @@ impl From<UserProfileSqlx> for UserProfile {
             avatar_hash: profile.avatar_hash,
             picture_hashes: profile.picture_hashes,
             bio: profile.bio,
-            age: profile.age,
+            age: calculate_age(profile.birth_date),
             birth_date: profile.birth_date,
             gender: profile.gender,
             sexual_orientation: profile.sexual_orientation,

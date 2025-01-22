@@ -64,7 +64,6 @@ impl UserProfileSqlx {
             avatar_hash: None,
             picture_hashes: vec![],
             bio,
-            age,
             birth_date,
             gender,
             sexual_orientation: orientation,
@@ -81,15 +80,14 @@ impl UserProfileSqlx {
     pub async fn insert(&self, pool: &PgPool) {
         sqlx::query!(
             r#"
-            INSERT INTO user_profile (id, user_id, name, avatar_hash, bio, age, birth_date, rating, gender, sexual_orientation, location)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::gender, $10::sexual_orientation, $11::geometry)
+            INSERT INTO user_profile (id, user_id, name, avatar_hash, bio, birth_date, rating, gender, sexual_orientation, location)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry)
             "#,
             self.id.as_i64(),
             self.user_id.as_i64(),
             self.name,
             self.avatar_hash,
             self.bio,
-            self.age,
             self.birth_date,
             self.rating,
             self.gender as _,

@@ -69,7 +69,6 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 avatar_hash,
                 picture_hashes,
                 bio,
-                age,
                 birth_date,
                 gender AS "gender: _",
                 sexual_orientation AS "sexual_orientation: _",
@@ -108,7 +107,6 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 avatar_hash,
                 picture_hashes,
                 bio,
-                age,
                 birth_date,
                 gender AS "gender: _",
                 sexual_orientation AS "sexual_orientation: _",
@@ -190,10 +188,12 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         // count common tags
         if params.tag_ids.is_some() {
-            query_builder.push("COUNT(DISTINCT pt.id) AS common_tags_count ");
+            query_builder.push("COUNT(DISTINCT pt.id) AS common_tags_count, ");
         } else {
-            query_builder.push("0 AS common_tags_count ");
+            query_builder.push("0 AS common_tags_count, ");
         }
+
+        query_builder.push("EXTRACT(YEAR FROM AGE(up.birth_date)) AS age ");
 
         query_builder.push(
             " FROM user_profile up
@@ -204,11 +204,11 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         // filters
         if let Some(min_age) = params.min_age {
-            query_builder.push(" AND up.age >= ");
+            query_builder.push(" AND EXTRACT(YEAR FROM AGE(up.birth_date)) >= ");
             query_builder.push_bind(min_age);
         }
         if let Some(max_age) = params.max_age {
-            query_builder.push(" AND up.age <= ");
+            query_builder.push(" AND EXTRACT(YEAR FROM AGE(up.birth_date)) <= ");
             query_builder.push_bind(max_age);
         }
         if let Some(min_fame) = params.min_fame_rating {
@@ -251,7 +251,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 }
             }
             Some(UserProfileSortBy::Age) => {
-                query_builder.push(" ORDER BY up.age");
+                query_builder.push(" ORDER BY EXTRACT(YEAR FROM AGE(up.birth_date))");
                 if let Some(sort_order) = &params.sort_order {
                     query_builder.push(&format!(" {}", sort_order.to_string()));
                 } else {
@@ -325,7 +325,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                     $6::INT AS max_age
             )
             SELECT up.id, up.user_id, up.name, up.avatar_hash, up.picture_hashes,
-                   up.bio, up.age, up.birth_date, up.gender AS "gender: Gender",
+                   up.bio, up.birth_date, up.gender AS "gender: Gender",
                    up.sexual_orientation AS "sexual_orientation: Orientation",
                    up.location AS "location!: _",
                    up.rating, up.last_active, up.created_at, up.updated_at,
@@ -711,7 +711,6 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.avatar_hash,
                 up.picture_hashes,
                 up.bio,
-                up.age,
                 up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
@@ -749,7 +748,6 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.avatar_hash,
                 up.picture_hashes,
                 up.bio,
-                up.age,
                 up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
@@ -787,7 +785,6 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.avatar_hash,
                 up.picture_hashes,
                 up.bio,
-                up.age,
                 up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
