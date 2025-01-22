@@ -16,17 +16,21 @@ pub enum AuthError {
     #[error("Database error")]
     DatabaseError,
     #[error("Redis error")]
-    RedisError(#[from] redis::RedisError),
+    RedisError,
     #[error("Password is required")]
     PasswordRequired,
     #[error("Error hashing password")]
     PasswordHashError,
     #[error("Error sending mail")]
     MailError,
+    #[error("User not found")]
+    UserNotFound,
     #[error("An user with this email already exists")]
     UserEmailAlreadyExists,
     #[error("An user with this username already exists")]
     UserUsernameAlreadyExists,
+    #[error("Invalid reset token")]
+    InvalidResetToken,
 }
 
 impl ApiErrorImpl for AuthError {
@@ -37,12 +41,14 @@ impl ApiErrorImpl for AuthError {
             AuthError::InvalidCredentials => (StatusCode::UNAUTHORIZED, ErrorCode::InvalidCredentials),
             AuthError::OAuth2Error(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             AuthError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
-            AuthError::RedisError(..) => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            AuthError::RedisError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             AuthError::PasswordRequired => (StatusCode::BAD_REQUEST, ErrorCode::InvalidCredentials),
             AuthError::PasswordHashError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
             AuthError::MailError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
+            AuthError::UserNotFound => (StatusCode::NOT_FOUND, ErrorCode::UnknownUser),
             AuthError::UserEmailAlreadyExists => (StatusCode::CONFLICT, ErrorCode::UserEmailAlreadyExists),
             AuthError::UserUsernameAlreadyExists => (StatusCode::CONFLICT, ErrorCode::UserUsernameAlreadyExists),
+            AuthError::InvalidResetToken => (StatusCode::BAD_REQUEST, ErrorCode::InvalidResetToken),
         }
     }
 }
@@ -51,7 +57,7 @@ impl From<sqlx::Error> for AuthError {
     fn from(e: sqlx::Error) -> Self {
         tracing::error!("Database error: {}", e);
         match e {
-            sqlx::Error::RowNotFound => AuthError::InvalidCredentials,
+            sqlx::Error::RowNotFound => AuthError::UserNotFound,
             sqlx::Error::Database(db_err) => {
                 if let Some(constraint) = db_err.constraint() {
                     match constraint {
@@ -64,6 +70,16 @@ impl From<sqlx::Error> for AuthError {
                 }
             }
             _ => AuthError::DatabaseError,
+        }
+    }
+}
+
+impl From<redis::RedisError> for AuthError {
+    fn from(e: redis::RedisError) -> Self {
+        tracing::error!("Redis error: {}", e);
+        match e.kind() {
+            redis::ErrorKind::TypeError => AuthError::InvalidResetToken,
+            _ => AuthError::RedisError,
         }
     }
 }

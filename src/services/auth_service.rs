@@ -243,6 +243,9 @@ impl AuthService for AuthServiceImpl {
 
     #[tracing::instrument(skip(self))]
     async fn request_password_reset(&self, email: &str, reset_url: &str) -> Result<(), AuthError> {
+        let mut pg_conn = self.pool.acquire().await?;
+        let _ = PgUserRepository::get_by_email(&mut *pg_conn, email).await?;
+
         let reset_token = generate_random_secure_string(32);
 
         let mut conn = self.redis.get_multiplexed_async_connection().await?;
@@ -294,6 +297,8 @@ impl AuthService for AuthServiceImpl {
         PgUserRepository::update_password(&mut *tx, &email, &password_hash).await?;
 
         tx.commit().await?;
+
+        conn.del(&key).await?;
 
         Ok(())
     }

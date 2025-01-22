@@ -22,6 +22,7 @@ pub enum ErrorCode {
     InvalidMimeType = 50003,
     OnlyImagesAllowed = 50004,
     InvalidImageOffset = 50005,
+    InvalidResetToken = 50006,
 }
 
 impl ErrorCode {
@@ -48,6 +49,7 @@ impl ErrorCode {
             ErrorCode::InvalidMimeType => "Invalid mime type",
             ErrorCode::OnlyImagesAllowed => "Only images are allowed",
             ErrorCode::InvalidImageOffset => "Invalid image offset",
+            ErrorCode::InvalidResetToken => "Invalid reset token",
         }
     }
 }
