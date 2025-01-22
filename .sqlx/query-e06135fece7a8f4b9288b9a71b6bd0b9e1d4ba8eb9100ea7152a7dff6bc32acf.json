@@ -1,14 +1,16 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            UPDATE user_profile\n            SET\n                name = COALESCE($2, name),\n                avatar_hash = COALESCE($3, avatar_hash),\n                bio = COALESCE($4, bio),\n                age = COALESCE($5, age),\n                gender = COALESCE($6, gender),\n                sexual_orientation = COALESCE($7, sexual_orientation),\n                location = COALESCE($8, location)\n            WHERE\n                id = $1\n            ",
+  "query": "\n            INSERT INTO user_profile (id, user_id, name, avatar_hash, bio, birth_date, rating, gender, sexual_orientation, location)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry)\n            ",
   "describe": {
     "columns": [],
     "parameters": {
       "Left": [
         "Int8",
+        "Int8",
         "Varchar",
         "Varchar",
         "Text",
+        "Date",
         "Int4",
         {
           "Custom": {
@@ -43,5 +45,5 @@
     },
     "nullable": []
   },
-  "hash": "58e1f699dcf696bacb59b277cba7517501d6cbd536c1194cf9de2ce4ddd85823"
+  "hash": "e06135fece7a8f4b9288b9a71b6bd0b9e1d4ba8eb9100ea7152a7dff6bc32acf"
 }

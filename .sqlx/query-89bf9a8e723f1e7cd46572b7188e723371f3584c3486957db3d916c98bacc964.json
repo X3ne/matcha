@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT \n                id,\n                user_id,\n                name,\n                avatar_hash,\n                picture_hashes,\n                bio,\n                age,\n                gender AS \"gender: _\",\n                sexual_orientation AS \"sexual_orientation: _\",\n                location AS \"location!: _\",\n                rating,\n                created_at,\n                updated_at\n            FROM\n                user_profile\n            WHERE\n                id = $1\n            ",
+  "query": "\n            SELECT\n                up.id,\n                up.user_id,\n                up.name,\n                up.avatar_hash,\n                up.picture_hashes,\n                up.bio,\n                up.birth_date,\n                up.gender AS \"gender: _\",\n                up.sexual_orientation AS \"sexual_orientation: _\",\n                up.location AS \"location!: _\",\n                up.rating,\n                up.last_active,\n                up.created_at,\n                up.updated_at\n            FROM user_profile up\n            JOIN profile_like pl ON up.id = pl.user_profile_id\n            WHERE pl.liked_user_profile_id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -35,8 +35,8 @@
       },
       {
         "ordinal": 6,
-        "name": "age",
-        "type_info": "Int4"
+        "name": "birth_date",
+        "type_info": "Date"
       },
       {
         "ordinal": 7,
@@ -86,11 +86,16 @@
       },
       {
         "ordinal": 11,
-        "name": "created_at",
+        "name": "last_active",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 12,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 13,
         "name": "updated_at",
         "type_info": "Timestamp"
       }
@@ -113,8 +118,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "087cc5858842111bc9dc6b8163b73c7dd1c6d4cad84481321cd2b1c33696caf8"
+  "hash": "89bf9a8e723f1e7cd46572b7188e723371f3584c3486957db3d916c98bacc964"
 }

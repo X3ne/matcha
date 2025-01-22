@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM profile_like\n            WHERE user_profile_id = $1 AND liked_user_profile_id = $2\n            RETURNING user_profile_id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_profile_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1ed14fc588fdef78386f27d3883ec83b5a75f0a337b8adaf39a83c35e60c4719"
+}

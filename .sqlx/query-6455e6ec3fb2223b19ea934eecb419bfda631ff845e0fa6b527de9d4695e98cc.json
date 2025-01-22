@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT EXISTS(\n                SELECT 1\n                FROM profile_like\n                WHERE user_profile_id = $1 AND liked_user_profile_id = $2\n            )\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "6455e6ec3fb2223b19ea934eecb419bfda631ff845e0fa6b527de9d4695e98cc"
+}

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO profile_like (id, user_profile_id, liked_user_profile_id)\n            VALUES ($1, $2, $3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "71f990aed183e2a3767f813aae2542005ab2c98d5f75805611272b4a639f58c9"
+}

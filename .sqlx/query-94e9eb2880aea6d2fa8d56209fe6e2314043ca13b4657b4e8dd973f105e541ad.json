@@ -1,0 +1,177 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH user_input AS (\n                SELECT\n                    $1::BIGINT AS user_id,\n                    $2::gender AS user_gender,\n                    $3::sexual_orientation AS user_orientation,\n                    ST_SetSRID(ST_GeomFromEWKB($4), 4326) AS user_location,\n                    $5::INT AS min_age,\n                    $6::INT AS max_age\n            )\n            SELECT up.id, up.user_id, up.name, up.avatar_hash, up.picture_hashes,\n                   up.bio, up.birth_date, up.gender AS \"gender: Gender\",\n                   up.sexual_orientation AS \"sexual_orientation: Orientation\",\n                   up.location AS \"location!: _\",\n                   up.rating, up.last_active, up.created_at, up.updated_at,\n                   subquery.distance, subquery.common_tags_count, subquery.inactivity_duration,\n                   (\n                       (CASE\n                            WHEN (ui.user_gender = 'male' AND up.gender = 'female' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual')) THEN 1.5\n                            WHEN (ui.user_gender = 'male' AND ui.user_orientation = 'bisexual' AND (up.gender = 'female' OR (up.gender = 'male' AND up.sexual_orientation = 'bisexual'))) THEN 1.5\n                            WHEN (ui.user_gender = 'female' AND ui.user_orientation = 'male' AND up.gender = 'male' AND (up.sexual_orientation = 'female' OR up.sexual_orientation = 'bisexual')) THEN 1.5\n                            WHEN (ui.user_gender = 'female' AND ui.user_orientation = 'bisexual' AND (up.gender = 'male' OR (up.gender = 'female' AND up.sexual_orientation = 'bisexual'))) THEN 1.5\n                            WHEN (ui.user_gender = 'female' AND ui.user_orientation = 'female' AND up.gender = 'female' AND (up.sexual_orientation = 'female' OR up.sexual_orientation = 'bisexual')) THEN 1.5\n                            WHEN (ui.user_gender = 'male' AND ui.user_orientation = 'male' AND up.gender = 'male' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual')) THEN 1.5\n                            ELSE 1\n                       END) *\n                       (1.0 / (subquery.distance + 1)) *\n                       (subquery.common_tags_count + 1) *\n                       (1 / (subquery.inactivity_duration + 1)) *\n                       (up.rating + 1) *\n                       (CASE WHEN up.avatar_hash IS NOT NULL THEN 1.2 ELSE 1 END) *\n                       (CASE WHEN up.bio IS NOT NULL AND LENGTH(up.bio) > 10 THEN 1.3 ELSE 1 END)\n                   ) AS recommendation_score\n            FROM (\n                SELECT\n                    up.id,\n                    ST_Distance(up.location::geography, ui.user_location::geography) AS distance,\n                    COUNT(DISTINCT pt.id) AS common_tags_count,\n                    EXTRACT(EPOCH FROM (NOW() - up.last_active)) AS inactivity_duration\n                FROM user_profile up\n                CROSS JOIN user_input ui\n                LEFT JOIN join_user_profile_tag jpt ON up.id = jpt.user_profile_id\n                LEFT JOIN profile_tag pt ON jpt.profile_tag_id = pt.id\n                LEFT JOIN profile_like pl ON up.id = pl.liked_user_profile_id AND pl.user_profile_id = ui.user_id\n                WHERE\n                    pl.id IS NULL\n                    AND up.id <> ui.user_id\n                    AND (\n                        (ui.user_gender = 'male' AND up.gender = 'female' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual')) OR\n                        (ui.user_gender = 'male' AND ui.user_orientation = 'bisexual' AND (up.gender = 'female' OR (up.gender = 'male' AND up.sexual_orientation = 'bisexual'))) OR\n                        (ui.user_gender = 'female' AND ui.user_orientation = 'male' AND up.gender = 'male' AND (up.sexual_orientation = 'female' OR up.sexual_orientation = 'bisexual')) OR\n                        (ui.user_gender = 'female' AND ui.user_orientation = 'bisexual' AND (up.gender = 'male' OR (up.gender = 'female' AND up.sexual_orientation = 'bisexual'))) OR\n                        (ui.user_gender = 'female' AND ui.user_orientation = 'female' AND up.gender = 'female' AND (up.sexual_orientation = 'female' OR up.sexual_orientation = 'bisexual')) OR\n                        (ui.user_gender = 'male' AND ui.user_orientation = 'male' AND up.gender = 'male' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual'))\n                    )\n                    AND ST_DWithin(up.location::geography, ui.user_location::geography, $7 * 1000)\n                    AND EXTRACT(YEAR FROM AGE(up.birth_date)) BETWEEN ui.min_age AND ui.max_age\n                GROUP BY up.id, ui.user_location\n            ) AS subquery\n            JOIN user_profile up ON up.id = subquery.id\n            CROSS JOIN user_input ui\n            ORDER BY recommendation_score DESC\n            LIMIT 10;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "avatar_hash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "picture_hashes",
+        "type_info": "VarcharArray"
+      },
+      {
+        "ordinal": 5,
+        "name": "bio",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "birth_date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 7,
+        "name": "gender: Gender",
+        "type_info": {
+          "Custom": {
+            "name": "gender",
+            "kind": {
+              "Enum": [
+                "male",
+                "female"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "sexual_orientation: Orientation",
+        "type_info": {
+          "Custom": {
+            "name": "sexual_orientation",
+            "kind": {
+              "Enum": [
+                "male",
+                "female",
+                "bisexual"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "location!: _",
+        "type_info": {
+          "Custom": {
+            "name": "geometry",
+            "kind": "Simple"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "rating",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "last_active",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 14,
+        "name": "distance",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 15,
+        "name": "common_tags_count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 16,
+        "name": "inactivity_duration",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 17,
+        "name": "recommendation_score",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        {
+          "Custom": {
+            "name": "gender",
+            "kind": {
+              "Enum": [
+                "male",
+                "female"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "sexual_orientation",
+            "kind": {
+              "Enum": [
+                "male",
+                "female",
+                "bisexual"
+              ]
+            }
+          }
+        },
+        "Bytea",
+        "Int4",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "94e9eb2880aea6d2fa8d56209fe6e2314043ca13b4657b4e8dd973f105e541ad"
+}

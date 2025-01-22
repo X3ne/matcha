@@ -1,0 +1,126 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                id,\n                user_id,\n                name,\n                avatar_hash,\n                picture_hashes,\n                bio,\n                birth_date,\n                gender AS \"gender: _\",\n                sexual_orientation AS \"sexual_orientation: _\",\n                location AS \"location!: _\",\n                rating,\n                last_active,\n                created_at,\n                updated_at\n            FROM\n                user_profile\n            WHERE\n                user_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "avatar_hash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "picture_hashes",
+        "type_info": "VarcharArray"
+      },
+      {
+        "ordinal": 5,
+        "name": "bio",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "birth_date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 7,
+        "name": "gender: _",
+        "type_info": {
+          "Custom": {
+            "name": "gender",
+            "kind": {
+              "Enum": [
+                "male",
+                "female"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "sexual_orientation: _",
+        "type_info": {
+          "Custom": {
+            "name": "sexual_orientation",
+            "kind": {
+              "Enum": [
+                "male",
+                "female",
+                "bisexual"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "location!: _",
+        "type_info": {
+          "Custom": {
+            "name": "geometry",
+            "kind": "Simple"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "rating",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "last_active",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "dfc8c57b1ad12cedf234c49a7f50e4634e93407048c5f58613f19999640ec198"
+}
