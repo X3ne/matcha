@@ -1,6 +1,7 @@
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use sqlx::PgPool;
-use std::sync::Arc;
 
 use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::entities::user_profile::UserProfile;
@@ -10,6 +11,7 @@ use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
 use crate::infrastructure::repositories::user_profile_repo::PgUserProfileRepository;
 use crate::shared::types::snowflake::Snowflake;
+use crate::shared::types::user_profile::{Gender, Orientation};
 use crate::shared::utils::fame::FameCalculator;
 
 #[derive(Clone)]
@@ -70,6 +72,33 @@ impl UserProfileService for UserProfileServiceImpl {
         let mut conn = self.pool.acquire().await?;
 
         let profiles = PgUserProfileRepository::search(&mut *conn, params).await?;
+
+        Ok(profiles)
+    }
+
+    async fn recommend(
+        &self,
+        user_id: Snowflake,
+        location: geo_types::Geometry<f64>,
+        radius_km: f64,
+        gender: Gender,
+        orientation: Orientation,
+        min_age: u8,
+        max_age: u8,
+    ) -> Result<Vec<UserProfile>, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let profiles = PgUserProfileRepository::recommend(
+            &mut *conn,
+            user_id,
+            location,
+            radius_km,
+            gender,
+            orientation,
+            min_age,
+            max_age,
+        )
+        .await?;
 
         Ok(profiles)
     }

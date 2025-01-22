@@ -17,6 +17,7 @@ use crate::shared::types::location::Location;
 use crate::shared::types::snowflake::Snowflake;
 use crate::shared::types::user_profile::{Gender, Orientation};
 use crate::shared::utils::build_cdn_profile_image_uri;
+use crate::shared::utils::validation::validate_birth_date;
 
 #[derive(Deserialize, Debug, ApiComponent, JsonSchema, Validate)]
 #[serde(rename(deserialize = "CompleteOnboarding"))]
@@ -25,8 +26,8 @@ pub struct CompleteOnboardingDto {
     pub name: String,
     #[garde(length(min = 1, max = 150))]
     pub bio: Option<String>,
-    #[garde(range(min = 18, max = 100))]
-    pub age: i32,
+    #[garde(custom(validate_birth_date))]
+    pub birth_date: chrono::NaiveDate,
     #[serde(default = "default_index")]
     #[garde(range(min = 0, max = MAX_PROFILE_IMAGES))]
     pub avatar_index: usize,
@@ -210,8 +211,6 @@ pub struct UpdateProfileDto {
     pub name: Option<String>,
     #[garde(length(min = 1, max = 150))]
     pub bio: Option<String>,
-    #[garde(range(min = 18, max = 100))]
-    pub age: Option<i32>,
     #[garde(skip)]
     pub gender: Option<Gender>,
     #[garde(skip)]

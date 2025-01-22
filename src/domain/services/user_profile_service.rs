@@ -6,6 +6,7 @@ use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::domain::repositories::user_profile_repo::UserProfileQueryParams;
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
 use crate::shared::types::snowflake::Snowflake;
+use crate::shared::types::user_profile::{Gender, Orientation};
 
 #[async_trait]
 pub trait UserProfileService: 'static + Sync + Send {
@@ -14,6 +15,16 @@ pub trait UserProfileService: 'static + Sync + Send {
     async fn get_by_user_id(&self, user_id: Snowflake) -> Result<UserProfile, UserProfileError>;
     async fn update(&self, id: Snowflake, profile: &UserProfileUpdate) -> Result<(), UserProfileError>;
     async fn search(&self, params: &UserProfileQueryParams) -> Result<Vec<UserProfile>, UserProfileError>;
+    async fn recommend(
+        &self,
+        user_id: Snowflake,
+        location: geo_types::Geometry<f64>,
+        radius_km: f64,
+        gender: Gender,
+        orientation: Orientation,
+        min_age: u8,
+        max_age: u8,
+    ) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn get_profile_tags(&self, profile_id: Snowflake) -> Result<Vec<ProfileTag>, UserProfileError>;
     async fn add_pictures(&self, profile_id: Snowflake, picture_hashes: Vec<String>) -> Result<(), UserProfileError>;
     async fn remove_pictures(&self, profile_id: Snowflake, picture_hashes: Vec<String>)

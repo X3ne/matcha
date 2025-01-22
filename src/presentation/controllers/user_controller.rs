@@ -120,7 +120,7 @@ pub async fn complete_onboarding(
             avatar_hash: picture_hashes.get(onboarding.avatar_index).cloned(),
             picture_hashes,
             bio: onboarding.bio,
-            age: onboarding.age,
+            birth_date: onboarding.birth_date,
             gender: onboarding.gender,
             sexual_orientation: onboarding.sexual_orientation,
             location,

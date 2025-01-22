@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{Datelike, Utc};
 use fake::faker::lorem::fr_fr::Paragraph;
 use fake::Fake;
 use geo_types::Point;
@@ -37,12 +37,22 @@ fn random_location_around(latitude: f64, longitude: f64, radius_km: f64) -> Poin
     Point::new(final_lon, final_lat)
 }
 
+fn random_birth_date(age: i32) -> chrono::NaiveDate {
+    let now = Utc::now().naive_utc();
+    let year = now.year() - age;
+    let month = rand::thread_rng().gen_range(1..13);
+    let day = rand::thread_rng().gen_range(1..29);
+
+    chrono::NaiveDate::from_ymd_opt(year, month, day).unwrap()
+}
+
 impl UserProfileSqlx {
     pub fn new(user_id: Snowflake, name: String, gender: Gender, orientation: Orientation) -> Self {
         let id = Snowflake::new();
         let bio = Paragraph(1..3).fake();
         let mut rng = rand::thread_rng();
-        let age = rng.gen_range(18..50);
+        let age = rng.gen_range(19..50);
+        let birth_date = random_birth_date(age);
         let now = Utc::now().naive_utc();
         let location = random_location_around(DEFAULT_LATITUDE, DEFAULT_LONGITUDE, 20.0);
         let rating = rng.gen_range(0..100);
@@ -55,12 +65,14 @@ impl UserProfileSqlx {
             picture_hashes: vec![],
             bio,
             age,
+            birth_date,
             gender,
             sexual_orientation: orientation,
             location: Decode {
                 geometry: Some(location.into()),
             },
             rating,
+            last_active: now,
             created_at: now,
             updated_at: now,
         }
@@ -69,8 +81,8 @@ impl UserProfileSqlx {
     pub async fn insert(&self, pool: &PgPool) {
         sqlx::query!(
             r#"
-            INSERT INTO user_profile (id, user_id, name, avatar_hash, bio, age, rating, gender, sexual_orientation, location)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry)
+            INSERT INTO user_profile (id, user_id, name, avatar_hash, bio, age, birth_date, rating, gender, sexual_orientation, location)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::gender, $10::sexual_orientation, $11::geometry)
             "#,
             self.id.as_i64(),
             self.user_id.as_i64(),
@@ -78,6 +90,7 @@ impl UserProfileSqlx {
             self.avatar_hash,
             self.bio,
             self.age,
+            self.birth_date,
             self.rating,
             self.gender as _,
             self.sexual_orientation as _,

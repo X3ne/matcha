@@ -11,10 +11,12 @@ pub struct UserProfile {
     pub picture_hashes: Vec<String>,
     pub bio: Option<String>,
     pub age: i32,
+    pub birth_date: chrono::NaiveDate,
     pub gender: Gender,
     pub sexual_orientation: Orientation,
     pub location: geo_types::Geometry<f64>,
     pub rating: i32,
+    pub last_active: chrono::NaiveDateTime,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }
@@ -29,10 +31,12 @@ impl From<UserProfileSqlx> for UserProfile {
             picture_hashes: profile.picture_hashes,
             bio: profile.bio,
             age: profile.age,
+            birth_date: profile.birth_date,
             gender: profile.gender,
             sexual_orientation: profile.sexual_orientation,
             location: profile.location.geometry.unwrap(), // TODO: Fix unsafe unwrap
             rating: profile.rating,
+            last_active: profile.updated_at,
             created_at: profile.created_at,
             updated_at: profile.updated_at,
         }

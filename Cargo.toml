@@ -10,7 +10,7 @@ actix-session = { version = "0.10.1", features = ["cookie-session"] }
 actix-multipart = "0.6"
 schemars = { package = "apistos-schemars", version = "0.8" }
 apistos = { version = "0.4.1", features = ["scalar", "query", "extras", "garde", "multipart"] }
-sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls", "chrono", "macros", "sqlx-macros"] }
+sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls", "chrono", "macros", "sqlx-macros", "bigdecimal"] }
 serde = { version = "1.0.215", features = ["derive"] }
 thiserror = "2.0.3"
 tokio = { version = "1", features = ["full"] }

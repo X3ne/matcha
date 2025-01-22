@@ -1,3 +1,4 @@
+use chrono::Datelike;
 use zxcvbn::{zxcvbn, Score};
 
 #[derive(Default)]
@@ -21,6 +22,17 @@ pub fn validate_password(password: &str, context: &ValidatePasswordContext) -> g
 
     if entropy.score() < Score::Two {
         return Err(garde::Error::new("password is too weak"));
+    }
+
+    Ok(())
+}
+
+pub fn validate_birth_date(birth_date: &chrono::NaiveDate, _context: &()) -> garde::Result {
+    let now = chrono::Utc::now().naive_utc().date();
+    let age = now.year() - birth_date.year();
+
+    if age < 18 {
+        return Err(garde::Error::new("user must be at least 18 years old"));
     }
 
     Ok(())

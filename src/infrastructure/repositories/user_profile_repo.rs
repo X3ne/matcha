@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use geo_types::Point;
 use geozero::wkb;
 use sqlx::{Acquire, Error, Postgres, QueryBuilder};
 
@@ -8,8 +9,11 @@ use crate::domain::repositories::user_profile_repo::{
     UserProfileQueryParams, UserProfileRepository, UserProfileSortBy,
 };
 use crate::infrastructure::models::profile_tag::ProfileTagSqlx;
-use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileSqlx, UserProfileUpdate};
+use crate::infrastructure::models::user_profile::{
+    RecommendedUserProfile, UserProfileInsert, UserProfileSqlx, UserProfileUpdate,
+};
 use crate::shared::types::snowflake::Snowflake;
+use crate::shared::types::user_profile::{Gender, Orientation};
 
 pub struct PgUserProfileRepository;
 
@@ -28,7 +32,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         sqlx::query!(
             r#"
-            INSERT INTO user_profile (id, user_id, name, avatar_hash, picture_hashes, bio, age, gender, sexual_orientation, location)
+            INSERT INTO user_profile (id, user_id, name, avatar_hash, picture_hashes, bio, birth_date, gender, sexual_orientation, location)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry)
             "#,
             id.as_i64(),
@@ -37,7 +41,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
             profile.avatar_hash,
             &profile.picture_hashes,
             profile.bio,
-            profile.age,
+            profile.birth_date,
             profile.gender as _,
             profile.sexual_orientation as _,
             wkb::Encode(geom) as _
@@ -58,7 +62,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         let profile = sqlx::query_as!(
             UserProfileSqlx,
             r#"
-            SELECT 
+            SELECT
                 id,
                 user_id,
                 name,
@@ -66,10 +70,12 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 picture_hashes,
                 bio,
                 age,
+                birth_date,
                 gender AS "gender: _",
                 sexual_orientation AS "sexual_orientation: _",
                 location AS "location!: _",
                 rating,
+                last_active,
                 created_at,
                 updated_at
             FROM
@@ -95,7 +101,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         let profile = sqlx::query_as!(
             UserProfileSqlx,
             r#"
-            SELECT 
+            SELECT
                 id,
                 user_id,
                 name,
@@ -103,10 +109,12 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 picture_hashes,
                 bio,
                 age,
+                birth_date,
                 gender AS "gender: _",
                 sexual_orientation AS "sexual_orientation: _",
                 location AS "location!: _",
                 rating,
+                last_active,
                 created_at,
                 updated_at
             FROM
@@ -141,10 +149,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 name = COALESCE($2, name),
                 avatar_hash = COALESCE($3, avatar_hash),
                 bio = COALESCE($4, bio),
-                age = COALESCE($5, age),
-                gender = COALESCE($6, gender),
-                sexual_orientation = COALESCE($7, sexual_orientation),
-                location = COALESCE($8, location)
+                gender = COALESCE($5, gender),
+                sexual_orientation = COALESCE($6, sexual_orientation),
+                location = COALESCE($7, location)
             WHERE
                 id = $1
             "#,
@@ -152,7 +159,6 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
             profile.name,
             profile.avatar_hash,
             profile.bio,
-            profile.age,
             profile.gender as _,
             profile.sexual_orientation as _,
             encode as _
@@ -286,6 +292,104 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         let profiles: Vec<UserProfile> = profiles.into_iter().map(|profile| profile.into()).collect();
         Ok(profiles)
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn recommend<'a, A>(
+        conn: A,
+        user_id: Snowflake,
+        location: geo_types::Geometry<f64>,
+        radius_km: f64,
+        gender: Gender,
+        orientation: Orientation,
+        min_age: u8,
+        max_age: u8,
+    ) -> sqlx::Result<Vec<UserProfile>, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let wkb_location = wkb::Encode(location);
+
+        let profiles = sqlx::query_as!(
+            RecommendedUserProfile,
+            r#"
+            WITH user_input AS (
+                SELECT
+                    $1::BIGINT AS user_id,
+                    $2::gender AS user_gender,
+                    $3::sexual_orientation AS user_orientation,
+                    ST_SetSRID(ST_GeomFromEWKB($4), 4326) AS user_location,
+                    $5::INT AS min_age,
+                    $6::INT AS max_age
+            )
+            SELECT up.id, up.user_id, up.name, up.avatar_hash, up.picture_hashes,
+                   up.bio, up.age, up.birth_date, up.gender AS "gender: Gender",
+                   up.sexual_orientation AS "sexual_orientation: Orientation",
+                   up.location AS "location!: _",
+                   up.rating, up.last_active, up.created_at, up.updated_at,
+                   subquery.distance, subquery.common_tags_count, subquery.inactivity_duration,
+                   (
+                       (CASE
+                            WHEN (ui.user_gender = 'male' AND up.gender = 'female' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual')) THEN 1.5
+                            WHEN (ui.user_gender = 'male' AND ui.user_orientation = 'bisexual' AND (up.gender = 'female' OR (up.gender = 'male' AND up.sexual_orientation = 'bisexual'))) THEN 1.5
+                            WHEN (ui.user_gender = 'female' AND ui.user_orientation = 'male' AND up.gender = 'male' AND (up.sexual_orientation = 'female' OR up.sexual_orientation = 'bisexual')) THEN 1.5
+                            WHEN (ui.user_gender = 'female' AND ui.user_orientation = 'bisexual' AND (up.gender = 'male' OR (up.gender = 'female' AND up.sexual_orientation = 'bisexual'))) THEN 1.5
+                            WHEN (ui.user_gender = 'female' AND ui.user_orientation = 'female' AND up.gender = 'female' AND (up.sexual_orientation = 'female' OR up.sexual_orientation = 'bisexual')) THEN 1.5
+                            WHEN (ui.user_gender = 'male' AND ui.user_orientation = 'male' AND up.gender = 'male' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual')) THEN 1.5
+                            ELSE 1
+                       END) *
+                       (1.0 / (subquery.distance + 1)) *
+                       (subquery.common_tags_count + 1) *
+                       (1 / (subquery.inactivity_duration + 1)) *
+                       (up.rating + 1) *
+                       (CASE WHEN up.avatar_hash IS NOT NULL THEN 1.2 ELSE 1 END) *
+                       (CASE WHEN up.bio IS NOT NULL AND LENGTH(up.bio) > 10 THEN 1.3 ELSE 1 END)
+                   ) AS recommendation_score
+            FROM (
+                SELECT
+                    up.id,
+                    ST_Distance(up.location::geography, ui.user_location::geography) AS distance,
+                    COUNT(DISTINCT pt.id) AS common_tags_count,
+                    EXTRACT(EPOCH FROM (NOW() - up.last_active)) AS inactivity_duration
+                FROM user_profile up
+                CROSS JOIN user_input ui
+                LEFT JOIN join_user_profile_tag jpt ON up.id = jpt.user_profile_id
+                LEFT JOIN profile_tag pt ON jpt.profile_tag_id = pt.id
+                LEFT JOIN profile_like pl ON up.id = pl.liked_user_profile_id AND pl.user_profile_id = ui.user_id
+                WHERE
+                    pl.id IS NULL
+                    AND up.id <> ui.user_id
+                    AND (
+                        (ui.user_gender = 'male' AND up.gender = 'female' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual')) OR
+                        (ui.user_gender = 'male' AND ui.user_orientation = 'bisexual' AND (up.gender = 'female' OR (up.gender = 'male' AND up.sexual_orientation = 'bisexual'))) OR
+                        (ui.user_gender = 'female' AND ui.user_orientation = 'male' AND up.gender = 'male' AND (up.sexual_orientation = 'female' OR up.sexual_orientation = 'bisexual')) OR
+                        (ui.user_gender = 'female' AND ui.user_orientation = 'bisexual' AND (up.gender = 'male' OR (up.gender = 'female' AND up.sexual_orientation = 'bisexual'))) OR
+                        (ui.user_gender = 'female' AND ui.user_orientation = 'female' AND up.gender = 'female' AND (up.sexual_orientation = 'female' OR up.sexual_orientation = 'bisexual')) OR
+                        (ui.user_gender = 'male' AND ui.user_orientation = 'male' AND up.gender = 'male' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual'))
+                    )
+                    AND ST_DWithin(up.location::geography, ui.user_location::geography, $7 * 1000)
+                    AND EXTRACT(YEAR FROM AGE(up.birth_date)) BETWEEN ui.min_age AND ui.max_age
+                GROUP BY up.id, ui.user_location
+            ) AS subquery
+            JOIN user_profile up ON up.id = subquery.id
+            CROSS JOIN user_input ui
+            ORDER BY recommendation_score DESC
+            LIMIT 10;
+            "#,
+            user_id.as_i64(),
+            gender as _,
+            orientation as _,
+            wkb_location as _,
+            min_age as i32,
+            max_age as i32,
+            radius_km as _
+        )
+            .fetch_all(&mut *conn)
+            .await?;
+
+        Ok(profiles.into_iter().map(|profile| profile.into()).collect())
     }
 
     #[tracing::instrument(skip(conn))]
@@ -608,10 +712,12 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.picture_hashes,
                 up.bio,
                 up.age,
+                up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
                 up.location AS "location!: _",
                 up.rating,
+                up.last_active,
                 up.created_at,
                 up.updated_at
             FROM user_profile up
@@ -644,10 +750,12 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.picture_hashes,
                 up.bio,
                 up.age,
+                up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
                 up.location AS "location!: _",
                 up.rating,
+                up.last_active,
                 up.created_at,
                 up.updated_at
             FROM user_profile up
@@ -680,10 +788,12 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.picture_hashes,
                 up.bio,
                 up.age,
+                up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
                 up.location AS "location!: _",
                 up.rating,
+                up.last_active,
                 up.created_at,
                 up.updated_at
             FROM user_profile up

@@ -4,6 +4,7 @@ use crate::domain::repositories::repository::{QueryParams, DEFAULT_LIMIT, DEFAUL
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
 use crate::shared::types::filtering::SortOrder;
 use crate::shared::types::snowflake::Snowflake;
+use crate::shared::types::user_profile::{Gender, Orientation};
 use apistos::ApiComponent;
 use async_trait::async_trait;
 use geo_types::Point;
@@ -75,6 +76,19 @@ pub trait UserProfileRepository<Db>: Send + Sync {
         A: Acquire<'a, Database = Db> + Send;
 
     async fn search<'a, A>(conn: A, params: &UserProfileQueryParams) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn recommend<'a, A>(
+        conn: A,
+        user_id: Snowflake,
+        location: geo_types::Geometry<f64>,
+        radius_km: f64,
+        gender: Gender,
+        orientation: Orientation,
+        min_age: u8,
+        max_age: u8,
+    ) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
 

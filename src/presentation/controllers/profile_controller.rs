@@ -75,7 +75,6 @@ pub async fn update_my_profile(
             &UserProfileUpdate {
                 name: body.name,
                 bio: body.bio,
-                age: body.age,
                 gender: body.gender,
                 sexual_orientation: body.sexual_orientation,
                 location: body.location.map(Into::into),
@@ -170,6 +169,62 @@ pub async fn search_profiles(
     let mut profiles_dto = Vec::new();
 
     for (profile, tags_result) in profiles.into_iter().zip(tags_results) {
+        let tags = tags_result.unwrap_or_else(|_| vec![]);
+        let approx_distance = approx_distance_km(&user_profile.location, &profile.location);
+
+        let (is_liked, is_a_match) = tokio::try_join!(
+            user_profile_service.is_profile_liked(user_profile.id, profile.id),
+            user_profile_service.is_profile_matched(user_profile.id, profile.id),
+        )?;
+
+        let mut profile_dto: UserProfileDto = profile.into();
+        profile_dto.append_tags(tags);
+        profile_dto.set_approx_distance(approx_distance);
+        profile_dto.set_meta(UserProfileMeta { is_liked, is_a_match });
+
+        profiles_dto.push(profile_dto);
+    }
+
+    Ok(web::Json(profiles_dto))
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "recommend_profiles",
+    summary = "Recommend user profiles",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn recommend_profiles(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let user_profile = user_profile_service.get_by_user_id(user.id).await?;
+    let recommendations = user_profile_service
+        .recommend(
+            user_profile.id,
+            user_profile.location.clone(),
+            50.0, // TODO: for now this is hardcoded, but it should be a user setting
+            user_profile.gender,
+            user_profile.sexual_orientation,
+            18,
+            99,
+        )
+        .await?;
+
+    let tag_futures: Vec<_> = recommendations
+        .iter()
+        .map(|profile| user_profile_service.get_profile_tags(profile.id))
+        .collect();
+
+    let tags_results: Vec<Result<Vec<ProfileTag>, _>> = join_all(tag_futures).await;
+
+    let mut profiles_dto = Vec::new();
+
+    for (profile, tags_result) in recommendations.into_iter().zip(tags_results) {
         let tags = tags_result.unwrap_or_else(|_| vec![]);
         let approx_distance = approx_distance_km(&user_profile.location, &profile.location);
 

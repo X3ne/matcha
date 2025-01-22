@@ -30,10 +30,13 @@ CREATE TABLE user_profile
     bio                TEXT,
     age                INTEGER               NOT NULL
         CONSTRAINT user_profile_age_check CHECK (age >= 18),
+    birth_date         DATE                  NOT NULL
+        CONSTRAINT user_profile_birthdate_check CHECK (birth_date <= NOW()::DATE - INTERVAL '18 years'),
     gender             GENDER                NOT NULL,
     sexual_orientation SEXUAL_ORIENTATION    NOT NULL,
     location           GEOMETRY(POINT, 4326) NOT NULL,
     rating             INTEGER               NOT NULL DEFAULT 0,
+    last_active        TIMESTAMP             NOT NULL DEFAULT NOW(),
     created_at         TIMESTAMP             NOT NULL DEFAULT NOW(),
     updated_at         TIMESTAMP             NOT NULL DEFAULT NOW()
 );

@@ -8,7 +8,8 @@ back:
   ✔ add UserProfile field to calculate distance from user @done(25-01-20 00:27)
   ✔ disable dev emails @done(25-01-14 13:53)
   ✔ mock db @done(25-01-14 13:53)
-  ☐ add likes
+  ✔ add likes @done(25-01-21 19:16)
+  ☐ add profile views
   ☐ add block and report
   ☐ add websocket notifications/realtime chat
   ☐ remove current user from search results
@@ -22,8 +23,12 @@ back:
   ☐ swipe system (like/dislike dislikes should not be shown again -> dislike in a timed redis)
   ✔ upload/delete images @done(25-01-20 20:05)
   ☐ add search radius to user settings
+  ☐ add min_age and max_age to user settings
   ✔ do not delete s3 file when same image hash is used @done(25-01-20 20:00)
   ✔ prevent deleting profile image @done(25-01-20 20:05)
+  ☐ remove age in db
+  ☐ calculate age from birthdate
+  ☐ allow user to delete profile picture
 
 bonuses:
   ✔ oauth2 @done(25-01-13 16:24)
