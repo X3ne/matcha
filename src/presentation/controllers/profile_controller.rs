@@ -157,7 +157,7 @@ pub async fn search_profiles(
         search_params.tag_ids = Some(user_tags.iter().map(|tag| tag.id).collect());
     }
 
-    let profiles = user_profile_service.search(&search_params).await?;
+    let profiles = user_profile_service.search(&search_params, user_profile.id).await?;
 
     let tag_futures: Vec<_> = profiles
         .iter()

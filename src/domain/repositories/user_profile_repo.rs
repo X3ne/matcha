@@ -75,7 +75,11 @@ pub trait UserProfileRepository<Db>: Send + Sync {
     where
         A: Acquire<'a, Database = Db> + Send;
 
-    async fn search<'a, A>(conn: A, params: &UserProfileQueryParams) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
+    async fn search<'a, A>(
+        conn: A,
+        params: &UserProfileQueryParams,
+        current_profile_id: Snowflake,
+    ) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
 

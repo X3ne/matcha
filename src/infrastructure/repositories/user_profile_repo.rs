@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use geo_types::Point;
 use geozero::wkb;
 use sqlx::{Acquire, Error, Postgres, QueryBuilder};
 
@@ -168,7 +167,11 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
     }
 
     #[tracing::instrument(skip(conn))]
-    async fn search<'a, A>(conn: A, params: &UserProfileQueryParams) -> sqlx::Result<Vec<UserProfile>, Error>
+    async fn search<'a, A>(
+        conn: A,
+        params: &UserProfileQueryParams,
+        current_profile_id: Snowflake,
+    ) -> sqlx::Result<Vec<UserProfile>, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
     {
@@ -202,7 +205,10 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         WHERE 1=1",
         );
 
-        // filters
+        // exclude current user
+        query_builder.push(" AND up.id != ");
+        query_builder.push_bind(current_profile_id);
+
         if let Some(min_age) = params.min_age {
             query_builder.push(" AND EXTRACT(YEAR FROM AGE(up.birth_date)) >= ");
             query_builder.push_bind(min_age);

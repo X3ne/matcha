@@ -12,22 +12,22 @@ back:
   ☐ add profile views
   ☐ add block and report
   ☐ add websocket notifications/realtime chat
-  ☐ remove current user from search results
+  ✔ remove current user from search results @done(25-01-22 18:33)
   ☐ remove blocked users from search results
   ✔ find user location from ip @done(25-01-19 16:33)
   ✔ recommend users based on location @done(25-01-19 03:48)
   ✔ add s3 for images @done(25-01-17 17:17)
   ✔ add image upload @done(25-01-17 17:17) @done(25-01-17 17:17)
   ✔ rewrite tags api @done(25-01-19 03:47)
-  ☐ algorithm to recommend user profiles
+  ✔ algorithm to recommend user profiles @done(25-01-22 18:34)
   ☐ swipe system (like/dislike dislikes should not be shown again -> dislike in a timed redis)
   ✔ upload/delete images @done(25-01-20 20:05)
   ☐ add search radius to user settings
   ☐ add min_age and max_age to user settings
   ✔ do not delete s3 file when same image hash is used @done(25-01-20 20:00)
   ✔ prevent deleting profile image @done(25-01-20 20:05)
-  ☐ remove age in db
-  ☐ calculate age from birthdate
+  ✔ remove age in db @done(25-01-22 18:20)
+  ✔ calculate age from birthdate @done(25-01-22 18:20)
   ☐ allow user to delete profile picture
 
 bonuses:
