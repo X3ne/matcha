@@ -25,7 +25,6 @@ const OnboardingIndexLazyImport = createFileRoute('/onboarding/')()
 const MessagesIndexLazyImport = createFileRoute('/messages/')()
 const LoginIndexLazyImport = createFileRoute('/login/')()
 const ErrorIndexLazyImport = createFileRoute('/error/')()
-const ProfileUsernameLazyImport = createFileRoute('/profile/$username')()
 const ProfileIdLazyImport = createFileRoute('/profile/$id')()
 const ActivationTokenLazyImport = createFileRoute('/activation/$token')()
 
@@ -93,14 +92,6 @@ const ErrorIndexLazyRoute = ErrorIndexLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/error/index.lazy').then((d) => d.Route))
 
-const ProfileUsernameLazyRoute = ProfileUsernameLazyImport.update({
-  id: '/profile/$username',
-  path: '/profile/$username',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() =>
-  import('./routes/profile/$username.lazy').then((d) => d.Route),
-)
-
 const ProfileIdLazyRoute = ProfileIdLazyImport.update({
   id: '/profile/$id',
   path: '/profile/$id',
@@ -138,13 +129,6 @@ declare module '@tanstack/react-router' {
       path: '/profile/$id'
       fullPath: '/profile/$id'
       preLoaderRoute: typeof ProfileIdLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/profile/$username': {
-      id: '/profile/$username'
-      path: '/profile/$username'
-      fullPath: '/profile/$username'
-      preLoaderRoute: typeof ProfileUsernameLazyImport
       parentRoute: typeof rootRoute
     }
     '/error/': {
@@ -212,7 +196,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
   '/activation/$token': typeof ActivationTokenLazyRoute
   '/profile/$id': typeof ProfileIdLazyRoute
-  '/profile/$username': typeof ProfileUsernameLazyRoute
   '/error': typeof ErrorIndexLazyRoute
   '/login': typeof LoginIndexLazyRoute
   '/messages': typeof MessagesIndexLazyRoute
@@ -227,7 +210,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
   '/activation/$token': typeof ActivationTokenLazyRoute
   '/profile/$id': typeof ProfileIdLazyRoute
-  '/profile/$username': typeof ProfileUsernameLazyRoute
   '/error': typeof ErrorIndexLazyRoute
   '/login': typeof LoginIndexLazyRoute
   '/messages': typeof MessagesIndexLazyRoute
@@ -243,7 +225,6 @@ export interface FileRoutesById {
   '/': typeof IndexLazyRoute
   '/activation/$token': typeof ActivationTokenLazyRoute
   '/profile/$id': typeof ProfileIdLazyRoute
-  '/profile/$username': typeof ProfileUsernameLazyRoute
   '/error/': typeof ErrorIndexLazyRoute
   '/login/': typeof LoginIndexLazyRoute
   '/messages/': typeof MessagesIndexLazyRoute
@@ -260,7 +241,6 @@ export interface FileRouteTypes {
     | '/'
     | '/activation/$token'
     | '/profile/$id'
-    | '/profile/$username'
     | '/error'
     | '/login'
     | '/messages'
@@ -274,7 +254,6 @@ export interface FileRouteTypes {
     | '/'
     | '/activation/$token'
     | '/profile/$id'
-    | '/profile/$username'
     | '/error'
     | '/login'
     | '/messages'
@@ -288,7 +267,6 @@ export interface FileRouteTypes {
     | '/'
     | '/activation/$token'
     | '/profile/$id'
-    | '/profile/$username'
     | '/error/'
     | '/login/'
     | '/messages/'
@@ -304,7 +282,6 @@ export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
   ActivationTokenLazyRoute: typeof ActivationTokenLazyRoute
   ProfileIdLazyRoute: typeof ProfileIdLazyRoute
-  ProfileUsernameLazyRoute: typeof ProfileUsernameLazyRoute
   ErrorIndexLazyRoute: typeof ErrorIndexLazyRoute
   LoginIndexLazyRoute: typeof LoginIndexLazyRoute
   MessagesIndexLazyRoute: typeof MessagesIndexLazyRoute
@@ -319,7 +296,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
   ActivationTokenLazyRoute: ActivationTokenLazyRoute,
   ProfileIdLazyRoute: ProfileIdLazyRoute,
-  ProfileUsernameLazyRoute: ProfileUsernameLazyRoute,
   ErrorIndexLazyRoute: ErrorIndexLazyRoute,
   LoginIndexLazyRoute: LoginIndexLazyRoute,
   MessagesIndexLazyRoute: MessagesIndexLazyRoute,
@@ -343,7 +319,6 @@ export const routeTree = rootRoute
         "/",
         "/activation/$token",
         "/profile/$id",
-        "/profile/$username",
         "/error/",
         "/login/",
         "/messages/",
@@ -362,9 +337,6 @@ export const routeTree = rootRoute
     },
     "/profile/$id": {
       "filePath": "profile/$id.lazy.tsx"
-    },
-    "/profile/$username": {
-      "filePath": "profile/$username.lazy.tsx"
     },
     "/error/": {
       "filePath": "error/index.lazy.tsx"

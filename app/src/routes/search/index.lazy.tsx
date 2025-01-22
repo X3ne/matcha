@@ -43,12 +43,12 @@ function Search() {
   const [filters, setFilters] = useState({
     age: '',
     radius_km: '',
-    fameRating: '',
+    rating: '',
     commonTags: [] as string[],
     minAge: '',
     maxAge: '',
-    minFame: '',
-    maxFame: '',
+    minRating: '',
+    maxRating: '',
     multipleTags: [] as string[]
   })
 
@@ -78,12 +78,12 @@ function Search() {
     setFilters({
       age: '',
       radius_km: '',
-      fameRating: '',
+      rating: '',
       commonTags: [],
       minAge: '',
       maxAge: '',
-      minFame: '',
-      maxFame: '',
+      minRating: '',
+      maxRating: '',
       multipleTags: []
     })
     setIsAdvancedSearch((prev) => !prev)
@@ -109,9 +109,9 @@ function Search() {
           min_age: parseInt(activeFilters.age),
           max_age: parseInt(activeFilters.age)
         }),
-        ...(activeFilters.fameRating && {
-          min_fame_rating: parseInt(activeFilters.fameRating),
-          max_fame_rating: parseInt(activeFilters.fameRating)
+        ...(activeFilters.rating && {
+          min_fame_rating: parseInt(activeFilters.rating),
+          max_fame_rating: parseInt(activeFilters.rating)
         }),
         ...(activeFilters.radius_km && {
           radius_km: parseInt(activeFilters.radius_km)
@@ -125,11 +125,11 @@ function Search() {
         ...(activeFilters.maxAge && {
           max_age: parseInt(activeFilters.maxAge)
         }),
-        ...(activeFilters.minFame && {
-          min_fame_rating: parseInt(activeFilters.minFame)
+        ...(activeFilters.minRating && {
+          min_fame_rating: parseInt(activeFilters.minRating)
         }),
-        ...(activeFilters.maxFame && {
-          max_fame_rating: parseInt(activeFilters.maxFame)
+        ...(activeFilters.maxRating && {
+          max_fame_rating: parseInt(activeFilters.maxRating)
         }),
         ...(activeFilters.multipleTags.length > 0 && {
           tag_ids: activeFilters.multipleTags
@@ -179,7 +179,7 @@ function Search() {
           <SelectContent>
             <SelectItem value={UserProfileSortBy.Distance}>Distance</SelectItem>
             <SelectItem value={UserProfileSortBy.Age}>Age</SelectItem>
-            <SelectItem value={UserProfileSortBy.FameRating}>Fame</SelectItem>
+            <SelectItem value={UserProfileSortBy.Rating}>Rating</SelectItem>
             <SelectItem value={UserProfileSortBy.Tags}>Tags</SelectItem>
           </SelectContent>
         </Select>
@@ -224,22 +224,22 @@ function Search() {
                 </div>
 
                 <div>
-                  <p className="mb-2 text-sm font-medium">Fame Rating</p>
+                  <p className="mb-2 text-sm font-medium">Rating</p>
                   <Slider
-                    value={[parseInt(filters.fameRating) || 0]}
+                    value={[parseInt(filters.rating) || 0]}
                     min={0}
-                    max={1000}
+                    max={100}
                     step={1}
                     onValueChange={(val) => {
                       setFilters((prev) => ({
                         ...prev,
-                        fameRating: val[0].toString()
+                        rating: val[0].toString()
                       }))
                     }}
                     className={cn('w-full')}
                   />
                   <p className="mt-1 text-xs">
-                    Selected Fame: {filters.fameRating || '0'}
+                    Selected Rating: {filters.rating || '0'}
                   </p>
                 </div>
 
@@ -310,26 +310,26 @@ function Search() {
                 </div>
 
                 <div>
-                  <p className="mb-2 text-sm font-medium">Fame Rating Range</p>
+                  <p className="mb-2 text-sm font-medium">Rating Range</p>
                   <Slider
                     value={[
-                      parseInt(filters.minFame) || 0,
-                      parseInt(filters.maxFame) || 100
+                      parseInt(filters.minRating) || 0,
+                      parseInt(filters.maxRating) || 100
                     ]}
                     min={0}
-                    max={1000}
+                    max={100}
                     step={1}
                     onValueChange={(vals) => {
                       setFilters((prev) => ({
                         ...prev,
-                        minFame: vals[0].toString(),
-                        maxFame: vals[1].toString()
+                        minRating: vals[0].toString(),
+                        maxRating: vals[1].toString()
                       }))
                     }}
                     className={cn('w-full')}
                   />
                   <p className="mt-1 text-xs">
-                    {filters.minFame || 0} - {filters.maxFame || 100}
+                    {filters.minRating || 0} - {filters.maxRating || 100}
                   </p>
                 </div>
 
@@ -453,7 +453,7 @@ function UserCard({ user }: { user: UserProfile }) {
               </li>
               <li className="flex items-center gap-1">
                 <FaFire size={10} />
-                <p className="text-[8px] font-light">{user.fame_rating}</p>
+                <p className="text-[8px] font-light">{user.rating}</p>
               </li>
             </ul>
           </div>
