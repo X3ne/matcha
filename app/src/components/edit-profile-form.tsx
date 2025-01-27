@@ -33,7 +33,6 @@ export function EditProfileForm() {
     firstName: '',
     lastName: '',
     email: '',
-    age: '',
     biography: '',
     gender: Gender.Male,
     sexualOrientation: Orientation.Bisexual
@@ -83,7 +82,6 @@ export function EditProfileForm() {
       firstName: user?.first_name || '',
       lastName: user?.last_name || '',
       email: user?.email || '',
-      age: userProfile.age?.toString() || '',
       biography: userProfile.bio || '',
       gender: userProfile.gender,
       sexualOrientation: userProfile.sexual_orientation
@@ -111,7 +109,6 @@ export function EditProfileForm() {
       }
 
       const profileData = {
-        age: Number(formData.age) || null,
         name: `${formData.firstName} ${formData.lastName}`,
         bio: formData.biography || null,
         gender: formData.gender,
@@ -236,7 +233,6 @@ export function EditProfileForm() {
             firstName: user?.first_name || '',
             lastName: user?.last_name || '',
             email: user?.email || '',
-            age: userProfile?.age?.toString() || '',
             biography: userProfile?.bio || '',
             gender: userProfile?.gender || Gender.Male,
             sexualOrientation:
@@ -259,7 +255,6 @@ export function EditProfileForm() {
             firstName: user?.first_name || '',
             lastName: user?.last_name || '',
             email: user?.email || '',
-            age: userProfile?.age?.toString() || '',
             biography: userProfile?.bio || '',
             gender: userProfile?.gender || Gender.Male,
             sexualOrientation:
@@ -409,18 +404,6 @@ export function EditProfileForm() {
                 <SelectItem value={Orientation.Bisexual}>Bisexual</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Age */}
-          <div>
-            <Label htmlFor="age">Age</Label>
-            <Input
-              id="age"
-              name="age"
-              type="number"
-              value={formData.age}
-              onChange={handleInputChange}
-            />
           </div>
 
           {/* Biography */}
