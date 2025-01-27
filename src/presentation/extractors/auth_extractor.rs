@@ -75,6 +75,10 @@ impl FromRequest for Session {
 
             let user = user_service.get_by_id(user_id).await?;
 
+            if user.is_active == false {
+                return Err(AuthError::AccountNotActivated.into());
+            }
+
             Ok(Session {
                 inner: session,
                 user: Some(user),
