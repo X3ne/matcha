@@ -14,7 +14,7 @@ import {
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { useToast } from '@/components/ui/use-toast'
 import { useUser } from '@/hooks/useUser'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   createLazyFileRoute,
   useParams,
@@ -38,7 +38,7 @@ function Profile() {
     }
   }, [currentUserProfile, userId, navigate])
 
-  const { data: userProfile } = useQuery({
+  const { data: userProfile, refetch: refetchUserProfile } = useQuery({
     queryKey: ['user', userId],
     retry: false,
     queryFn: async () =>
@@ -49,28 +49,69 @@ function Profile() {
       ).data
   })
 
-  // const [profile, setProfile] = useState(userProfile)
   const { toast } = useToast()
 
   const [isConfettiActive, setIsConfettiActive] = useState(false)
 
-  const handleLike = () => {
-    // if (!profile.isLikedByCurrentUser) {
-    //   setIsConfettiActive(true)
-    //   setTimeout(() => {
-    //     setIsConfettiActive(false)
-    //   }, 1000)
-  }
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      return api.v1.likeUserProfile(userId)
+    },
+    onSuccess: () => {
+      setIsConfettiActive(true)
+      setTimeout(() => {
+        setIsConfettiActive(false)
+      }, 1000)
+      toast({
+        title: 'Liked',
+        description: `You have liked ${userProfile?.name}'s profile.`
+      })
+    },
+    onError: (err: any) => {
+      console.error(err)
+      toast({
+        title: 'Action failed',
+        description:
+          err.message || 'Something went wrong while liking the profile.',
+        variant: 'destructive'
+      })
+    },
+    onSettled: () => {
+      refetchUserProfile()
+    }
+  })
 
-  //   setProfile((prev) => ({
-  //     ...prev,
-  //     isLikedByCurrentUser: !prev.isLikedByCurrentUser
-  //   }))
-  //   toast({
-  //     title: profile.isLikedByCurrentUser ? 'Unliked' : 'Liked',
-  //     description: `You have ${profile.isLikedByCurrentUser ? 'unliked' : 'liked'} ${profile.name}'s profile.`
-  //   })
-  // }
+  const unlikeMutation = useMutation({
+    mutationFn: async () => {
+      return api.v1.removeUserProfileLike(userId)
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Unliked',
+        description: `You have unliked ${userProfile?.name}'s profile.`
+      })
+    },
+    onError: (err: any) => {
+      console.error(err)
+      toast({
+        title: 'Action failed',
+        description:
+          err.message || 'Something went wrong while unliking the profile.',
+        variant: 'destructive'
+      })
+    },
+    onSettled: () => {
+      refetchUserProfile()
+    }
+  })
+
+  const handleLike = () => {
+    if (userProfile?.meta?.is_liked) {
+      unlikeMutation.mutate()
+    } else {
+      likeMutation.mutate()
+    }
+  }
 
   const handleReport = () => {
     toast({
@@ -126,9 +167,7 @@ function Profile() {
             <div className="flex flex-col items-center space-y-2 pt-6 sm:pt-0 md:items-start">
               <Button
                 size={'sm'}
-                // variant={
-                //   userProfile?.isLikedByCurrentUser ? 'default' : 'outline'
-                // }
+                variant={userProfile?.meta?.is_liked ? 'default' : 'outline'}
                 onClick={handleLike}
                 className={`w-full ${
                   isConfettiActive
@@ -136,8 +175,8 @@ function Profile() {
                     : ''
                 }`}
               >
-                <Heart className="h-4 w-4" /> Like
-                {/* {userProfile?.isLikedByCurrentUser ? 'Unlike' : 'Like'} */}
+                <Heart className="h-4 w-4" />
+                {userProfile?.meta?.is_liked ? 'Like' : 'Unlike'}
               </Button>
               {/* Dialog for Report */}
               <Dialog>
