@@ -167,7 +167,7 @@ function Profile() {
             <div className="flex flex-col items-center space-y-2 pt-6 sm:pt-0 md:items-start">
               <Button
                 size={'sm'}
-                variant={userProfile?.meta?.is_liked ? 'default' : 'outline'}
+                variant={userProfile?.meta?.is_liked ? 'outline' : 'default'}
                 onClick={handleLike}
                 className={`w-full ${
                   isConfettiActive
@@ -176,9 +176,9 @@ function Profile() {
                 }`}
               >
                 <Heart className="h-4 w-4" />
-                {userProfile?.meta?.is_liked ? 'Like' : 'Unlike'}
+                {userProfile?.meta?.is_liked ? 'Unlike' : 'Like'}
               </Button>
-              {/* Dialog for Report */}
+              {/* Report */}
               <Dialog>
                 <DialogTrigger asChild>
                   <Button size={'sm'} variant="outline" className="w-full">
@@ -200,7 +200,7 @@ function Profile() {
                   </div>
                 </DialogContent>
               </Dialog>
-              {/* Dialog for Block */}
+              {/* Block */}
               <Dialog>
                 <DialogTrigger asChild>
                   <Button size={'sm'} className="w-full" variant="outline">
