@@ -1,5 +1,6 @@
 'use client'
 import { Orientation, Gender, Location } from '@/api/spec'
+import { DateTimePicker } from '@/components/datetime-picker'
 import TagSelector from '@/components/tag-selector'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,6 +18,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { useUser } from '@/hooks/useUser'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { useNavigate } from '@tanstack/react-router'
+import { subYears, format } from 'date-fns'
 import { Trash } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
@@ -31,6 +33,13 @@ export default function OnboardingPage() {
 
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
+  const today = new Date()
+  const [birthDate, setBirthDate] = useState<Date | undefined>(
+    subYears(today, 18)
+  )
+  const minDate = subYears(today, 99)
+  const maxDate = subYears(today, 18)
+
   useEffect(() => {
     console.log('userProfile', userProfile)
     if (userProfile) {
@@ -39,12 +48,10 @@ export default function OnboardingPage() {
   }, [userProfile, navigate])
 
   const [formData, setFormData] = useState<{
-    age: string
     biography: string
     gender: Gender
     sexualOrientation: Orientation
   }>({
-    age: '',
     biography: '',
     gender: Gender.Male,
     sexualOrientation: Orientation.Bisexual
@@ -64,8 +71,8 @@ export default function OnboardingPage() {
     setIsSubmitting(true)
     setErrorMessage('')
 
-    if (!formData.age.trim()) {
-      setErrorMessage('Age is required.')
+    if (!birthDate) {
+      setErrorMessage('Birth date is required.')
       setIsSubmitting(false)
       return
     }
@@ -93,7 +100,7 @@ export default function OnboardingPage() {
 
       const profileObj = {
         bio: formData.biography,
-        age: Number(formData.age),
+        birth_date: format(birthDate, 'yyyy-MM-dd'), // Format to RFC 3339 full-date
         name: `${user?.first_name} ${user?.last_name}`,
         avatar_index: 0,
         gender: formData.gender,
@@ -260,13 +267,14 @@ export default function OnboardingPage() {
               </div>
 
               <div>
-                <Label htmlFor="age">Age</Label>
-                <Input
-                  id="age"
-                  name="age"
-                  type="number"
-                  value={formData.age}
-                  onChange={handleInputChange}
+                <Label htmlFor="birthDate">Birth Date</Label>
+                <DateTimePicker
+                  value={birthDate}
+                  onChange={setBirthDate}
+                  min={minDate}
+                  max={maxDate}
+                  hideTime={true}
+                  dateFormat="yyyy-MM-dd" // Ensure the picker uses the correct format
                 />
               </div>
 
