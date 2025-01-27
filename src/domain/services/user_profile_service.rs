@@ -52,4 +52,6 @@ pub trait UserProfileService: 'static + Sync + Send {
     async fn get_my_likes(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn get_profile_likes(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn get_matches(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
+    async fn view_profile(&self, profile_id: Snowflake, viewed_profile_id: Snowflake) -> Result<(), UserProfileError>;
+    async fn get_viewers(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
 }

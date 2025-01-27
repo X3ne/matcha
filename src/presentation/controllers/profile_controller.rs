@@ -120,6 +120,9 @@ pub async fn get_user_profile_by_id(
     profile.set_approx_distance(approx_distance);
     profile.set_meta(UserProfileMeta { is_liked, is_a_match });
 
+    // set profile as viewed for the current logged-in user
+    user_profile_service.view_profile(user_profile.id, profile.id).await?;
+
     Ok(web::Json(profile))
 }
 
@@ -553,6 +556,26 @@ pub async fn get_my_profile_matches(
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
     let profiles = user_profile_service.get_matches(profile.id).await?;
+
+    Ok(web::Json(profiles.into_iter().map(Into::into).collect()))
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "get_my_profile_views",
+    summary = "Get the current user profile views",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn get_my_profile_views(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+    let profiles = user_profile_service.get_viewers(profile.id).await?;
 
     Ok(web::Json(profiles.into_iter().map(Into::into).collect()))
 }

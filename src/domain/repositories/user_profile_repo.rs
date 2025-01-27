@@ -195,4 +195,16 @@ pub trait UserProfileRepository<Db>: Send + Sync {
     async fn decrease_fame_rating<'a, A>(conn: A, profile_id: Snowflake, rating: i32) -> sqlx::Result<(), sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
+
+    async fn view_profile<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        viewed_profile_id: Snowflake,
+    ) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn get_viewers<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
 }

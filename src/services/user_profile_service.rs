@@ -272,4 +272,22 @@ impl UserProfileService for UserProfileServiceImpl {
 
         Ok(profiles)
     }
+
+    async fn view_profile(&self, profile_id: Snowflake, viewed_profile_id: Snowflake) -> Result<(), UserProfileError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserProfileRepository::view_profile(&mut *tx, profile_id, viewed_profile_id).await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn get_viewers(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let profiles = PgUserProfileRepository::get_viewers(&mut *conn, profile_id).await?;
+
+        Ok(profiles)
+    }
 }

@@ -3,8 +3,8 @@ use apistos::web::{resource, scope};
 
 use crate::presentation::controllers::profile_controller::{
     add_tag_to_my_profile, bulk_add_tag_to_my_profile, bulk_remove_tag_from_my_profile, delete_profile_picture,
-    get_my_profile, get_my_profile_likes, get_my_profile_matches, get_user_profile_by_id, like_user_profile,
-    recommend_profiles, remove_tag_from_my_profile, remove_user_profile_like, search_profiles,
+    get_my_profile, get_my_profile_likes, get_my_profile_matches, get_my_profile_views, get_user_profile_by_id,
+    like_user_profile, recommend_profiles, remove_tag_from_my_profile, remove_user_profile_like, search_profiles,
     set_default_profile_picture, update_my_profile, upload_profile_picture,
 };
 
@@ -34,8 +34,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                     .route(web::put().to(bulk_add_tag_to_my_profile))
                     .route(web::delete().to(bulk_remove_tag_from_my_profile)),
             )
-            .service(resource("/@me/likes").route(web::put().to(get_my_profile_likes)))
-            .service(resource("/@me/matches").route(web::put().to(get_my_profile_matches)))
+            .service(resource("/@me/likes").route(web::get().to(get_my_profile_likes)))
+            .service(resource("/@me/matches").route(web::get().to(get_my_profile_matches)))
+            .service(resource("/@me/views").route(web::get().to(get_my_profile_views)))
             .service(resource("/{profile_id}").route(web::get().to(get_user_profile_by_id)))
             .service(
                 resource("/{profile_id}/like")

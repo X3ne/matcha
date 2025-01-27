@@ -853,4 +853,67 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         Ok(())
     }
+
+    async fn view_profile<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        viewed_profile_id: Snowflake,
+    ) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let view_id = Snowflake::new();
+
+        sqlx::query!(
+            r#"
+            INSERT INTO profile_view (id, user_profile_id, viewer_profile_id)
+            VALUES ($1, $2, $3)
+            "#,
+            view_id.as_i64(),
+            viewed_profile_id.as_i64(),
+            profile_id.as_i64()
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    async fn get_viewers<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let profiles = sqlx::query_as!(
+            UserProfileSqlx,
+            r#"
+            SELECT
+                up.id,
+                up.user_id,
+                up.name,
+                up.avatar_hash,
+                up.picture_hashes,
+                up.bio,
+                up.birth_date,
+                up.gender AS "gender: _",
+                up.sexual_orientation AS "sexual_orientation: _",
+                up.location AS "location!: _",
+                up.rating,
+                up.last_active,
+                up.created_at,
+                up.updated_at
+            FROM user_profile up
+            JOIN profile_view pv ON up.id = pv.viewer_profile_id
+            WHERE pv.user_profile_id = $1
+            "#,
+            profile_id.as_i64()
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        Ok(profiles.into_iter().map(|profile| profile.into()).collect())
+    }
 }
