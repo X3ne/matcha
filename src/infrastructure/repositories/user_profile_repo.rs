@@ -645,6 +645,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         Ok(())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn is_like_exists<'a, A>(
         conn: A,
         profile_id: Snowflake,
@@ -672,6 +673,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         Ok(result.exists.unwrap_or(false))
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn is_match_exists<'a, A>(
         conn: A,
         profile_id: Snowflake,
@@ -812,6 +814,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         Ok(profiles.into_iter().map(|profile| profile.into()).collect())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn increase_fame_rating<'a, A>(conn: A, profile_id: Snowflake, rating: i32) -> sqlx::Result<(), Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -833,6 +836,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         Ok(())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn decrease_fame_rating<'a, A>(conn: A, profile_id: Snowflake, rating: i32) -> sqlx::Result<(), Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -854,6 +858,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         Ok(())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn view_profile<'a, A>(
         conn: A,
         profile_id: Snowflake,
@@ -881,6 +886,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         Ok(())
     }
 
+    #[tracing::instrument(skip(conn))]
     async fn get_viewers<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,

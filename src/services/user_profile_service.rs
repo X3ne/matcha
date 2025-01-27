@@ -80,6 +80,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(profiles)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn recommend(
         &self,
         user_id: Snowflake,
@@ -222,6 +223,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn is_profile_liked(
         &self,
         profile_id: Snowflake,
@@ -234,6 +236,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(is_liked)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn is_profile_matched(
         &self,
         profile_id: Snowflake,
@@ -273,6 +276,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(profiles)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn view_profile(&self, profile_id: Snowflake, viewed_profile_id: Snowflake) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
@@ -283,6 +287,7 @@ impl UserProfileService for UserProfileServiceImpl {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn get_viewers(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError> {
         let mut conn = self.pool.acquire().await?;
 
