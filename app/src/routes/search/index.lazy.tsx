@@ -20,14 +20,15 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
+import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { ListFilter } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { FaMapMarkerAlt } from 'react-icons/fa'
-import { FaHeart, FaFire } from 'react-icons/fa6'
+import { FaHeart, FaHeartCrack, FaFire } from 'react-icons/fa6'
 
 export const Route = createLazyFileRoute('/search/')({
   component: Search
@@ -413,14 +414,66 @@ function Search() {
 
 function UserCard({ user }: { user: UserProfile }) {
   const [isConfettiActive, setIsConfettiActive] = useState(false)
+  const { toast } = useToast()
+
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      return api.v1.likeUserProfile(user.id)
+    },
+    onSuccess: () => {
+      setIsConfettiActive(true)
+      setTimeout(() => {
+        setIsConfettiActive(false)
+      }, 1000)
+      if (user.meta) {
+        user.meta.is_liked = true
+      }
+      toast({
+        title: 'Liked',
+        description: `You have liked ${user?.name}'s profile.`
+      })
+    },
+    onError: (err: any) => {
+      toast({
+        title: 'Action failed',
+        description:
+          err.message || 'Something went wrong while liking the profile.',
+        variant: 'destructive'
+      })
+    }
+  })
+
+  const unlikeMutation = useMutation({
+    mutationFn: async () => {
+      return api.v1.removeUserProfileLike(user.id)
+    },
+    onSuccess: () => {
+      if (user.meta) {
+        user.meta.is_liked = false
+      }
+      toast({
+        title: 'Unliked',
+        description: `You have unliked ${user?.name}'s profile.`
+      })
+    },
+    onError: (err: any) => {
+      toast({
+        title: 'Action failed',
+        description:
+          err.message || 'Something went wrong while unliking the profile.',
+        variant: 'destructive'
+      })
+    }
+  })
 
   const handleLikeClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsConfettiActive(true)
-    setTimeout(() => {
-      setIsConfettiActive(false)
-    }, 1000)
+    if (user?.meta?.is_liked) {
+      unlikeMutation.mutate()
+    } else {
+      likeMutation.mutate()
+    }
   }
 
   return (
@@ -467,7 +520,11 @@ function UserCard({ user }: { user: UserProfile }) {
             }`}
             onClick={handleLikeClick}
           >
-            <FaHeart color="white" />
+            {user?.meta?.is_liked ? (
+              <FaHeartCrack color="white" />
+            ) : (
+              <FaHeart color="white" />
+            )}
           </Button>
         </div>
 

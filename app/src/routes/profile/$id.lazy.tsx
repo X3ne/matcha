@@ -20,7 +20,15 @@ import {
   useParams,
   useNavigate
 } from '@tanstack/react-router'
-import { Heart, Eye, MapPin, Flame, AlertTriangle, Ban } from 'lucide-react'
+import {
+  Heart,
+  HeartCrack,
+  Eye,
+  MapPin,
+  Flame,
+  AlertTriangle,
+  Ban
+} from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 export const Route = createLazyFileRoute('/profile/$id')({
@@ -167,7 +175,7 @@ function Profile() {
             <div className="flex flex-col items-center space-y-2 pt-6 sm:pt-0 md:items-start">
               <Button
                 size={'sm'}
-                variant={userProfile?.meta?.is_liked ? 'outline' : 'default'}
+                variant="default"
                 onClick={handleLike}
                 className={`w-full ${
                   isConfettiActive
@@ -175,8 +183,17 @@ function Profile() {
                     : ''
                 }`}
               >
-                <Heart className="h-4 w-4" />
-                {userProfile?.meta?.is_liked ? 'Unlike' : 'Like'}
+                {userProfile?.meta?.is_liked ? (
+                  <>
+                    <HeartCrack className="h-4 w-4" />
+                    Unlike
+                  </>
+                ) : (
+                  <>
+                    <Heart className="h-4 w-4" />
+                    Like
+                  </>
+                )}
               </Button>
               {/* Report */}
               <Dialog>
