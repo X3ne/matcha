@@ -77,7 +77,7 @@ function Root() {
 
   return (
     <Layout>
-      <div>
+      <div className="mx-auto w-full">
         <Outlet />
       </div>
       <TanStackRouterDevtools />

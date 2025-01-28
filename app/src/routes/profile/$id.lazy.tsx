@@ -139,7 +139,7 @@ function Profile() {
     <div className="flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow md:max-w-xl">
         <CardContent className="space-y-8 p-6">
-          <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between md:space-x-4">
+          <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between md:space-x-10">
             <div className="flex flex-col items-center md:flex-row md:items-center md:space-x-4">
               <Avatar className="h-20 w-20 border border-gray-300">
                 <AvatarImage
