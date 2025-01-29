@@ -57,6 +57,34 @@ impl ChannelRepository<Postgres> for PgChannelRepository {
         Ok(channel.into())
     }
 
+    async fn get_dm_channel<'a, A>(
+        conn: A,
+        profile1_id: Snowflake,
+        profile2_id: Snowflake,
+    ) -> sqlx::Result<Channel, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let channel = sqlx::query_as!(
+            ChannelSqlx,
+            r#"
+            SELECT c.*
+            FROM channel c
+            JOIN channel_participant cp1 ON c.id = cp1.channel_id
+            JOIN channel_participant cp2 ON c.id = cp2.channel_id
+            WHERE cp1.profile_id = $1 AND cp2.profile_id = $2
+            "#,
+            profile1_id.as_i64(),
+            profile2_id.as_i64()
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+
+        Ok(channel.into())
+    }
+
     async fn get_profile_channels<'a, A>(
         conn: A,
         profile_id: Snowflake,

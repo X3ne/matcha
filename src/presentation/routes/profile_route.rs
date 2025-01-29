@@ -2,10 +2,11 @@ use apistos::web;
 use apistos::web::{resource, scope};
 
 use crate::presentation::controllers::profile_controller::{
-    add_tag_to_my_profile, bulk_add_tag_to_my_profile, bulk_remove_tag_from_my_profile, delete_profile_picture,
-    dislike_user_profile, get_my_profile, get_my_profile_likes, get_my_profile_matches, get_my_profile_views,
-    get_user_profile_by_id, like_user_profile, recommend_profiles, remove_tag_from_my_profile,
-    remove_user_profile_like, search_profiles, set_default_profile_picture, update_my_profile, upload_profile_picture,
+    add_tag_to_my_profile, block_user_profile, bulk_add_tag_to_my_profile, bulk_remove_tag_from_my_profile,
+    delete_profile_picture, dislike_user_profile, get_my_profile, get_my_profile_likes, get_my_profile_matches,
+    get_my_profile_views, get_user_profile_by_id, like_user_profile, recommend_profiles, remove_tag_from_my_profile,
+    remove_user_profile_like, report_user_profile, search_profiles, set_default_profile_picture, unblock_user_profile,
+    update_my_profile, upload_profile_picture,
 };
 
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -43,6 +44,12 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                     .route(web::put().to(like_user_profile))
                     .route(web::delete().to(remove_user_profile_like)),
             )
-            .service(resource("/{profile_id}/dislike").route(web::put().to(dislike_user_profile))),
+            .service(resource("/{profile_id}/dislike").route(web::put().to(dislike_user_profile)))
+            .service(
+                resource("/{profile_id}/block")
+                    .route(web::put().to(block_user_profile))
+                    .route(web::delete().to(unblock_user_profile)),
+            )
+            .service(resource("/{profile_id}/report").route(web::post().to(report_user_profile))),
     );
 }

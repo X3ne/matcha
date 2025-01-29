@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO user_profile (id, user_id, name, avatar_hash, picture_hashes, bio, birth_date, gender, sexual_orientation, location)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry)\n            ",
+  "query": "\n            INSERT INTO user_profile (id, user_id, name, avatar_hash, picture_hashes, bio, birth_date, gender, sexual_orientation, location, min_age, max_age, max_distance_km)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry, $11, $12, $13)\n            ",
   "describe": {
     "columns": [],
     "parameters": {
@@ -40,10 +40,13 @@
             "name": "geometry",
             "kind": "Simple"
           }
-        }
+        },
+        "Int4",
+        "Int4",
+        "Int4"
       ]
     },
     "nullable": []
   },
-  "hash": "64c98e67c965c56b6c8af79a288c124b7f0522e1c9fd7c4135a709ff871faa28"
+  "hash": "361fe9b4861b9f3f1c7784963d0f3c6296ab6f56cd9a723c0428551f13eb6b9b"
 }

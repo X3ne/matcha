@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                id,\n                user_id,\n                name,\n                avatar_hash,\n                picture_hashes,\n                bio,\n                birth_date,\n                gender AS \"gender: _\",\n                sexual_orientation AS \"sexual_orientation: _\",\n                location AS \"location!: _\",\n                rating,\n                last_active,\n                created_at,\n                updated_at\n            FROM\n                user_profile\n            WHERE\n                id = $1\n            ",
+  "query": "\n            SELECT\n                up.id,\n                up.user_id,\n                up.name,\n                up.avatar_hash,\n                up.picture_hashes,\n                up.bio,\n                up.birth_date,\n                up.gender AS \"gender: _\",\n                up.sexual_orientation AS \"sexual_orientation: _\",\n                up.min_age,\n                up.max_age,\n                up.max_distance_km,\n                up.location AS \"location!: _\",\n                up.rating,\n                up.last_active,\n                up.created_at,\n                up.updated_at\n            FROM user_profile up\n            JOIN profile_like pl ON up.id = pl.liked_user_profile_id\n            WHERE pl.user_profile_id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -71,6 +71,21 @@
       },
       {
         "ordinal": 9,
+        "name": "min_age",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "max_age",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "max_distance_km",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 12,
         "name": "location!: _",
         "type_info": {
           "Custom": {
@@ -80,22 +95,22 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 13,
         "name": "rating",
         "type_info": "Int4"
       },
       {
-        "ordinal": 11,
+        "ordinal": 14,
         "name": "last_active",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 12,
+        "ordinal": 15,
         "name": "created_at",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 13,
+        "ordinal": 16,
         "name": "updated_at",
         "type_info": "Timestamp"
       }
@@ -119,8 +134,11 @@
       false,
       false,
       false,
+      false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "865f2d6682b5ce7ee68befced9465d336e686c8554d7d2cd326c395c4de2fb3d"
+  "hash": "8affb6bcfcfd5efd5fdd86c5ea1350e7748d62bcd97681980191b670cc765a14"
 }

@@ -962,4 +962,172 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         Ok(profiles.into_iter().map(|profile| profile.into()).collect())
     }
+
+    #[tracing::instrument(skip(conn))]
+    async fn block_user<'a, A>(conn: A, profile_id: Snowflake, blocked_profile_id: Snowflake) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let block_id = Snowflake::new();
+
+        sqlx::query!(
+            r#"
+            INSERT INTO user_block (id, blocker_id, blocked_id)
+            VALUES ($1, $2, $3)
+            "#,
+            block_id.as_i64(),
+            profile_id.as_i64(),
+            blocked_profile_id.as_i64()
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn unblock_user<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        blocked_profile_id: Snowflake,
+    ) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            DELETE FROM user_block
+            WHERE blocker_id = $1 AND blocked_id = $2
+            "#,
+            profile_id.as_i64(),
+            blocked_profile_id.as_i64()
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn is_blocked<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        blocked_profile_id: Snowflake,
+    ) -> sqlx::Result<bool, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let result = sqlx::query!(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM user_block
+                WHERE blocker_id = $1 AND blocked_id = $2
+            )
+            "#,
+            profile_id.as_i64(),
+            blocked_profile_id.as_i64()
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+
+        Ok(result.exists.unwrap_or(false))
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn get_blocked_users<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let profiles = sqlx::query_as!(
+            UserProfileSqlx,
+            r#"
+            SELECT
+                up.id,
+                up.user_id,
+                up.name,
+                up.avatar_hash,
+                up.picture_hashes,
+                up.bio,
+                up.birth_date,
+                up.gender AS "gender: _",
+                up.sexual_orientation AS "sexual_orientation: _",
+                up.min_age,
+                up.max_age,
+                up.max_distance_km,
+                up.location AS "location!: _",
+                up.rating,
+                up.last_active,
+                up.created_at,
+                up.updated_at
+            FROM user_profile up
+            JOIN user_block ub ON up.id = ub.blocked_id
+            WHERE ub.blocker_id = $1
+            "#,
+            profile_id.as_i64()
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        Ok(profiles.into_iter().map(|profile| profile.into()).collect())
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn get_blocked_user_ids<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<Snowflake>, Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let blocked_ids = sqlx::query!(
+            r#"
+            SELECT blocked_id
+            FROM user_block
+            WHERE blocker_id = $1
+            "#,
+            profile_id.as_i64()
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        Ok(blocked_ids.into_iter().map(|row| Snowflake(row.blocked_id)).collect())
+    }
+
+    #[tracing::instrument(skip(conn))]
+    async fn report_profile<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        reported_profile_id: Snowflake,
+        reason: Option<&str>,
+    ) -> sqlx::Result<(), Error>
+    where
+        A: Acquire<'a, Database = Postgres> + Send,
+    {
+        let mut conn = conn.acquire().await?;
+
+        let report_id = Snowflake::new();
+
+        sqlx::query!(
+            r#"
+            INSERT INTO user_report (id, reporter_id, reported_id, reason)
+            VALUES ($1, $2, $3, $4)
+            "#,
+            report_id.as_i64(),
+            profile_id.as_i64(),
+            reported_profile_id.as_i64(),
+            reason
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
+    }
 }

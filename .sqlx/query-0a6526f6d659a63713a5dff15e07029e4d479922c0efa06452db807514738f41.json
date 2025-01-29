@@ -1,0 +1,144 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                up.id,\n                up.user_id,\n                up.name,\n                up.avatar_hash,\n                up.picture_hashes,\n                up.bio,\n                up.birth_date,\n                up.gender AS \"gender: _\",\n                up.sexual_orientation AS \"sexual_orientation: _\",\n                up.min_age,\n                up.max_age,\n                up.max_distance_km,\n                up.location AS \"location!: _\",\n                up.rating,\n                up.last_active,\n                up.created_at,\n                up.updated_at\n            FROM user_profile up\n            JOIN profile_like pl1 ON up.id = pl1.user_profile_id\n            JOIN profile_like pl2 ON up.id = pl2.liked_user_profile_id\n            WHERE pl1.liked_user_profile_id = $1 AND pl2.user_profile_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "avatar_hash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "picture_hashes",
+        "type_info": "VarcharArray"
+      },
+      {
+        "ordinal": 5,
+        "name": "bio",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "birth_date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 7,
+        "name": "gender: _",
+        "type_info": {
+          "Custom": {
+            "name": "gender",
+            "kind": {
+              "Enum": [
+                "male",
+                "female"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "sexual_orientation: _",
+        "type_info": {
+          "Custom": {
+            "name": "sexual_orientation",
+            "kind": {
+              "Enum": [
+                "male",
+                "female",
+                "bisexual"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "min_age",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "max_age",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "max_distance_km",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 12,
+        "name": "location!: _",
+        "type_info": {
+          "Custom": {
+            "name": "geometry",
+            "kind": "Simple"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "rating",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 14,
+        "name": "last_active",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 15,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 16,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "0a6526f6d659a63713a5dff15e07029e4d479922c0efa06452db807514738f41"
+}

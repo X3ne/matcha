@@ -300,3 +300,13 @@ pub struct UserProfileBulkTagsDto {
     #[garde(dive)]
     pub tag_ids: Vec<Snowflake>,
 }
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent, Validate)]
+#[serde(rename(deserialize = "ReportProfile"))]
+pub struct ReportProfileDto {
+    #[garde(length(min = 1, max = 2000))]
+    pub reason: Option<String>,
+    #[garde(skip)]
+    #[serde(default)]
+    pub block_user: bool,
+}

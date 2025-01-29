@@ -18,8 +18,8 @@ use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::UserProfileUpdate;
 use crate::presentation::dto::user_profile_dto::{
-    PartialUserProfileDto, UpdateProfileDto, UploadProfilePictureForm, UserProfileBulkTagsDto, UserProfileDto,
-    UserProfileMeta, UserProfileQueryParamsDto, UserProfileTagParamsDto,
+    PartialUserProfileDto, ReportProfileDto, UpdateProfileDto, UploadProfilePictureForm, UserProfileBulkTagsDto,
+    UserProfileDto, UserProfileMeta, UserProfileQueryParamsDto, UserProfileTagParamsDto,
 };
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
@@ -163,9 +163,10 @@ pub async fn search_profiles(
         search_params.tag_ids = Some(user_tags.iter().map(|tag| tag.id).collect());
     }
 
-    let profiles = user_profile_service
-        .search(&search_params, vec![user_profile.id])
-        .await?;
+    let mut excluded_profiles = user_profile_service.get_blocked_user_ids(user_profile.id).await?;
+    excluded_profiles.push(user_profile.id);
+
+    let profiles = user_profile_service.search(&search_params, excluded_profiles).await?;
 
     let tag_futures: Vec<_> = profiles
         .iter()
@@ -213,6 +214,13 @@ pub async fn recommend_profiles(
     let user_profile = user_profile_service.get_by_user_id(user.id).await?;
 
     let disliked_profiles = user_profile_service.get_disliked_ids(user_profile.id).await?;
+    let blocked_profiles = user_profile_service.get_blocked_user_ids(user_profile.id).await?;
+
+    let excluded_profiles = disliked_profiles
+        .iter()
+        .chain(blocked_profiles.iter())
+        .cloned()
+        .collect();
 
     let recommendations = user_profile_service
         .recommend(
@@ -224,7 +232,7 @@ pub async fn recommend_profiles(
             user_profile.birth_date,
             user_profile.min_age,
             user_profile.max_age,
-            disliked_profiles,
+            excluded_profiles,
         )
         .await?;
 
@@ -613,4 +621,77 @@ pub async fn get_my_profile_views(
     let profiles = user_profile_service.get_viewers(profile.id).await?;
 
     Ok(web::Json(profiles.into_iter().map(Into::into).collect()))
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "block_user_profile",
+    summary = "Block a user profile",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn block_user_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_id: web::Path<Snowflake>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    let profile_id = profile_id.into_inner();
+
+    user_profile_service.block_user(profile.id, profile_id).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "unblock_user_profile",
+    summary = "Unblock a user profile",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn unblock_user_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_id: web::Path<Snowflake>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    let profile_id = profile_id.into_inner();
+
+    user_profile_service.unblock_user(profile.id, profile_id).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "report_user_profile",
+    summary = "Report a user profile",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn report_user_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_id: web::Path<Snowflake>,
+    body: web::Json<ReportProfileDto>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    let profile_id = profile_id.into_inner();
+    let body = body.into_inner();
+
+    user_profile_service
+        .report_profile(profile.id, profile_id, body.reason.as_deref(), body.block_user)
+        .await?;
+
+    Ok(NoContent)
 }

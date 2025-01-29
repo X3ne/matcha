@@ -69,6 +69,14 @@ pub trait ChannelRepository<Db>: Send + Sync {
     where
         A: Acquire<'a, Database = Db> + Send;
 
+    async fn get_dm_channel<'a, A>(
+        conn: A,
+        profile1_id: Snowflake,
+        profile2_id: Snowflake,
+    ) -> sqlx::Result<Channel, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
     async fn get_profile_channels<'a, A>(
         conn: A,
         profile_id: Snowflake,

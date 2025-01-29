@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT c.*\n            FROM channel c\n            JOIN channel_participant cp1 ON c.id = cp1.channel_id\n            JOIN channel_participant cp2 ON c.id = cp2.channel_id\n            WHERE cp1.profile_id = $1 AND cp2.profile_id = $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "last_activity",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "dfbe6ee6702c3428df5eea7ab1708105d7f56c09cf033785216e85348c728893"
+}

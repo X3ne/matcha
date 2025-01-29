@@ -339,4 +339,78 @@ impl UserProfileService for UserProfileServiceImpl {
 
         Ok(profiles)
     }
+
+    #[tracing::instrument(skip(self))]
+    async fn block_user(&self, profile_id: Snowflake, blocked_profile_id: Snowflake) -> Result<(), UserProfileError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserProfileRepository::block_user(&mut *tx, profile_id, blocked_profile_id).await?;
+
+        if let Ok(channel) = PgChannelRepository::get_dm_channel(&mut *tx, profile_id, blocked_profile_id).await {
+            PgChannelRepository::delete(&mut *tx, channel.id).await?;
+        }
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn unblock_user(&self, profile_id: Snowflake, blocked_profile_id: Snowflake) -> Result<(), UserProfileError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserProfileRepository::unblock_user(&mut *tx, profile_id, blocked_profile_id).await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn is_blocked(&self, profile_id: Snowflake, blocked_profile_id: Snowflake) -> Result<bool, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let is_blocked = PgUserProfileRepository::is_blocked(&mut *conn, profile_id, blocked_profile_id).await?;
+
+        Ok(is_blocked)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn get_blocked_users(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let profiles = PgUserProfileRepository::get_blocked_users(&mut *conn, profile_id).await?;
+
+        Ok(profiles)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn get_blocked_user_ids(&self, profile_id: Snowflake) -> Result<Vec<Snowflake>, UserProfileError> {
+        let mut conn = self.pool.acquire().await?;
+
+        let profile_ids = PgUserProfileRepository::get_blocked_user_ids(&mut *conn, profile_id).await?;
+
+        Ok(profile_ids)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn report_profile(
+        &self,
+        profile_id: Snowflake,
+        reported_profile_id: Snowflake,
+        reason: Option<&str>,
+        block: bool,
+    ) -> Result<(), UserProfileError> {
+        let mut tx = self.pool.begin().await?;
+
+        PgUserProfileRepository::report_profile(&mut *tx, profile_id, reported_profile_id, reason).await?;
+
+        if block {
+            Self::block_user(self, profile_id, reported_profile_id).await?;
+        }
+
+        tx.commit().await?;
+
+        Ok(())
+    }
 }

@@ -1,5 +1,3 @@
-use async_trait::async_trait;
-
 use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::errors::user_profile_error::UserProfileError;
@@ -7,6 +5,7 @@ use crate::domain::repositories::user_profile_repo::UserProfileQueryParams;
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
 use crate::shared::types::snowflake::Snowflake;
 use crate::shared::types::user_profile::{Gender, Orientation};
+use async_trait::async_trait;
 
 #[async_trait]
 pub trait UserProfileService: 'static + Sync + Send {
@@ -58,4 +57,16 @@ pub trait UserProfileService: 'static + Sync + Send {
     async fn get_matches(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn view_profile(&self, profile_id: Snowflake, viewed_profile_id: Snowflake) -> Result<(), UserProfileError>;
     async fn get_viewers(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
+    async fn block_user(&self, profile_id: Snowflake, blocked_profile_id: Snowflake) -> Result<(), UserProfileError>;
+    async fn unblock_user(&self, profile_id: Snowflake, blocked_profile_id: Snowflake) -> Result<(), UserProfileError>;
+    async fn is_blocked(&self, profile_id: Snowflake, blocked_profile_id: Snowflake) -> Result<bool, UserProfileError>;
+    async fn get_blocked_users(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
+    async fn get_blocked_user_ids(&self, profile_id: Snowflake) -> Result<Vec<Snowflake>, UserProfileError>;
+    async fn report_profile(
+        &self,
+        profile_id: Snowflake,
+        reported_profile_id: Snowflake,
+        reason: Option<&str>,
+        block: bool,
+    ) -> Result<(), UserProfileError>;
 }

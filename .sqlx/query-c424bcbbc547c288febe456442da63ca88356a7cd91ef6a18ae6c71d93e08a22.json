@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            UPDATE user_profile\n            SET\n                name = COALESCE($2, name),\n                avatar_hash = COALESCE($3, avatar_hash),\n                bio = COALESCE($4, bio),\n                gender = COALESCE($5, gender),\n                sexual_orientation = COALESCE($6, sexual_orientation),\n                location = COALESCE($7, location)\n            WHERE\n                id = $1\n            ",
+  "query": "\n            UPDATE user_profile\n            SET\n                name = COALESCE($2, name),\n                avatar_hash = COALESCE($3, avatar_hash),\n                bio = COALESCE($4, bio),\n                gender = COALESCE($5, gender),\n                sexual_orientation = COALESCE($6, sexual_orientation),\n                location = COALESCE($7, location),\n                min_age = COALESCE($8, min_age),\n                max_age = COALESCE($9, max_age),\n                max_distance_km = COALESCE($10, max_distance_km)\n            WHERE\n                id = $1\n            ",
   "describe": {
     "columns": [],
     "parameters": {
@@ -37,10 +37,13 @@
             "name": "geometry",
             "kind": "Simple"
           }
-        }
+        },
+        "Int4",
+        "Int4",
+        "Int4"
       ]
     },
     "nullable": []
   },
-  "hash": "fac2b623575155fec5167cf4ca1d27389481d84d04c14e6c702c8dd45f8cc274"
+  "hash": "c424bcbbc547c288febe456442da63ca88356a7cd91ef6a18ae6c71d93e08a22"
 }

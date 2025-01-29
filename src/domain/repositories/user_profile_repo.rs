@@ -211,4 +211,45 @@ pub trait UserProfileRepository<Db>: Send + Sync {
     async fn get_viewers<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
+
+    async fn block_user<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        blocked_profile_id: Snowflake,
+    ) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn unblock_user<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        blocked_profile_id: Snowflake,
+    ) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn is_blocked<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        blocked_profile_id: Snowflake,
+    ) -> sqlx::Result<bool, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn get_blocked_users<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn get_blocked_user_ids<'a, A>(conn: A, profile_id: Snowflake) -> sqlx::Result<Vec<Snowflake>, sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
+
+    async fn report_profile<'a, A>(
+        conn: A,
+        profile_id: Snowflake,
+        reported_profile_id: Snowflake,
+        reason: Option<&str>,
+    ) -> sqlx::Result<(), sqlx::Error>
+    where
+        A: Acquire<'a, Database = Db> + Send;
 }

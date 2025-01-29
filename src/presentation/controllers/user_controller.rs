@@ -20,7 +20,7 @@ use crate::infrastructure::models::user_profile::UserProfileInsert;
 use crate::infrastructure::services::iploc::locate_ip;
 use crate::presentation::dto::chat_dto::ChannelDto;
 use crate::presentation::dto::user_dto::{UpdateUserDto, UserDto};
-use crate::presentation::dto::user_profile_dto::{CompleteOnboardingForm, UserProfileMeta};
+use crate::presentation::dto::user_profile_dto::{CompleteOnboardingForm, UserProfileDto, UserProfileMeta};
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 
@@ -175,4 +175,26 @@ pub async fn get_my_channels(
     }
 
     Ok(web::Json(channels_dto))
+}
+
+#[api_operation(
+    tag = "users",
+    operation_id = "get_blocked_profiles",
+    summary = "Get blocked user profiles",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(session, profile_service))]
+pub async fn get_blocked_profiles(
+    profile_service: web::Data<Arc<dyn UserProfileService>>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+    let user = session.authenticated_user()?;
+    let profile = profile_service.get_by_user_id(user.id).await?;
+
+    let blocked_profiles = profile_service.get_blocked_users(profile.id).await?;
+
+    Ok(web::Json(
+        blocked_profiles.into_iter().map(UserProfileDto::from).collect(),
+    ))
 }

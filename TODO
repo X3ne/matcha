@@ -10,10 +10,10 @@ back:
   ✔ mock db @done(25-01-14 13:53)
   ✔ add likes @done(25-01-21 19:16)
   ✔ add profile views @done(25-01-27 19:27)
-  ☐ add block and report
+  ✔ add block and report @done(25-01-29 16:29)
   ☐ add websocket notifications/realtime chat
   ✔ remove current user from search results @done(25-01-22 18:33)
-  ☐ remove blocked users from search results
+  ✔ remove blocked users from search results @done(25-01-29 16:16)
   ✔ find user location from ip @done(25-01-19 16:33)
   ✔ recommend users based on location @done(25-01-19 03:48)
   ✔ add s3 for images @done(25-01-17 17:17)
@@ -29,6 +29,8 @@ back:
   ✔ remove age in db @done(25-01-22 18:20)
   ✔ calculate age from birthdate @done(25-01-22 18:20)
   ☐ allow user to delete profile picture
+  ☐ last seen
+  ☐ change mail
 
 bonuses:
   ✔ oauth2 @done(25-01-13 16:24)
