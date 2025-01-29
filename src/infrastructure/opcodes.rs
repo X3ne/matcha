@@ -43,6 +43,7 @@ impl ErrorCode {
             ErrorCode::UnknownMessage => "Unknown message",
             ErrorCode::MaxImages => "Maximum images reached",
             ErrorCode::CannotDeleteAvatar => "Cannot delete avatar",
+            ErrorCode::AvatarNotSet => "Avatar not set",
             ErrorCode::Unauthorized => "Unauthorized",
             ErrorCode::AccountNotActivated => "You need to verify your account to perform this action",
             ErrorCode::UserEmailAlreadyExists => "An user with this email already exists",
