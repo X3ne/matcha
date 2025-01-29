@@ -10,3 +10,5 @@ pub const PROFILE_IMAGES_PATH: &str = "/profile";
 pub const MAX_PROFILE_IMAGES: usize = 5;
 
 pub const RESET_PASSWORD_TOKEN_TTL: u64 = 900;
+
+pub const DISLIKED_PROFILE_TTL: u64 = 604800; // 1 week

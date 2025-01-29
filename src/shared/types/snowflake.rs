@@ -1,6 +1,7 @@
 use apistos::ApiComponent;
 use garde::Validate;
 use once_cell::sync::Lazy;
+use redis::{FromRedisValue, RedisWrite, ToRedisArgs};
 use schemars::JsonSchema;
 use schemars::_serde_json::Value;
 use schemars::schema::{InstanceType, Metadata, SchemaObject, SingleOrVec};
@@ -34,6 +35,21 @@ impl From<i64> for Snowflake {
 impl std::fmt::Display for Snowflake {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl ToRedisArgs for Snowflake {
+    fn write_redis_args<W>(&self, out: &mut W)
+    where
+        W: ?Sized + RedisWrite,
+    {
+        self.0.write_redis_args(out)
+    }
+}
+
+impl FromRedisValue for Snowflake {
+    fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
+        i64::from_redis_value(v).map(Snowflake)
     }
 }
 

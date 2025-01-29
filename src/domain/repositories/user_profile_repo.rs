@@ -80,7 +80,7 @@ pub trait UserProfileRepository<Db>: Send + Sync {
     async fn search<'a, A>(
         conn: A,
         params: &UserProfileQueryParams,
-        current_profile_id: Snowflake,
+        excluded_profile_ids: Vec<Snowflake>,
     ) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;
@@ -95,6 +95,7 @@ pub trait UserProfileRepository<Db>: Send + Sync {
         birth_date: chrono::NaiveDate,
         min_age: u8,
         max_age: u8,
+        excluded_profile_ids: Vec<Snowflake>,
     ) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>
     where
         A: Acquire<'a, Database = Db> + Send;

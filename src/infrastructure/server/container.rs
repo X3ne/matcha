@@ -87,7 +87,7 @@ impl Container {
         ));
 
         let user_service = Arc::new(UserServiceImpl::new(Arc::clone(&pool)));
-        let user_profile_service = Arc::new(UserProfileServiceImpl::new(Arc::clone(&pool)));
+        let user_profile_service = Arc::new(UserProfileServiceImpl::new(Arc::clone(&pool), Arc::clone(&redis)));
         let profile_tag_service = Arc::new(ProfileTagServiceImpl::new(Arc::clone(&pool)));
         let cdn_service = Arc::new(CdnServiceImpl::new(Arc::clone(&s3), Arc::clone(&pool)));
         let chat_service = Arc::new(ChatServiceImpl::new(Arc::clone(&pool)));

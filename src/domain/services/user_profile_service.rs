@@ -17,7 +17,7 @@ pub trait UserProfileService: 'static + Sync + Send {
     async fn search(
         &self,
         params: &UserProfileQueryParams,
-        current_profile_id: Snowflake,
+        excluded_profile_ids: Vec<Snowflake>,
     ) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn recommend(
         &self,
@@ -29,6 +29,7 @@ pub trait UserProfileService: 'static + Sync + Send {
         birth_date: chrono::NaiveDate,
         min_age: u8,
         max_age: u8,
+        excluded_profile_ids: Vec<Snowflake>,
     ) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn get_profile_tags(&self, profile_id: Snowflake) -> Result<Vec<ProfileTag>, UserProfileError>;
     async fn add_pictures(&self, profile_id: Snowflake, picture_hashes: Vec<String>) -> Result<(), UserProfileError>;
@@ -52,6 +53,8 @@ pub trait UserProfileService: 'static + Sync + Send {
     ) -> Result<bool, UserProfileError>;
     async fn get_my_likes(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn get_profile_likes(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
+    async fn add_dislike(&self, profile_id: Snowflake, disliked_profile_id: Snowflake) -> Result<(), UserProfileError>;
+    async fn get_disliked_ids(&self, profile_id: Snowflake) -> Result<Vec<Snowflake>, UserProfileError>;
     async fn get_matches(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;
     async fn view_profile(&self, profile_id: Snowflake, viewed_profile_id: Snowflake) -> Result<(), UserProfileError>;
     async fn get_viewers(&self, profile_id: Snowflake) -> Result<Vec<UserProfile>, UserProfileError>;

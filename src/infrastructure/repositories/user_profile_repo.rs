@@ -185,7 +185,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
     async fn search<'a, A>(
         conn: A,
         params: &UserProfileQueryParams,
-        current_profile_id: Snowflake,
+        excluded_profile_ids: Vec<Snowflake>,
     ) -> sqlx::Result<Vec<UserProfile>, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -220,9 +220,12 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         WHERE 1=1",
         );
 
-        // exclude current user
-        query_builder.push(" AND up.id != ");
-        query_builder.push_bind(current_profile_id);
+        // exclude profile ids
+        if !excluded_profile_ids.is_empty() {
+            query_builder.push(" AND up.id NOT IN (");
+            query_builder.push_bind(excluded_profile_ids.iter().map(|id| id.as_i64()).collect::<Vec<_>>());
+            query_builder.push(")");
+        }
 
         if let Some(min_age) = params.min_age {
             query_builder.push(" AND EXTRACT(YEAR FROM AGE(up.birth_date)) >= ");
@@ -326,6 +329,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         birth_date: chrono::NaiveDate,
         min_age: u8,
         max_age: u8,
+        excluded_profile_ids: Vec<Snowflake>,
     ) -> sqlx::Result<Vec<UserProfile>, Error>
     where
         A: Acquire<'a, Database = Postgres> + Send,
@@ -384,7 +388,10 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 LEFT JOIN profile_like pl ON up.id = pl.liked_user_profile_id AND pl.user_profile_id = ui.user_id
                 WHERE
                     pl.id IS NULL
-                    AND up.id <> ui.user_id
+                    AND up.id <> ui.user_id  -- Exclude the current user
+                    AND up.id NOT IN (
+                        SELECT UNNEST($9::BIGINT[])  -- Exclude additional user profiles
+                    )
                     AND (
                         (ui.user_gender = 'male' AND up.gender = 'female' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual')) OR
                         (ui.user_gender = 'male' AND ui.user_orientation = 'bisexual' AND (up.gender = 'female' OR (up.gender = 'male' AND up.sexual_orientation = 'bisexual'))) OR
@@ -410,7 +417,8 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
             min_age as i32,
             max_age as i32,
             max_distance_km as _,
-            birth_date as _
+            birth_date as _,
+            &excluded_profile_ids.iter().map(|id| id.as_i64()).collect::<Vec<_>>()[..]
         )
         .fetch_all(&mut *conn)
         .await?;

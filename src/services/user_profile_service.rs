@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
-use async_trait::async_trait;
-use sqlx::PgPool;
-
+use crate::domain::constants::DISLIKED_PROFILE_TTL;
 use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::errors::user_profile_error::UserProfileError;
@@ -16,15 +14,19 @@ use crate::infrastructure::repositories::user_profile_repo::PgUserProfileReposit
 use crate::shared::types::snowflake::Snowflake;
 use crate::shared::types::user_profile::{Gender, Orientation};
 use crate::shared::utils::fame::FameCalculator;
+use async_trait::async_trait;
+use redis::AsyncCommands;
+use sqlx::PgPool;
 
 #[derive(Clone)]
 pub struct UserProfileServiceImpl {
     pub pool: Arc<PgPool>,
+    pub redis: Arc<redis::Client>,
 }
 
 impl UserProfileServiceImpl {
-    pub fn new(pool: Arc<PgPool>) -> Self {
-        UserProfileServiceImpl { pool }
+    pub fn new(pool: Arc<PgPool>, redis: Arc<redis::Client>) -> Self {
+        UserProfileServiceImpl { pool, redis }
     }
 }
 
@@ -74,11 +76,11 @@ impl UserProfileService for UserProfileServiceImpl {
     async fn search(
         &self,
         params: &UserProfileQueryParams,
-        current_profile_id: Snowflake,
+        excluded_profile_ids: Vec<Snowflake>,
     ) -> Result<Vec<UserProfile>, UserProfileError> {
         let mut conn = self.pool.acquire().await?;
 
-        let profiles = PgUserProfileRepository::search(&mut *conn, params, current_profile_id).await?;
+        let profiles = PgUserProfileRepository::search(&mut *conn, params, excluded_profile_ids).await?;
 
         Ok(profiles)
     }
@@ -94,6 +96,7 @@ impl UserProfileService for UserProfileServiceImpl {
         birth_date: chrono::NaiveDate,
         min_age: u8,
         max_age: u8,
+        excluded_profile_ids: Vec<Snowflake>,
     ) -> Result<Vec<UserProfile>, UserProfileError> {
         let mut conn = self.pool.acquire().await?;
 
@@ -107,6 +110,7 @@ impl UserProfileService for UserProfileServiceImpl {
             birth_date,
             min_age,
             max_age,
+            excluded_profile_ids,
         )
         .await?;
 
@@ -195,7 +199,7 @@ impl UserProfileService for UserProfileServiceImpl {
     #[tracing::instrument(skip(self))]
     async fn add_like(&self, profile: &UserProfile, liked_profile_id: Snowflake) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
-        
+
         if profile.avatar_hash.is_none() {
             return Err(UserProfileError::AvatarNotSet);
         }
@@ -285,6 +289,26 @@ impl UserProfileService for UserProfileServiceImpl {
         let profiles = PgUserProfileRepository::get_profile_likes(&mut *conn, profile_id).await?;
 
         Ok(profiles)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn add_dislike(&self, profile_id: Snowflake, disliked_profile_id: Snowflake) -> Result<(), UserProfileError> {
+        let mut conn = self.redis.get_multiplexed_async_connection().await?;
+
+        let key = format!("disliked_profile:{}", profile_id);
+        conn.set_ex(&key, disliked_profile_id, DISLIKED_PROFILE_TTL).await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn get_disliked_ids(&self, profile_id: Snowflake) -> Result<Vec<Snowflake>, UserProfileError> {
+        let mut conn = self.redis.get_multiplexed_async_connection().await?;
+
+        let key = format!("disliked_profile:{}", profile_id);
+        let disliked_profile_ids: Vec<Snowflake> = conn.get(&key).await?;
+
+        Ok(disliked_profile_ids)
     }
 
     #[tracing::instrument(skip(self))]

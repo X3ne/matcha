@@ -20,7 +20,7 @@ back:
   ✔ add image upload @done(25-01-17 17:17) @done(25-01-17 17:17)
   ✔ rewrite tags api @done(25-01-19 03:47)
   ✔ algorithm to recommend user profiles @done(25-01-22 18:34)
-  ☐ swipe system (like/dislike dislikes should not be shown again -> dislike in a timed redis)
+  ✔ swipe system (like/dislike dislikes should not be shown again -> dislike in a timed redis) @done(25-01-29 03:02)
   ✔ upload/delete images @done(25-01-20 20:05)
   ✔ add search radius to user settings @done(25-01-29 02:10)
   ✔ add min_age and max_age to user settings @done(25-01-29 02:10)

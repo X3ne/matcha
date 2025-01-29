@@ -163,7 +163,9 @@ pub async fn search_profiles(
         search_params.tag_ids = Some(user_tags.iter().map(|tag| tag.id).collect());
     }
 
-    let profiles = user_profile_service.search(&search_params, user_profile.id).await?;
+    let profiles = user_profile_service
+        .search(&search_params, vec![user_profile.id])
+        .await?;
 
     let tag_futures: Vec<_> = profiles
         .iter()
@@ -209,6 +211,9 @@ pub async fn recommend_profiles(
     let user = session.authenticated_user()?;
 
     let user_profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    let disliked_profiles = user_profile_service.get_disliked_ids(user_profile.id).await?;
+
     let recommendations = user_profile_service
         .recommend(
             user_profile.id,
@@ -219,6 +224,7 @@ pub async fn recommend_profiles(
             user_profile.birth_date,
             user_profile.min_age,
             user_profile.max_age,
+            disliked_profiles,
         )
         .await?;
 
@@ -541,6 +547,30 @@ pub async fn remove_user_profile_like(
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
     let _ = user_profile_service.remove_like(profile.id, profile_id).await?;
+
+    Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "profiles",
+    operation_id = "dislike_user_profile",
+    summary = "Dislike a user profile",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(user_profile_service, session))]
+pub async fn dislike_user_profile(
+    user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    profile_id: web::Path<Snowflake>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<NoContent, ApiError> {
+    let user = session.authenticated_user()?;
+
+    let profile_id = profile_id.into_inner();
+
+    let profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    let _ = user_profile_service.add_dislike(profile.id, profile_id).await?;
 
     Ok(NoContent)
 }

@@ -1,5 +1,6 @@
 use actix_web::http::StatusCode;
 
+use crate::domain::errors::auth_error::AuthError;
 use crate::infrastructure::opcodes::ErrorCode;
 use crate::ApiErrorImpl;
 
@@ -25,6 +26,8 @@ pub enum UserProfileError {
     ProfileAlreadyLiked,
     #[error("Avatar not set")]
     AvatarNotSet,
+    #[error("Redis error")]
+    RedisError,
 }
 
 impl ApiErrorImpl for UserProfileError {
@@ -40,6 +43,7 @@ impl ApiErrorImpl for UserProfileError {
             UserProfileError::CannotDeleteAvatar => (StatusCode::BAD_REQUEST, ErrorCode::CannotDeleteAvatar),
             UserProfileError::ProfileAlreadyLiked => (StatusCode::CONFLICT, ErrorCode::ProfileAlreadyLiked),
             UserProfileError::AvatarNotSet => (StatusCode::BAD_REQUEST, ErrorCode::AvatarNotSet),
+            UserProfileError::RedisError => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::Default),
         }
     }
 }
@@ -67,6 +71,15 @@ impl From<sqlx::Error> for UserProfileError {
                 }
             }
             _ => UserProfileError::DatabaseError,
+        }
+    }
+}
+
+impl From<redis::RedisError> for UserProfileError {
+    fn from(e: redis::RedisError) -> Self {
+        tracing::error!("Redis error: {}", e);
+        match e.kind() {
+            _ => UserProfileError::RedisError,
         }
     }
 }
