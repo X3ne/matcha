@@ -1,5 +1,5 @@
 'use client'
-
+import api, { type ProfileTag } from '@/api'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -9,39 +9,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
-
-const availableTags = [
-  'vegan',
-  'vegetarian',
-  'geek',
-  'nerd',
-  'artist',
-  'musician',
-  'writer',
-  'traveler',
-  'foodie',
-  'fitness',
-  'yoga',
-  'meditation',
-  'outdoor',
-  'adventure',
-  'photography',
-  'fashion',
-  'design',
-  'technology',
-  'science',
-  'history',
-  'politics',
-  'philosophy',
-  'sports',
-  'gaming',
-  'anime',
-  'movies',
-  'books',
-  'cooking',
-  'dancing',
-  'singing'
-]
+import { useQuery } from '@tanstack/react-query'
 
 interface TagSelectorProps {
   selectedTags: string[]
@@ -52,6 +20,18 @@ export default function TagSelector({
   selectedTags,
   onToggleTag
 }: TagSelectorProps) {
+  const {
+    data: tags,
+    isLoading,
+    error
+  } = useQuery({
+    queryKey: ['tags'],
+    queryFn: async () => (await api.v1.getAllTags()).data as ProfileTag[]
+  })
+
+  if (isLoading) return <p>Loading tags...</p>
+  if (error) return <p>Failed to load tags</p>
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -65,17 +45,17 @@ export default function TagSelector({
         </DialogHeader>
         <ScrollArea className="mt-4 max-h-[60vh]">
           <div className="flex flex-wrap gap-2 p-4">
-            {availableTags.map((tag) => (
+            {tags?.map(({ id, name }) => (
               <div
-                key={tag}
+                key={id}
                 className={`inline-flex cursor-pointer items-center rounded-full border px-5 py-2 text-xs font-normal ${
-                  selectedTags.includes(tag)
+                  selectedTags.includes(name)
                     ? 'border-white/20 bg-black/80 text-white'
                     : 'border-black/20 bg-white text-black'
                 }`}
-                onClick={() => onToggleTag(tag)}
+                onClick={() => onToggleTag(name)}
               >
-                {tag}
+                {name}
               </div>
             ))}
           </div>
