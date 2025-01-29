@@ -6,13 +6,15 @@ use apistos::ApiErrorComponent;
 use oauth2::error::OAuth2Error;
 
 use crate::domain::errors::auth_error::AuthError;
+use crate::domain::errors::channel_error::ChannelError;
+use crate::domain::errors::message_error::MessageError;
 use crate::domain::errors::profile_tag_error::ProfileTagError;
 use crate::domain::errors::user_error::UserError;
 use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::infrastructure::opcodes::ErrorCode;
 use crate::infrastructure::s3::error::ImageError;
-use crate::{ApiErrorImpl, ErrorDetails, ErrorItem, ErrorResponse};
 use crate::infrastructure::services::iploc::error::IpLocError;
+use crate::{ApiErrorImpl, ErrorDetails, ErrorItem, ErrorResponse};
 
 #[derive(thiserror::Error, Debug, ApiErrorComponent)]
 #[openapi_error(
@@ -49,6 +51,10 @@ pub enum ApiError {
     ImageError(#[from] ImageError),
     #[error(transparent)]
     ProfileTagError(#[from] ProfileTagError),
+    #[error(transparent)]
+    ChannelError(#[from] ChannelError),
+    #[error(transparent)]
+    MessageError(#[from] MessageError),
 }
 
 impl ApiErrorImpl for ApiError {
@@ -67,6 +73,8 @@ impl ApiErrorImpl for ApiError {
             ApiError::UserProfileError(err) => err.get_codes(),
             ApiError::ImageError(err) => err.get_codes(),
             ApiError::ProfileTagError(err) => err.get_codes(),
+            ApiError::ChannelError(err) => err.get_codes(),
+            ApiError::MessageError(err) => err.get_codes(),
         }
     }
 }

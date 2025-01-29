@@ -4,19 +4,23 @@ use actix_multipart::form::MultipartForm;
 use actix_web::web;
 use apistos::actix::NoContent;
 use apistos::api_operation;
+use futures::future::join_all;
 use garde::{Error, Path, Report, Validate};
 use geo_types::Point;
 
 use crate::domain::constants::PROFILE_IMAGES_PATH;
+use crate::domain::entities::chat::ChannelParticipant;
 use crate::domain::errors::user_profile_error::UserProfileError;
 use crate::domain::services::cdn_service::CdnService;
+use crate::domain::services::chat_service::ChatService;
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::domain::services::user_service::UserService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::UserProfileInsert;
 use crate::infrastructure::services::iploc::locate_ip;
+use crate::presentation::dto::chat_dto::ChannelDto;
 use crate::presentation::dto::user_dto::{UpdateUserDto, UserDto};
-use crate::presentation::dto::user_profile::CompleteOnboardingForm;
+use crate::presentation::dto::user_profile_dto::{CompleteOnboardingForm, UserProfileMeta};
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 
@@ -128,4 +132,44 @@ pub async fn complete_onboarding(
         .await?;
 
     Ok(NoContent)
+}
+
+#[api_operation(
+    tag = "users",
+    operation_id = "get_my_channels",
+    summary = "Get the current user channels",
+    skip_args = "peer_infos"
+)]
+#[tracing::instrument(skip(session, chat_service, profile_service))]
+pub async fn get_my_channels(
+    chat_service: web::Data<Arc<dyn ChatService>>,
+    profile_service: web::Data<Arc<dyn UserProfileService>>,
+    session: Session,
+    peer_infos: PeerInfos,
+) -> Result<web::Json<Vec<ChannelDto>>, ApiError> {
+    let user = session.authenticated_user()?;
+    let profile = profile_service.get_by_user_id(user.id).await?; // TODO: need to find a way to avoid always querying the user profile
+
+    let channels = chat_service
+        .get_user_channels(profile.id, &Default::default()) // TODO: add query params
+        .await?;
+
+    let participant_futures = channels
+        .iter()
+        .map(|channel| chat_service.get_channel_participants(channel.id));
+
+    let participants_results: Vec<Result<Vec<ChannelParticipant>, _>> = join_all(participant_futures).await;
+
+    let mut channels_dto = Vec::new();
+
+    for (channel, participants_result) in channels.into_iter().zip(participants_results) {
+        let participants = participants_result.unwrap_or_else(|_| vec![]);
+
+        let mut channel_dto: ChannelDto = channel.into();
+        channel_dto.append_participants(participants);
+
+        channels_dto.push(channel_dto);
+    }
+
+    Ok(web::Json(channels_dto))
 }

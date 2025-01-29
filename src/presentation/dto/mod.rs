@@ -1,4 +1,6 @@
-use crate::presentation::dto::user_profile::{CompleteOnboardingDto, CompleteOnboardingForm, UploadProfilePictureForm};
+use crate::presentation::dto::user_profile_dto::{
+    CompleteOnboardingDto, CompleteOnboardingForm, UploadProfilePictureForm,
+};
 use crate::shared::types::location::Location;
 use apistos::reference_or::ReferenceOr;
 use apistos::{ApiComponent, TypedSchema};
@@ -6,8 +8,9 @@ use schemars::schema::{InstanceType, ObjectValidation, Schema, SchemaObject, Sin
 use schemars::Map;
 
 pub mod auth_dto;
+pub mod chat_dto;
 pub mod user_dto;
-pub mod user_profile;
+pub mod user_profile_dto;
 
 impl TypedSchema for CompleteOnboardingForm {
     fn schema_type() -> InstanceType {

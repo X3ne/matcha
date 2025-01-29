@@ -6,9 +6,12 @@ use sqlx::PgPool;
 use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::errors::user_profile_error::UserProfileError;
+use crate::domain::repositories::chat::channel_repository::ChannelRepository;
 use crate::domain::repositories::user_profile_repo::{UserProfileQueryParams, UserProfileRepository};
 use crate::domain::services::user_profile_service::UserProfileService;
+use crate::infrastructure::models::chat::ChannelInsert;
 use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfileUpdate};
+use crate::infrastructure::repositories::chat::channel_repo::PgChannelRepository;
 use crate::infrastructure::repositories::user_profile_repo::PgUserProfileRepository;
 use crate::shared::types::snowflake::Snowflake;
 use crate::shared::types::user_profile::{Gender, Orientation};
@@ -199,6 +202,17 @@ impl UserProfileService for UserProfileServiceImpl {
         let fame_increase = FameCalculator::calculate_fame(liked_profile.rating, fame_multiplier);
 
         PgUserProfileRepository::increase_fame_rating(&mut *tx, liked_profile_id, fame_increase).await?;
+
+        // TODO: this is a temporary solution
+        let is_matched = PgUserProfileRepository::is_like_exists(&mut *tx, liked_profile_id, profile.id).await?;
+
+        if is_matched {
+            let channel_name = format!("dm-{}-{}", liked_profile_id, profile.id);
+
+            let channel = PgChannelRepository::insert(&mut *tx, &ChannelInsert { name: channel_name }).await?;
+
+            PgChannelRepository::add_participants(&mut *tx, channel.id, vec![liked_profile_id, profile.id]).await?;
+        }
 
         tx.commit().await?;
 

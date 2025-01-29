@@ -1,3 +1,12 @@
+use std::fmt::Display;
+
+use apistos::ApiComponent;
+use async_trait::async_trait;
+use geo_types::Point;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use sqlx::Acquire;
+
 use crate::domain::entities::profile_tag::ProfileTag;
 use crate::domain::entities::user_profile::UserProfile;
 use crate::domain::repositories::repository::{QueryParams, DEFAULT_LIMIT, DEFAULT_OFFSET};
@@ -5,13 +14,6 @@ use crate::infrastructure::models::user_profile::{UserProfileInsert, UserProfile
 use crate::shared::types::filtering::SortOrder;
 use crate::shared::types::snowflake::Snowflake;
 use crate::shared::types::user_profile::{Gender, Orientation};
-use apistos::ApiComponent;
-use async_trait::async_trait;
-use geo_types::Point;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use sqlx::Acquire;
-use std::fmt::Display;
 
 #[derive(Debug)]
 pub struct UserProfileQueryParams {
@@ -34,7 +36,7 @@ pub enum UserProfileSortBy {
     Age,
     FameRating,
     Distance,
-    Tags, // TODO: Implement tags sorting
+    Tags,
 }
 
 impl Display for UserProfileSortBy {

@@ -1,3 +1,4 @@
+pub mod chat;
 pub mod oauth_account;
 pub mod oauth_provider;
 pub mod profile_tag;

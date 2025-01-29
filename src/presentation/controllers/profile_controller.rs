@@ -17,7 +17,7 @@ use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::UserProfileUpdate;
-use crate::presentation::dto::user_profile::{
+use crate::presentation::dto::user_profile_dto::{
     UpdateProfileDto, UploadProfilePictureForm, UserProfileBulkTagsDto, UserProfileDto, UserProfileMeta,
     UserProfileQueryParamsDto, UserProfileTagParamsDto,
 };

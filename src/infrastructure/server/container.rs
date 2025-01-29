@@ -8,6 +8,7 @@ use crate::config::SmtpConfig;
 use crate::config::{OAuth2Config, S3Config};
 use crate::domain::services::auth_service::AuthService;
 use crate::domain::services::cdn_service::CdnService;
+use crate::domain::services::chat_service::ChatService;
 use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::domain::services::user_service::UserService;
@@ -18,6 +19,7 @@ use crate::infrastructure::mailing::sender::Sender;
 use crate::infrastructure::s3::S3Service;
 use crate::services::auth_service::AuthServiceImpl;
 use crate::services::cdn_service::CdnServiceImpl;
+use crate::services::chat_service::ChatServiceImpl;
 use crate::services::profile_tag_service::ProfileTagServiceImpl;
 use crate::services::user_profile_service::UserProfileServiceImpl;
 use crate::services::user_service::UserServiceImpl;
@@ -28,6 +30,7 @@ pub struct Container {
     pub user_profile_service: Arc<dyn UserProfileService>,
     pub profile_tag_service: Arc<dyn ProfileTagService>,
     pub cdn_service: Arc<dyn CdnService>,
+    pub chat_service: Arc<dyn ChatService>,
     pub s3: Arc<S3Service>,
     pub pool: Arc<sqlx::PgPool>,
     pub redis: Arc<redis::Client>,
@@ -87,6 +90,7 @@ impl Container {
         let user_profile_service = Arc::new(UserProfileServiceImpl::new(Arc::clone(&pool)));
         let profile_tag_service = Arc::new(ProfileTagServiceImpl::new(Arc::clone(&pool)));
         let cdn_service = Arc::new(CdnServiceImpl::new(Arc::clone(&s3), Arc::clone(&pool)));
+        let chat_service = Arc::new(ChatServiceImpl::new(Arc::clone(&pool)));
 
         Container {
             auth_service,
@@ -94,6 +98,7 @@ impl Container {
             user_profile_service,
             profile_tag_service,
             cdn_service,
+            chat_service,
             s3,
             pool,
             redis,

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use actix_session::config::PersistentSession;
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
@@ -10,7 +12,6 @@ use apistos::web::{get, resource, scope};
 use apistos::{api_operation, info::Info, ApiComponent, ScalarConfig};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tracing_actix_web::TracingLogger;
 
@@ -79,6 +80,7 @@ pub fn init_server(
             .app_data(web::Data::new(container.user_profile_service.clone()))
             .app_data(web::Data::new(container.profile_tag_service.clone()))
             .app_data(web::Data::new(container.cdn_service.clone()))
+            .app_data(web::Data::new(container.chat_service.clone()))
             .app_data(
                 web::FormConfig::default().error_handler(|err, _req| ApiError::BadRequest(err.to_string()).into()),
             )
@@ -101,6 +103,7 @@ pub fn init_server(
                             crate::presentation::routes::profile_route::config(cfg);
                             crate::presentation::routes::cdn_route::config(cfg);
                             crate::presentation::routes::tag_route::config(cfg);
+                            crate::presentation::routes::chat_route::config(cfg);
                         }),
                 );
             })
