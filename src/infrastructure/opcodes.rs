@@ -11,6 +11,7 @@ pub enum ErrorCode {
     UnknownMessage = 10007,
     MaxImages = 30001,
     CannotDeleteAvatar = 30002,
+    AvatarNotSet = 30003,
     Unauthorized = 40001,
     AccountNotActivated = 40002,
     UserEmailAlreadyExists = 40003,

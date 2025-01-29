@@ -23,6 +23,8 @@ pub enum UserProfileError {
     CannotDeleteAvatar,
     #[error("Profile already liked")]
     ProfileAlreadyLiked,
+    #[error("Avatar not set")]
+    AvatarNotSet,
 }
 
 impl ApiErrorImpl for UserProfileError {
@@ -37,6 +39,7 @@ impl ApiErrorImpl for UserProfileError {
             UserProfileError::ProfileAlreadyHasTag => (StatusCode::CONFLICT, ErrorCode::ProfileAlreadyHasTag),
             UserProfileError::CannotDeleteAvatar => (StatusCode::BAD_REQUEST, ErrorCode::CannotDeleteAvatar),
             UserProfileError::ProfileAlreadyLiked => (StatusCode::CONFLICT, ErrorCode::ProfileAlreadyLiked),
+            UserProfileError::AvatarNotSet => (StatusCode::BAD_REQUEST, ErrorCode::AvatarNotSet),
         }
     }
 }
