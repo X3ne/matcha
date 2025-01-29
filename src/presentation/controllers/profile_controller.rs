@@ -16,6 +16,8 @@ use crate::domain::services::cdn_service::CdnService;
 use crate::domain::services::profile_tag_service::ProfileTagService;
 use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
+use crate::infrastructure::gateway::events::GatewayEvent;
+use crate::infrastructure::gateway::Gateway;
 use crate::infrastructure::models::user_profile::UserProfileUpdate;
 use crate::presentation::dto::user_profile_dto::{
     PartialUserProfileDto, ReportProfileDto, UpdateProfileDto, UploadProfilePictureForm, UserProfileBulkTagsDto,
@@ -24,7 +26,7 @@ use crate::presentation::dto::user_profile_dto::{
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
 use crate::shared::types::snowflake::Snowflake;
-use crate::shared::utils::approx_distance_km;
+use crate::shared::utils::{approx_distance_km, build_cdn_profile_image_uri};
 
 #[api_operation(
     tag = "profiles",
@@ -95,9 +97,10 @@ pub async fn update_my_profile(
     summary = "Get the user profile by id",
     skip_args = "peer_infos"
 )]
-#[tracing::instrument(skip(user_profile_service, session))]
+#[tracing::instrument(skip(user_profile_service, gateway, session))]
 pub async fn get_user_profile_by_id(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    gateway: web::Data<Arc<Gateway>>,
     profile_id: web::Path<Snowflake>,
     session: Session,
     peer_infos: PeerInfos,
@@ -125,6 +128,17 @@ pub async fn get_user_profile_by_id(
 
     // set profile as viewed for the current logged-in user
     user_profile_service.view_profile(user_profile.id, profile.id).await?;
+
+    gateway
+        .send_event(
+            &profile_id,
+            &GatewayEvent::ProfileViewed {
+                user_id: user_profile.id,
+                username: user_profile.name,
+                avatar: user_profile.avatar_hash.map(|hash| build_cdn_profile_image_uri(&hash)),
+            },
+        )
+        .await;
 
     Ok(web::Json(profile))
 }
@@ -518,9 +532,10 @@ pub async fn get_my_profile_likes(
     summary = "Like a user profile",
     skip_args = "peer_infos"
 )]
-#[tracing::instrument(skip(user_profile_service, session))]
+#[tracing::instrument(skip(user_profile_service, gateway, session))]
 pub async fn like_user_profile(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    gateway: web::Data<Arc<Gateway>>,
     profile_id: web::Path<Snowflake>,
     session: Session,
     peer_infos: PeerInfos,
@@ -533,6 +548,35 @@ pub async fn like_user_profile(
 
     let _ = user_profile_service.add_like(&profile, profile_id).await?;
 
+    let is_a_match = user_profile_service.is_profile_matched(profile.id, profile_id).await?;
+
+    match is_a_match {
+        true => {
+            gateway
+                .send_event(
+                    &profile_id,
+                    &GatewayEvent::NewMatch {
+                        user_id: profile.user_id,
+                        username: profile.name,
+                        avatar: profile.avatar_hash.map(|hash| build_cdn_profile_image_uri(&hash)),
+                    },
+                )
+                .await;
+        }
+        false => {
+            gateway
+                .send_event(
+                    &profile_id,
+                    &GatewayEvent::LikeReceived {
+                        user_id: profile.user_id,
+                        username: profile.name,
+                        avatar: profile.avatar_hash.map(|hash| build_cdn_profile_image_uri(&hash)),
+                    },
+                )
+                .await;
+        }
+    }
+
     Ok(NoContent)
 }
 
@@ -542,9 +586,10 @@ pub async fn like_user_profile(
     summary = "Remove a like from a user profile",
     skip_args = "peer_infos"
 )]
-#[tracing::instrument(skip(user_profile_service, session))]
+#[tracing::instrument(skip(user_profile_service, gateway, session))]
 pub async fn remove_user_profile_like(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
+    gateway: web::Data<Arc<Gateway>>,
     profile_id: web::Path<Snowflake>,
     session: Session,
     peer_infos: PeerInfos,
@@ -554,7 +599,23 @@ pub async fn remove_user_profile_like(
     let profile_id = profile_id.into_inner();
 
     let profile = user_profile_service.get_by_user_id(user.id).await?;
+
+    let is_a_match = user_profile_service.is_profile_matched(profile.id, profile_id).await?;
+
     let _ = user_profile_service.remove_like(profile.id, profile_id).await?;
+
+    if is_a_match {
+        gateway
+            .send_event(
+                &profile_id,
+                &GatewayEvent::MatchRemoved {
+                    user_id: profile.user_id,
+                    username: profile.name,
+                    avatar: profile.avatar_hash.map(|hash| build_cdn_profile_image_uri(&hash)),
+                },
+            )
+            .await;
+    }
 
     Ok(NoContent)
 }

@@ -14,6 +14,7 @@ use crate::domain::services::user_profile_service::UserProfileService;
 use crate::domain::services::user_service::UserService;
 use crate::infrastructure::databases::postgresql::connection::connect;
 use crate::infrastructure::databases::postgresql::init::create_default_providers;
+use crate::infrastructure::gateway::Gateway;
 #[cfg(feature = "mailing")]
 use crate::infrastructure::mailing::sender::Sender;
 use crate::infrastructure::s3::S3Service;
@@ -34,6 +35,7 @@ pub struct Container {
     pub s3: Arc<S3Service>,
     pub pool: Arc<sqlx::PgPool>,
     pub redis: Arc<redis::Client>,
+    pub gateway: Arc<Gateway>,
 }
 
 impl Container {
@@ -76,6 +78,9 @@ impl Container {
                 .expect("Failed to connect to s3 service"),
         );
 
+        // Gateway
+        let gateway = Arc::new(Gateway::new());
+
         // Services
         let auth_service = Arc::new(AuthServiceImpl::new(
             Arc::clone(&pool),
@@ -102,6 +107,7 @@ impl Container {
             s3,
             pool,
             redis,
+            gateway,
         }
     }
 }

@@ -17,17 +17,16 @@ impl MessageRepository<Postgres> for PgMessageRepository {
         A: Acquire<'a, Database = Postgres> + Send,
     {
         let mut conn = conn.acquire().await?;
-
         let id = Snowflake::new();
 
         sqlx::query!(
             r#"
-            INSERT INTO message (id, channel_id, author_id, content, sent_at)
+            INSERT INTO message (id, author_id, channel_id, content, sent_at)
             VALUES ($1, $2, $3, $4, $5)
             "#,
             id.as_i64(),
-            message.channel_id.as_i64(),
             message.author_id.as_i64(),
+            message.channel_id.as_i64(),
             message.content,
             message.sent_at
         )

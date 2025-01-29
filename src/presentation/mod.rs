@@ -1,5 +1,5 @@
 mod controllers;
-mod dto;
+pub mod dto;
 mod extractors;
 mod middlewares;
 pub mod routes;

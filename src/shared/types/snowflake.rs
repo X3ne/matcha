@@ -11,7 +11,7 @@ use std::sync::{Arc, Mutex};
 
 static SNOWFLAKE_GENERATOR: Lazy<SnowflakeGenerator> = Lazy::new(|| SnowflakeGenerator::new(1, 1));
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, Validate, ApiComponent)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, sqlx::Type, Validate, ApiComponent)]
 #[garde(transparent)]
 #[sqlx(transparent)]
 pub struct Snowflake(#[garde(range(equal = 19))] pub i64);

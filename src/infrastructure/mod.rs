@@ -1,6 +1,7 @@
 pub mod config;
 pub mod databases;
 pub mod error;
+pub mod gateway;
 #[cfg(feature = "mailing")]
 pub mod mailing;
 pub mod models;

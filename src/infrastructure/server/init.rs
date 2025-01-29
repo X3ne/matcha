@@ -5,7 +5,7 @@ use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
 use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, SameSite};
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use apistos::app::{BuildConfig, OpenApiWrapper};
 use apistos::spec::Spec;
 use apistos::web::{get, resource, scope};
@@ -17,6 +17,7 @@ use tracing_actix_web::TracingLogger;
 
 use crate::infrastructure::config::Config;
 use crate::infrastructure::error::ApiError;
+use crate::infrastructure::gateway::Gateway;
 use crate::infrastructure::web::cors::default_cors;
 use crate::server::container::Container;
 
@@ -81,6 +82,7 @@ pub fn init_server(
             .app_data(web::Data::new(container.profile_tag_service.clone()))
             .app_data(web::Data::new(container.cdn_service.clone()))
             .app_data(web::Data::new(container.chat_service.clone()))
+            .app_data(web::Data::new(container.gateway.clone()))
             .app_data(
                 web::FormConfig::default().error_handler(|err, _req| ApiError::BadRequest(err.to_string()).into()),
             )
@@ -104,6 +106,7 @@ pub fn init_server(
                             crate::presentation::routes::cdn_route::config(cfg);
                             crate::presentation::routes::tag_route::config(cfg);
                             crate::presentation::routes::chat_route::config(cfg);
+                            crate::presentation::routes::gateway_route::config(cfg);
                         }),
                 );
             })
