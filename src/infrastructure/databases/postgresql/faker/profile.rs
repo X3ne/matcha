@@ -69,7 +69,7 @@ impl UserProfileSqlx {
             sexual_orientation: orientation,
             min_age: 18,
             max_age: 100,
-            max_distance_km: 100.0,
+            max_distance_km: 100,
             location: Decode {
                 geometry: Some(location.into()),
             },
