@@ -9,7 +9,7 @@ back:
   ✔ disable dev emails @done(25-01-14 13:53)
   ✔ mock db @done(25-01-14 13:53)
   ✔ add likes @done(25-01-21 19:16)
-  ☐ add profile views
+  ✔ add profile views @done(25-01-27 19:27)
   ☐ add block and report
   ☐ add websocket notifications/realtime chat
   ✔ remove current user from search results @done(25-01-22 18:33)
@@ -22,8 +22,8 @@ back:
   ✔ algorithm to recommend user profiles @done(25-01-22 18:34)
   ☐ swipe system (like/dislike dislikes should not be shown again -> dislike in a timed redis)
   ✔ upload/delete images @done(25-01-20 20:05)
-  ☐ add search radius to user settings
-  ☐ add min_age and max_age to user settings
+  ✔ add search radius to user settings @done(25-01-29 02:10)
+  ✔ add min_age and max_age to user settings @done(25-01-29 02:10)
   ✔ do not delete s3 file when same image hash is used @done(25-01-20 20:00)
   ✔ prevent deleting profile image @done(25-01-20 20:05)
   ✔ remove age in db @done(25-01-22 18:20)

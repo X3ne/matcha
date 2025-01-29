@@ -1,0 +1,4 @@
+ALTER TABLE user_profile
+    ADD COLUMN min_age         INTEGER NOT NULL DEFAULT 18,
+    ADD COLUMN max_age         INTEGER NOT NULL DEFAULT 99,
+    ADD COLUMN max_distance_km INTEGER NOT NULL DEFAULT 50;

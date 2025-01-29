@@ -26,6 +26,7 @@ pub trait UserProfileService: 'static + Sync + Send {
         radius_km: f64,
         gender: Gender,
         orientation: Orientation,
+        birth_date: chrono::NaiveDate,
         min_age: u8,
         max_age: u8,
     ) -> Result<Vec<UserProfile>, UserProfileError>;

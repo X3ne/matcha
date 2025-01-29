@@ -92,6 +92,7 @@ pub trait UserProfileRepository<Db>: Send + Sync {
         radius_km: f64,
         gender: Gender,
         orientation: Orientation,
+        birth_date: chrono::NaiveDate,
         min_age: u8,
         max_age: u8,
     ) -> sqlx::Result<Vec<UserProfile>, sqlx::Error>

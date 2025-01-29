@@ -18,8 +18,8 @@ use crate::domain::services::user_profile_service::UserProfileService;
 use crate::infrastructure::error::ApiError;
 use crate::infrastructure::models::user_profile::UserProfileUpdate;
 use crate::presentation::dto::user_profile_dto::{
-    UpdateProfileDto, UploadProfilePictureForm, UserProfileBulkTagsDto, UserProfileDto, UserProfileMeta,
-    UserProfileQueryParamsDto, UserProfileTagParamsDto,
+    PartialUserProfileDto, UpdateProfileDto, UploadProfilePictureForm, UserProfileBulkTagsDto, UserProfileDto,
+    UserProfileMeta, UserProfileQueryParamsDto, UserProfileTagParamsDto,
 };
 use crate::presentation::extractors::auth_extractor::Session;
 use crate::shared::types::peer_infos::PeerInfos;
@@ -77,6 +77,9 @@ pub async fn update_my_profile(
                 bio: body.bio,
                 gender: body.gender,
                 sexual_orientation: body.sexual_orientation,
+                min_age: body.min_age,
+                max_age: body.max_age,
+                max_distance_km: body.max_distance_km,
                 location: body.location.map(Into::into),
                 ..Default::default()
             },
@@ -98,7 +101,7 @@ pub async fn get_user_profile_by_id(
     profile_id: web::Path<Snowflake>,
     session: Session,
     peer_infos: PeerInfos,
-) -> Result<web::Json<UserProfileDto>, ApiError> {
+) -> Result<web::Json<PartialUserProfileDto>, ApiError> {
     let user = session.authenticated_user()?;
     let profile_id = profile_id.into_inner();
 
@@ -115,7 +118,7 @@ pub async fn get_user_profile_by_id(
 
     let approx_distance = approx_distance_km(&user_profile.location, &profile_data.location);
 
-    let mut profile: UserProfileDto = profile_data.into();
+    let mut profile: PartialUserProfileDto = profile_data.into();
     profile.append_tags(tags);
     profile.set_approx_distance(approx_distance);
     profile.set_meta(UserProfileMeta { is_liked, is_a_match });
@@ -138,7 +141,7 @@ pub async fn search_profiles(
     params: web::Query<UserProfileQueryParamsDto>,
     session: Session,
     peer_infos: PeerInfos,
-) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+) -> Result<web::Json<Vec<PartialUserProfileDto>>, ApiError> {
     let params = params.into_inner();
     params.validate()?;
 
@@ -180,7 +183,7 @@ pub async fn search_profiles(
             user_profile_service.is_profile_matched(user_profile.id, profile.id),
         )?;
 
-        let mut profile_dto: UserProfileDto = profile.into();
+        let mut profile_dto: PartialUserProfileDto = profile.into();
         profile_dto.append_tags(tags);
         profile_dto.set_approx_distance(approx_distance);
         profile_dto.set_meta(UserProfileMeta { is_liked, is_a_match });
@@ -202,7 +205,7 @@ pub async fn recommend_profiles(
     user_profile_service: web::Data<Arc<dyn UserProfileService>>,
     session: Session,
     peer_infos: PeerInfos,
-) -> Result<web::Json<Vec<UserProfileDto>>, ApiError> {
+) -> Result<web::Json<Vec<PartialUserProfileDto>>, ApiError> {
     let user = session.authenticated_user()?;
 
     let user_profile = user_profile_service.get_by_user_id(user.id).await?;
@@ -210,11 +213,12 @@ pub async fn recommend_profiles(
         .recommend(
             user_profile.id,
             user_profile.location.clone(),
-            50.0, // TODO: for now this is hardcoded, but it should be a user setting
+            user_profile.max_distance_km as f64,
             user_profile.gender,
             user_profile.sexual_orientation,
-            18,
-            99,
+            user_profile.birth_date,
+            user_profile.min_age,
+            user_profile.max_age,
         )
         .await?;
 
@@ -236,7 +240,7 @@ pub async fn recommend_profiles(
             user_profile_service.is_profile_matched(user_profile.id, profile.id),
         )?;
 
-        let mut profile_dto: UserProfileDto = profile.into();
+        let mut profile_dto: PartialUserProfileDto = profile.into();
         profile_dto.append_tags(tags);
         profile_dto.set_approx_distance(approx_distance);
         profile_dto.set_meta(UserProfileMeta { is_liked, is_a_match });

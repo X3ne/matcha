@@ -36,6 +36,12 @@ pub struct CompleteOnboardingDto {
     #[serde(default = "Orientation::default")]
     #[garde(skip)]
     pub sexual_orientation: Orientation,
+    #[garde(range(min = 18, max = 100))]
+    pub min_age: i32,
+    #[garde(custom(validate_age(self.min_age, self.max_age)))]
+    pub max_age: i32,
+    #[garde(range(min = 0, max = 150))]
+    pub max_distance_km: i32,
     #[garde(dive)]
     pub location: Option<Location>,
 }
@@ -65,6 +71,54 @@ pub struct UserProfileDto {
     pub sexual_orientation: Orientation,
     pub rating: i32,
     pub tags: Vec<ProfileTag>,
+    pub min_age: u8,
+    pub max_age: u8,
+    pub max_distance_km: i32,
+}
+
+impl From<UserProfile> for UserProfileDto {
+    fn from(user: UserProfile) -> Self {
+        Self {
+            id: user.id,
+            name: user.name,
+            avatar_url: user.avatar_hash.map(|hash| build_cdn_profile_image_uri(&hash)),
+            picture_urls: user
+                .picture_hashes
+                .iter()
+                .map(|hash| build_cdn_profile_image_uri(hash))
+                .collect(),
+            bio: user.bio,
+            age: user.age,
+            gender: user.gender,
+            sexual_orientation: user.sexual_orientation,
+            rating: user.rating,
+            tags: vec![],
+            min_age: user.min_age,
+            max_age: user.max_age,
+            max_distance_km: user.max_distance_km,
+        }
+    }
+}
+
+impl UserProfileDto {
+    pub fn append_tags(&mut self, tags: Vec<ProfileTag>) {
+        self.tags = tags;
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema, ApiComponent)]
+#[serde(rename(deserialize = "PartialUserProfile"))]
+pub struct PartialUserProfileDto {
+    pub id: Snowflake,
+    pub name: String,
+    pub avatar_url: Option<String>,
+    pub picture_urls: Vec<String>,
+    pub bio: Option<String>,
+    pub age: i32,
+    pub gender: Gender,
+    pub sexual_orientation: Orientation,
+    pub rating: i32,
+    pub tags: Vec<ProfileTag>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub approx_distance_km: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -80,7 +134,7 @@ pub struct UserProfileMeta {
     pub is_a_match: bool,
 }
 
-impl From<UserProfile> for UserProfileDto {
+impl From<UserProfile> for PartialUserProfileDto {
     fn from(user: UserProfile) -> Self {
         Self {
             id: user.id,
@@ -103,7 +157,7 @@ impl From<UserProfile> for UserProfileDto {
     }
 }
 
-impl UserProfileDto {
+impl PartialUserProfileDto {
     pub fn append_tags(&mut self, tags: Vec<ProfileTag>) {
         self.tags = tags;
     }
@@ -156,17 +210,18 @@ fn limit_default() -> i64 {
     DEFAULT_LIMIT.unwrap_or(50)
 }
 
-fn validate_age(min: Option<i32>, max: Option<i32>) -> impl FnOnce(&Option<i32>, &()) -> garde::Result {
+fn validate_age<M: Into<Option<i32>>, X: Into<Option<i32>>, R: Into<Option<i32>>>(
+    min: M,
+    max: X,
+) -> impl FnOnce(&R, &()) -> garde::Result {
     move |_, _| {
-        if min.is_none() || max.is_none() {
-            return Ok(());
-        }
+        let min = min.into();
+        let max = max.into();
 
-        if max < min {
-            return Err(garde::Error::new("Max age is less than min age"));
+        match (min, max) {
+            (Some(min), Some(max)) if max < min => Err(garde::Error::new("Max age is less than min age")),
+            _ => Ok(()),
         }
-
-        Ok(())
     }
 }
 
@@ -215,6 +270,12 @@ pub struct UpdateProfileDto {
     pub gender: Option<Gender>,
     #[garde(skip)]
     pub sexual_orientation: Option<Orientation>,
+    #[garde(range(min = 18, max = 100))]
+    pub min_age: i32,
+    #[garde(custom(validate_age(self.min_age, self.max_age)))]
+    pub max_age: i32,
+    #[garde(range(min = 0, max = 150))]
+    pub max_distance_km: i32,
     #[garde(dive)]
     pub location: Option<Location>,
 }

@@ -91,6 +91,7 @@ impl UserProfileService for UserProfileServiceImpl {
         radius_km: f64,
         gender: Gender,
         orientation: Orientation,
+        birth_date: chrono::NaiveDate,
         min_age: u8,
         max_age: u8,
     ) -> Result<Vec<UserProfile>, UserProfileError> {
@@ -103,6 +104,7 @@ impl UserProfileService for UserProfileServiceImpl {
             radius_km,
             gender,
             orientation,
+            birth_date,
             min_age,
             max_age,
         )

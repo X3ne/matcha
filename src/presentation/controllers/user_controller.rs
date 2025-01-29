@@ -127,6 +127,9 @@ pub async fn complete_onboarding(
             birth_date: onboarding.birth_date,
             gender: onboarding.gender,
             sexual_orientation: onboarding.sexual_orientation,
+            min_age: onboarding.min_age,
+            max_age: onboarding.max_age,
+            max_distance_km: onboarding.max_distance_km,
             location,
         })
         .await?;

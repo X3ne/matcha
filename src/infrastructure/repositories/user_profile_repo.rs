@@ -31,8 +31,8 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         sqlx::query!(
             r#"
-            INSERT INTO user_profile (id, user_id, name, avatar_hash, picture_hashes, bio, birth_date, gender, sexual_orientation, location)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry)
+            INSERT INTO user_profile (id, user_id, name, avatar_hash, picture_hashes, bio, birth_date, gender, sexual_orientation, location, min_age, max_age, max_distance_km)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::gender, $9::sexual_orientation, $10::geometry, $11, $12, $13)
             "#,
             id.as_i64(),
             profile.user_id.as_i64(),
@@ -43,7 +43,10 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
             profile.birth_date,
             profile.gender as _,
             profile.sexual_orientation as _,
-            wkb::Encode(geom) as _
+            wkb::Encode(geom) as _,
+            profile.min_age,
+            profile.max_age,
+            profile.max_distance_km
         )
         .execute(&mut *conn)
         .await?;
@@ -71,6 +74,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 birth_date,
                 gender AS "gender: _",
                 sexual_orientation AS "sexual_orientation: _",
+                min_age,
+                max_age,
+                max_distance_km,
                 location AS "location!: _",
                 rating,
                 last_active,
@@ -109,6 +115,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 birth_date,
                 gender AS "gender: _",
                 sexual_orientation AS "sexual_orientation: _",
+                min_age,
+                max_age,
+                max_distance_km,
                 location AS "location!: _",
                 rating,
                 last_active,
@@ -148,7 +157,10 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 bio = COALESCE($4, bio),
                 gender = COALESCE($5, gender),
                 sexual_orientation = COALESCE($6, sexual_orientation),
-                location = COALESCE($7, location)
+                location = COALESCE($7, location),
+                min_age = COALESCE($8, min_age),
+                max_age = COALESCE($9, max_age),
+                max_distance_km = COALESCE($10, max_distance_km)
             WHERE
                 id = $1
             "#,
@@ -158,7 +170,10 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
             profile.bio,
             profile.gender as _,
             profile.sexual_orientation as _,
-            encode as _
+            encode as _,
+            profile.min_age,
+            profile.max_age,
+            profile.max_distance_km
         )
         .execute(&mut *conn)
         .await?;
@@ -305,9 +320,10 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         conn: A,
         user_id: Snowflake,
         location: geo_types::Geometry<f64>,
-        radius_km: f64,
+        max_distance_km: f64,
         gender: Gender,
         orientation: Orientation,
+        birth_date: chrono::NaiveDate,
         min_age: u8,
         max_age: u8,
     ) -> sqlx::Result<Vec<UserProfile>, Error>
@@ -315,7 +331,6 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         A: Acquire<'a, Database = Postgres> + Send,
     {
         let mut conn = conn.acquire().await?;
-
         let wkb_location = wkb::Encode(location);
 
         let profiles = sqlx::query_as!(
@@ -328,11 +343,14 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                     $3::sexual_orientation AS user_orientation,
                     ST_SetSRID(ST_GeomFromEWKB($4), 4326) AS user_location,
                     $5::INT AS min_age,
-                    $6::INT AS max_age
+                    $6::INT AS max_age,
+                    $7::INT AS max_distance_km,
+                    $8::DATE AS birth_date
             )
             SELECT up.id, up.user_id, up.name, up.avatar_hash, up.picture_hashes,
                    up.bio, up.birth_date, up.gender AS "gender: Gender",
                    up.sexual_orientation AS "sexual_orientation: Orientation",
+                   up.min_age, up.max_age, up.max_distance_km,
                    up.location AS "location!: _",
                    up.rating, up.last_active, up.created_at, up.updated_at,
                    subquery.distance, subquery.common_tags_count, subquery.inactivity_duration,
@@ -375,8 +393,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                         (ui.user_gender = 'female' AND ui.user_orientation = 'female' AND up.gender = 'female' AND (up.sexual_orientation = 'female' OR up.sexual_orientation = 'bisexual')) OR
                         (ui.user_gender = 'male' AND ui.user_orientation = 'male' AND up.gender = 'male' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual'))
                     )
-                    AND ST_DWithin(up.location::geography, ui.user_location::geography, $7 * 1000)
-                    AND EXTRACT(YEAR FROM AGE(up.birth_date)) BETWEEN ui.min_age AND ui.max_age
+                    AND ST_DWithin(up.location::geography, ui.user_location::geography, LEAST(ui.max_distance_km, up.max_distance_km) * 1000)
+                    AND EXTRACT(YEAR FROM AGE(NOW(), up.birth_date)) BETWEEN ui.min_age AND ui.max_age
+                    AND EXTRACT(YEAR FROM AGE(NOW(), ui.birth_date)) BETWEEN up.min_age AND up.max_age
                 GROUP BY up.id, ui.user_location
             ) AS subquery
             JOIN user_profile up ON up.id = subquery.id
@@ -390,10 +409,11 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
             wkb_location as _,
             min_age as i32,
             max_age as i32,
-            radius_km as _
+            max_distance_km as _,
+            birth_date as _
         )
-            .fetch_all(&mut *conn)
-            .await?;
+        .fetch_all(&mut *conn)
+        .await?;
 
         Ok(profiles.into_iter().map(|profile| profile.into()).collect())
     }
@@ -722,6 +742,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
+                up.min_age,
+                up.max_age,
+                up.max_distance_km,
                 up.location AS "location!: _",
                 up.rating,
                 up.last_active,
@@ -759,6 +782,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
+                up.min_age,
+                up.max_age,
+                up.max_distance_km,
                 up.location AS "location!: _",
                 up.rating,
                 up.last_active,
@@ -796,6 +822,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
+                up.min_age,
+                up.max_age,
+                up.max_distance_km,
                 up.location AS "location!: _",
                 up.rating,
                 up.last_active,
@@ -906,6 +935,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 up.birth_date,
                 up.gender AS "gender: _",
                 up.sexual_orientation AS "sexual_orientation: _",
+                up.min_age,
+                up.max_age,
+                up.max_distance_km,
                 up.location AS "location!: _",
                 up.rating,
                 up.last_active,
