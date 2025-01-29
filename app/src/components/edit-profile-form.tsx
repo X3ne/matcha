@@ -200,7 +200,9 @@ export function EditProfileForm() {
 
   function handleSubmit() {
     setErrorMessage('')
+
     updateEverything()
+    updateTags(selectedTags)
   }
 
   function handleGetLocation() {
@@ -317,15 +319,56 @@ export function EditProfileForm() {
     }
   }
 
+  const { mutate: updateTags } = useMutation({
+    mutationFn: async (tags: string[]) => {
+      if (!userProfile) return
+
+      const currentTagNames = userProfile.tags.map((tag) => tag.name)
+
+      console.log('currentTagNames', currentTagNames, 'tags', tags)
+
+      const tagsToAdd = tags.filter(
+        (tag) => currentTagNames.includes(tag) === false
+      )
+
+      const tagsToRemove = userProfile.tags
+        .filter((tag) => !tags.includes(tag.name))
+        .map((tag) => tag.id)
+
+      console.log('currentTagNames', currentTagNames)
+      console.log('tagsToAdd', tagsToAdd)
+      console.log('tagsToRemove', tagsToRemove)
+
+      try {
+        if (tagsToAdd.length > 0) {
+          await api.v1.bulkAddTagToMyProfile({ tag_ids: tagsToAdd })
+        }
+        if (tagsToRemove.length > 0) {
+          await api.v1.bulkRemoveTagFromMyProfile({ tag_ids: tagsToRemove })
+        }
+
+        refreshUserProfile()
+        toast({
+          title: 'Tags updated!',
+          description: 'Your profile tags have been updated successfully.'
+        })
+      } catch (err: any) {
+        toast({
+          title: 'Failed to update tags',
+          description: err.message || 'An error occurred while updating tags.',
+          variant: 'destructive'
+        })
+      }
+    }
+  })
+
   function toggleTag(tag: string) {
     setSelectedTags((prev) => {
       const updatedTags = prev.includes(tag)
         ? prev.filter((t) => t !== tag)
         : [...prev, tag]
-      setIsModified(
-        JSON.stringify(updatedTags.sort()) !==
-          JSON.stringify(userProfile?.tags.map((tg) => tg.name).sort() || [])
-      )
+
+      setIsModified(true)
       return updatedTags
     })
   }
@@ -333,9 +376,7 @@ export function EditProfileForm() {
   return (
     <>
       <div className="mx-px flex flex-col gap-6 md:flex-row">
-        {/* Left side: form fields */}
         <div className="flex-1 space-y-4">
-          {/* First Name */}
           <div>
             <Label htmlFor="firstName">First Name</Label>
             <Input
@@ -346,7 +387,6 @@ export function EditProfileForm() {
             />
           </div>
 
-          {/* Last Name */}
           <div>
             <Label htmlFor="lastName">Last Name</Label>
             <Input
@@ -357,7 +397,6 @@ export function EditProfileForm() {
             />
           </div>
 
-          {/* Email */}
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -369,7 +408,6 @@ export function EditProfileForm() {
             />
           </div>
 
-          {/* Gender */}
           <div>
             <Label htmlFor="gender">Gender</Label>
             <Select
@@ -386,7 +424,6 @@ export function EditProfileForm() {
             </Select>
           </div>
 
-          {/* Sexual Orientation */}
           <div>
             <Label htmlFor="sexualOrientation">Preferred Partners</Label>
             <Select
@@ -406,7 +443,6 @@ export function EditProfileForm() {
             </Select>
           </div>
 
-          {/* Biography */}
           <div>
             <Label htmlFor="biography">Biography</Label>
             <Textarea
@@ -417,7 +453,6 @@ export function EditProfileForm() {
             />
           </div>
 
-          {/* Interests / Tags */}
           <div>
             <Label>Interests</Label>
             <TagSelector selectedTags={selectedTags} onToggleTag={toggleTag} />
@@ -433,7 +468,6 @@ export function EditProfileForm() {
             </div>
           </div>
 
-          {/* Location */}
           <div className="flex flex-col gap-1">
             <Label>Your Location</Label>
             <Button size="sm" variant="outline" onClick={handleGetLocation}>
@@ -447,7 +481,6 @@ export function EditProfileForm() {
           </div>
         </div>
 
-        {/* Right side: pictures grid */}
         <div className="grid h-fit w-fit grid-cols-1 gap-4 sm:grid-cols-2">
           {pictures.map((pic, index) => (
             <div
@@ -497,7 +530,6 @@ export function EditProfileForm() {
         </div>
       </div>
 
-      {/* Save Changes Button */}
       <DialogClose asChild>
         <Button
           className="mt-6 w-full"
@@ -508,7 +540,6 @@ export function EditProfileForm() {
         </Button>
       </DialogClose>
 
-      {/* Error Message */}
       {errorMessage && (
         <p className="mt-2 text-center text-xs text-red-600">{errorMessage}</p>
       )}
