@@ -30,7 +30,6 @@ back:
   ✔ calculate age from birthdate @done(25-01-22 18:20)
   ☐ allow user to delete profile picture
   ☐ last seen
-  ☐ change mail
   ✔ when a user is blocked by another user, remove the likes @done(25-01-30 16:52)
   ☐ when a user is blocked do not send notifications from this user
   ✔ unlike a user should delete the chat channel @done(25-01-30 16:58)
