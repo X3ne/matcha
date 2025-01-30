@@ -22,11 +22,12 @@ import {
 import { Slider } from '@/components/ui/slider'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
+import { UserContext } from '@/providers/userProvider'
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { ListFilter } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { FaMapMarkerAlt } from 'react-icons/fa'
 import { FaHeart, FaHeartCrack, FaFire } from 'react-icons/fa6'
 
@@ -35,6 +36,8 @@ export const Route = createLazyFileRoute('/search/')({
 })
 
 function Search() {
+  const { userProfile: currentUserProfile } = useContext(UserContext)
+
   const [sortOption, setSortOption] = useState<UserProfileSortBy>(
     UserProfileSortBy.Distance
   )
@@ -42,12 +45,11 @@ function Search() {
   const [isAdvancedSearch, setIsAdvancedSearch] = useState(false)
 
   const [filters, setFilters] = useState({
-    age: '',
+    age: currentUserProfile?.age.toString(),
     radius_km: '',
     rating: '',
-    commonTags: [] as ProfileTag[],
-    minAge: '',
-    maxAge: '',
+    minAge: currentUserProfile?.min_age.toString(),
+    maxAge: currentUserProfile?.max_age.toString(),
     minRating: '',
     maxRating: '',
     multipleTags: [] as ProfileTag[]
@@ -57,11 +59,11 @@ function Search() {
 
   const handleToggleCommonTag = (tag: ProfileTag) => {
     setFilters((prev) => {
-      const alreadySelected = prev.commonTags.some((t) => t.id === tag.id)
+      const alreadySelected = prev.multipleTags.some((t) => t.id === tag.id)
       const newTags = alreadySelected
-        ? prev.commonTags.filter((t) => t.id !== tag.id)
-        : [...prev.commonTags, tag]
-      return { ...prev, commonTags: newTags }
+        ? prev.multipleTags.filter((t) => t.id !== tag.id)
+        : [...prev.multipleTags, tag]
+      return { ...prev, multipleTags: newTags }
     })
   }
 
@@ -78,9 +80,8 @@ function Search() {
   const handleAdvancedSearchToggle = () => {
     setFilters({
       age: '',
-      radius_km: '',
+      radius_km: '300',
       rating: '',
-      commonTags: [],
       minAge: '',
       maxAge: '',
       minRating: '',
@@ -106,19 +107,12 @@ function Search() {
         limit: 25,
         sort_by: sortOption,
         sort_order: SortOrder.Asc,
-        ...(activeFilters.age && {
-          min_age: parseInt(activeFilters.age),
-          max_age: parseInt(activeFilters.age)
-        }),
         ...(activeFilters.rating && {
           min_fame_rating: parseInt(activeFilters.rating),
           max_fame_rating: parseInt(activeFilters.rating)
         }),
         ...(activeFilters.radius_km && {
           radius_km: parseInt(activeFilters.radius_km)
-        }),
-        ...(activeFilters.commonTags.length > 0 && {
-          common_tags: activeFilters.commonTags.map((t) => t.id)
         }),
         ...(activeFilters.multipleTags.length > 0 && {
           tag_ids: activeFilters.multipleTags.map((t) => t.id)
@@ -134,9 +128,6 @@ function Search() {
         }),
         ...(activeFilters.maxRating && {
           max_fame_rating: parseInt(activeFilters.maxRating)
-        }),
-        ...(activeFilters.multipleTags.length > 0 && {
-          tag_ids: activeFilters.multipleTags
         })
       }
 
@@ -250,9 +241,9 @@ function Search() {
                 <div>
                   <p className="mb-2 text-sm font-medium">Distance (km)</p>
                   <Slider
-                    value={[parseInt(filters.radius_km) || 0]}
+                    value={[parseInt(filters.radius_km) || 300]}
                     min={0}
-                    max={150}
+                    max={300}
                     step={5}
                     onValueChange={(val) => {
                       setFilters((prev) => ({
@@ -270,11 +261,11 @@ function Search() {
                 <div>
                   <p className="mb-2 text-sm font-medium">Multiple Tags</p>
                   <TagSelector
-                    selectedTags={filters.commonTags}
+                    selectedTags={filters.multipleTags}
                     onToggleTag={handleToggleCommonTag}
                   />
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {filters.commonTags.map((tag) => (
+                    {filters.multipleTags.map((tag) => (
                       <span
                         key={tag.id}
                         className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[8px] font-normal text-white"
@@ -340,7 +331,7 @@ function Search() {
                 <div>
                   <p className="mb-2 text-sm font-medium">Distance (km)</p>
                   <Slider
-                    value={[parseInt(filters.radius_km) || 0]}
+                    value={[parseInt(filters.radius_km) || 300]}
                     min={0}
                     max={300}
                     step={5}
