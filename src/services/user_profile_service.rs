@@ -324,7 +324,16 @@ impl UserProfileService for UserProfileServiceImpl {
     async fn view_profile(&self, profile_id: Snowflake, viewed_profile_id: Snowflake) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
-        PgUserProfileRepository::view_profile(&mut *tx, profile_id, viewed_profile_id).await?;
+        let result = PgUserProfileRepository::view_profile(&mut *tx, profile_id, viewed_profile_id).await;
+
+        if let Err(e) = result {
+            if let sqlx::Error::Database(ref db_err) = e {
+                if db_err.constraint() == Some("profile_view_user_profile_id_viewer_profile_id_key") {
+                    return Ok(());
+                }
+            }
+            return Err(e.into());
+        }
 
         tx.commit().await?;
 
