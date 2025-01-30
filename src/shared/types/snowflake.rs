@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use apistos::ApiComponent;
 use garde::Validate;
 use once_cell::sync::Lazy;
@@ -7,14 +9,12 @@ use schemars::_serde_json::Value;
 use schemars::schema::{InstanceType, Metadata, SchemaObject, SingleOrVec};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use snowflake::SnowflakeIdGenerator;
-use std::sync::{Arc, Mutex};
 
 static SNOWFLAKE_GENERATOR: Lazy<SnowflakeGenerator> = Lazy::new(|| SnowflakeGenerator::new(1, 1));
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, sqlx::Type, Validate, ApiComponent)]
-#[garde(transparent)]
 #[sqlx(transparent)]
-pub struct Snowflake(#[garde(range(equal = 19))] pub i64);
+pub struct Snowflake(#[garde(custom(validate_snowflake))] i64);
 
 impl Snowflake {
     pub fn new() -> Self {
@@ -72,6 +72,13 @@ impl<'de> Deserialize<'de> for Snowflake {
         let value = s.parse::<i64>().map_err(serde::de::Error::custom)?;
         Ok(Snowflake(value))
     }
+}
+
+fn validate_snowflake(value: &i64, context: &()) -> garde::Result {
+    if value.to_string().len() != 19 {
+        return Err(garde::Error::new("Snowflake ID must be 19 characters long"));
+    }
+    Ok(())
 }
 
 impl JsonSchema for Snowflake {

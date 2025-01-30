@@ -1098,7 +1098,10 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         .fetch_all(&mut *conn)
         .await?;
 
-        Ok(blocked_ids.into_iter().map(|row| Snowflake(row.blocked_id)).collect())
+        Ok(blocked_ids
+            .into_iter()
+            .map(|row| Snowflake::from(row.blocked_id))
+            .collect())
     }
 
     #[tracing::instrument(skip(conn))]
