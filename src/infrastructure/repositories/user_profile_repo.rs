@@ -215,9 +215,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         query_builder.push(
             " FROM user_profile up
-        LEFT JOIN join_user_profile_tag jpt ON up.id = jpt.user_profile_id
-        LEFT JOIN profile_tag pt ON jpt.profile_tag_id = pt.id
-        WHERE 1=1",
+            LEFT JOIN join_user_profile_tag jpt ON up.id = jpt.user_profile_id
+            LEFT JOIN profile_tag pt ON jpt.profile_tag_id = pt.id
+            WHERE 1=1",
         );
 
         // exclude profile ids
@@ -236,11 +236,11 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
             query_builder.push_bind(max_age);
         }
         if let Some(min_fame) = params.min_fame_rating {
-            query_builder.push(" AND up.fame_rating >= ");
+            query_builder.push(" AND up.rating >= ");
             query_builder.push_bind(min_fame);
         }
         if let Some(max_fame) = params.max_fame_rating {
-            query_builder.push(" AND up.fame_rating <= ");
+            query_builder.push(" AND up.rating <= ");
             query_builder.push_bind(max_fame);
         }
 
