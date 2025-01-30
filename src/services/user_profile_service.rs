@@ -242,6 +242,10 @@ impl UserProfileService for UserProfileServiceImpl {
 
         PgUserProfileRepository::decrease_fame_rating(&mut *tx, liked_profile_id, fame_decrease).await?;
 
+        if let Ok(channel) = PgChannelRepository::get_dm_channel(&mut *tx, profile_id, liked_profile_id).await {
+            PgChannelRepository::delete(&mut *tx, channel.id).await?;
+        }
+
         tx.commit().await?;
 
         Ok(())
@@ -358,6 +362,9 @@ impl UserProfileService for UserProfileServiceImpl {
         if let Ok(channel) = PgChannelRepository::get_dm_channel(&mut *tx, profile_id, blocked_profile_id).await {
             PgChannelRepository::delete(&mut *tx, channel.id).await?;
         }
+
+        PgUserProfileRepository::remove_like(&mut *tx, profile_id, blocked_profile_id).await?;
+        PgUserProfileRepository::remove_like(&mut *tx, blocked_profile_id, profile_id).await?;
 
         tx.commit().await?;
 

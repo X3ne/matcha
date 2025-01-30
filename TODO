@@ -31,10 +31,11 @@ back:
   ☐ allow user to delete profile picture
   ☐ last seen
   ☐ change mail
-  ☐ when a user is blocked by another user, remove the likes
+  ✔ when a user is blocked by another user, remove the likes @done(25-01-30 16:52)
   ☐ when a user is blocked do not send notifications from this user
-  ☐ unlike a user should delete the chat channel
+  ✔ unlike a user should delete the chat channel @done(25-01-30 16:58)
   ☐ remove a user like from my profile
+  ☐ view if an user liked my profile
 
 bonuses:
   ✔ oauth2 @done(25-01-13 16:24)

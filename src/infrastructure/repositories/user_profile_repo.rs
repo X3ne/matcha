@@ -388,9 +388,9 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
                 LEFT JOIN profile_like pl ON up.id = pl.liked_user_profile_id AND pl.user_profile_id = ui.user_id
                 WHERE
                     pl.id IS NULL
-                    AND up.id <> ui.user_id  -- Exclude the current user
+                    AND up.id <> ui.user_id
                     AND up.id NOT IN (
-                        SELECT UNNEST($9::BIGINT[])  -- Exclude additional user profiles
+                        SELECT UNNEST($9::BIGINT[])
                     )
                     AND (
                         (ui.user_gender = 'male' AND up.gender = 'female' AND (up.sexual_orientation = 'male' OR up.sexual_orientation = 'bisexual')) OR
