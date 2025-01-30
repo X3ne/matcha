@@ -1,10 +1,10 @@
 'use client'
+import api, { type ProfileTag } from '@/api'
 import { Orientation, Gender, Location } from '@/api/spec'
 import { DateTimePicker } from '@/components/datetime-picker'
 import TagSelector from '@/components/tag-selector'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -13,9 +13,12 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
 import { useUser } from '@/hooks/useUser'
+import { cn } from '@/lib/utils'
+import { useMutation } from '@tanstack/react-query'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { useNavigate } from '@tanstack/react-router'
 import { subYears, format } from 'date-fns'
@@ -51,14 +54,20 @@ export default function OnboardingPage() {
     biography: string
     gender: Gender
     sexualOrientation: Orientation
+    min_age: number
+    max_age: number
+    max_distance_km: number
   }>({
     biography: '',
     gender: Gender.Male,
-    sexualOrientation: Orientation.Bisexual
+    sexualOrientation: Orientation.Bisexual,
+    min_age: 18,
+    max_age: 99,
+    max_distance_km: 100
   })
 
   const [location, setLocation] = useState<Location | null>(null)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<ProfileTag[]>([])
 
   const [pictures, setPictures] = useState<
     { file: File | null; preview: string }[]
@@ -66,6 +75,27 @@ export default function OnboardingPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+
+  const { mutateAsync: updateTags } = useMutation({
+    mutationFn: async (tags: ProfileTag[]) => {
+      if (!tags.length) return
+      const tagIds = tags.map((t) => t.id.toString())
+      await api.v1.bulkAddTagToMyProfile({ tag_ids: tagIds })
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Tags updated!',
+        description: 'Your profile tags have been updated successfully.'
+      })
+    },
+    onError: (err: any) => {
+      toast({
+        title: 'Failed to update tags',
+        description: err.message || 'An error occurred while updating tags.',
+        variant: 'destructive'
+      })
+    }
+  })
 
   async function handleSubmit() {
     setIsSubmitting(true)
@@ -100,13 +130,15 @@ export default function OnboardingPage() {
 
       const profileObj = {
         bio: formData.biography,
-        birth_date: format(birthDate, 'yyyy-MM-dd'), // Format to RFC 3339 full-date
+        birth_date: format(birthDate, 'yyyy-MM-dd'),
         name: `${user?.first_name} ${user?.last_name}`,
         avatar_index: 0,
         gender: formData.gender,
         sexual_orientation: formData.sexualOrientation,
         location: location || null,
-        tag_ids: selectedTags.map((tag) => tag)
+        min_age: formData.min_age,
+        max_age: formData.max_age,
+        max_distance_km: formData.max_distance_km
       }
 
       fd.append(
@@ -128,6 +160,10 @@ export default function OnboardingPage() {
         throw new Error(`Error ${response.status}: ${errorText}`)
       }
 
+      if (selectedTags.length > 0) {
+        await updateTags(selectedTags)
+      }
+
       toast({
         title: 'Profile Created',
         description:
@@ -135,7 +171,7 @@ export default function OnboardingPage() {
         variant: 'default'
       })
 
-      window.location.href = '/search'
+      navigate({ to: '/search' })
     } catch (err: any) {
       setErrorMessage(err.message || String(err))
     } finally {
@@ -197,10 +233,11 @@ export default function OnboardingPage() {
     }
   }
 
-  function toggleTag(tag: string) {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    )
+  function toggleTag(tag: ProfileTag) {
+    setSelectedTags((prev) => {
+      const exists = prev.some((t) => t.id === tag.id)
+      return exists ? prev.filter((t) => t.id !== tag.id) : [...prev, tag]
+    })
   }
 
   function handlePictureChange(
@@ -274,7 +311,7 @@ export default function OnboardingPage() {
                   min={minDate}
                   max={maxDate}
                   hideTime={true}
-                  dateFormat="yyyy-MM-dd" // Ensure the picker uses the correct format
+                  dateFormat="yyyy-MM-dd"
                 />
               </div>
 
@@ -310,16 +347,59 @@ export default function OnboardingPage() {
                   selectedTags={selectedTags}
                   onToggleTag={toggleTag}
                 />
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {selectedTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
+                {selectedTags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedTags.map((tag) => (
+                      <span
+                        key={tag.id}
+                        className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[8px] font-normal text-white"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label>Preferred Age Range</Label>
+                <Slider
+                  value={[formData.min_age, formData.max_age]}
+                  min={18}
+                  max={99}
+                  step={1}
+                  onValueChange={(vals) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      min_age: vals[0],
+                      max_age: vals[1]
+                    }))
+                  }}
+                  className="!mt-1 w-full"
+                />
+                <p className="mt-1 text-xs">
+                  {formData.min_age} - {formData.max_age} yrs
+                </p>
+              </div>
+
+              <div>
+                <Label className="mb-1">Match Radius (km)</Label>
+                <Slider
+                  value={[formData.max_distance_km || 150]}
+                  min={0}
+                  max={150}
+                  step={5}
+                  onValueChange={(val) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      max_distance_km: val[0]
+                    }))
+                  }}
+                  className={cn('!mt-1 w-full')}
+                />
+                <p className="mt-1 text-xs">
+                  Max Distance: {formData.max_distance_km || '0'} km
+                </p>
               </div>
             </div>
 

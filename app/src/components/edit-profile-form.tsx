@@ -1,4 +1,4 @@
-import api, { UploadProfilePictureForm } from '@/api'
+import api, { UploadProfilePictureForm, type ProfileTag } from '@/api'
 import { Orientation, Gender, Location } from '@/api/spec'
 import TagSelector from '@/components/tag-selector'
 import { Button } from '@/components/ui/button'
@@ -39,7 +39,7 @@ export function EditProfileForm() {
   })
 
   const [location, setLocation] = useState<Location | null>(null)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<ProfileTag[]>([])
   const [errorMessage, setErrorMessage] = useState('')
   const [isModified, setIsModified] = useState(false)
 
@@ -54,6 +54,7 @@ export function EditProfileForm() {
     if (!userProfile) return
 
     setPreviousPictureUrls(userProfile.picture_urls)
+    setSelectedTags(userProfile.tags)
 
     const urls = [...userProfile.picture_urls]
     const avatarIndex = urls.indexOf(
@@ -87,7 +88,7 @@ export function EditProfileForm() {
       sexualOrientation: userProfile.sexual_orientation
     })
 
-    setSelectedTags(userProfile.tags.map((tag) => tag.name))
+    setSelectedTags(userProfile.tags)
   }, [user, userProfile])
 
   useEffect(() => {
@@ -320,24 +321,18 @@ export function EditProfileForm() {
   }
 
   const { mutate: updateTags } = useMutation({
-    mutationFn: async (tags: string[]) => {
+    mutationFn: async (selectedTags: ProfileTag[]) => {
       if (!userProfile) return
 
-      const currentTagNames = userProfile.tags.map((tag) => tag.name)
+      const currentTagIds = userProfile.tags.map((t) => t.id)
+      const selectedTagIds = selectedTags.map((t) => t.id)
 
-      console.log('currentTagNames', currentTagNames, 'tags', tags)
-
-      const tagsToAdd = tags.filter(
-        (tag) => currentTagNames.includes(tag) === false
+      const tagsToAdd = selectedTagIds.filter(
+        (id) => !currentTagIds.includes(id)
       )
-
-      const tagsToRemove = userProfile.tags
-        .filter((tag) => !tags.includes(tag.name))
-        .map((tag) => tag.id)
-
-      console.log('currentTagNames', currentTagNames)
-      console.log('tagsToAdd', tagsToAdd)
-      console.log('tagsToRemove', tagsToRemove)
+      const tagsToRemove = currentTagIds.filter(
+        (id) => !selectedTagIds.includes(id)
+      )
 
       try {
         if (tagsToAdd.length > 0) {
@@ -347,10 +342,10 @@ export function EditProfileForm() {
           await api.v1.bulkRemoveTagFromMyProfile({ tag_ids: tagsToRemove })
         }
 
-        refreshUserProfile()
+        await refreshUserProfile()
         toast({
           title: 'Tags updated!',
-          description: 'Your profile tags have been updated successfully.'
+          description: 'Your profile tags have been successfully updated.'
         })
       } catch (err: any) {
         toast({
@@ -362,15 +357,12 @@ export function EditProfileForm() {
     }
   })
 
-  function toggleTag(tag: string) {
+  function toggleTag(tag: ProfileTag) {
     setSelectedTags((prev) => {
-      const updatedTags = prev.includes(tag)
-        ? prev.filter((t) => t !== tag)
-        : [...prev, tag]
-
-      setIsModified(true)
-      return updatedTags
+      const exists = prev.some((t) => t.id === tag.id)
+      return exists ? prev.filter((t) => t.id !== tag.id) : [...prev, tag]
     })
+    setIsModified(true)
   }
 
   return (
@@ -459,10 +451,10 @@ export function EditProfileForm() {
             <div className="mt-2 flex flex-wrap gap-2">
               {selectedTags.map((tag) => (
                 <span
-                  key={tag}
+                  key={tag.id}
                   className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
                 >
-                  {tag}
+                  {tag.name} {/* Change from tag to tag.name */}
                 </span>
               ))}
             </div>

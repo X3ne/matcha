@@ -1,4 +1,4 @@
-import api from '@/api'
+import api, { type ProfileTag } from '@/api'
 import { UserProfileSortBy, UserProfile, SortOrder } from '@/api/spec'
 import TagSelector from '@/components/tag-selector'
 import { Badge } from '@/components/ui/badge'
@@ -45,31 +45,31 @@ function Search() {
     age: '',
     radius_km: '',
     rating: '',
-    commonTags: [] as string[],
+    commonTags: [] as ProfileTag[],
     minAge: '',
     maxAge: '',
     minRating: '',
     maxRating: '',
-    multipleTags: [] as string[]
+    multipleTags: [] as ProfileTag[]
   })
 
   const [activeFilters, setActiveFilters] = useState(filters)
 
-  const handleToggleCommonTag = (tag: string) => {
+  const handleToggleCommonTag = (tag: ProfileTag) => {
     setFilters((prev) => {
-      const alreadySelected = prev.commonTags.includes(tag)
+      const alreadySelected = prev.commonTags.some((t) => t.id === tag.id)
       const newTags = alreadySelected
-        ? prev.commonTags.filter((t) => t !== tag)
+        ? prev.commonTags.filter((t) => t.id !== tag.id)
         : [...prev.commonTags, tag]
       return { ...prev, commonTags: newTags }
     })
   }
 
-  const handleToggleMultipleTag = (tag: string) => {
+  const handleToggleMultipleTag = (tag: ProfileTag) => {
     setFilters((prev) => {
-      const alreadySelected = prev.multipleTags.includes(tag)
+      const alreadySelected = prev.multipleTags.some((t) => t.id === tag.id)
       const newTags = alreadySelected
-        ? prev.multipleTags.filter((t) => t !== tag)
+        ? prev.multipleTags.filter((t) => t.id !== tag.id)
         : [...prev.multipleTags, tag]
       return { ...prev, multipleTags: newTags }
     })
@@ -118,7 +118,10 @@ function Search() {
           radius_km: parseInt(activeFilters.radius_km)
         }),
         ...(activeFilters.commonTags.length > 0 && {
-          common_tags: activeFilters.commonTags
+          common_tags: activeFilters.commonTags.map((t) => t.id)
+        }),
+        ...(activeFilters.multipleTags.length > 0 && {
+          tag_ids: activeFilters.multipleTags.map((t) => t.id)
         }),
         ...(activeFilters.minAge && {
           min_age: parseInt(activeFilters.minAge)
@@ -249,7 +252,7 @@ function Search() {
                   <Slider
                     value={[parseInt(filters.radius_km) || 0]}
                     min={0}
-                    max={300}
+                    max={150}
                     step={5}
                     onValueChange={(val) => {
                       setFilters((prev) => ({
@@ -267,16 +270,16 @@ function Search() {
                 <div>
                   <p className="mb-2 text-sm font-medium">Multiple Tags</p>
                   <TagSelector
-                    selectedTags={filters.multipleTags}
-                    onToggleTag={handleToggleMultipleTag}
+                    selectedTags={filters.commonTags}
+                    onToggleTag={handleToggleCommonTag}
                   />
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {filters.multipleTags.map((tag) => (
+                    {filters.commonTags.map((tag) => (
                       <span
-                        key={tag}
-                        className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
+                        key={tag.id}
+                        className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[8px] font-normal text-white"
                       >
-                        {tag}
+                        {tag.name}
                       </span>
                     ))}
                   </div>
@@ -363,10 +366,10 @@ function Search() {
                   <div className="mt-2 flex flex-wrap gap-2">
                     {filters.multipleTags.map((tag) => (
                       <span
-                        key={tag}
-                        className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
+                        key={tag.id}
+                        className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[8px] font-normal text-white"
                       >
-                        {tag}
+                        {tag.name}
                       </span>
                     ))}
                   </div>
@@ -529,9 +532,9 @@ function UserCard({ user }: { user: UserProfile }) {
         </div>
 
         <div className="mt-2 flex flex-wrap gap-1 px-4 pb-4">
-          {user.tags.slice(0, 2).map((tag, index) => (
+          {user.tags.slice(0, 2).map((tag) => (
             <Badge
-              key={index}
+              key={tag.id}
               variant="secondary"
               className="rounded-full border border-white/20 bg-black/80 py-1 text-[6px] font-normal text-white hover:bg-black/80"
             >
