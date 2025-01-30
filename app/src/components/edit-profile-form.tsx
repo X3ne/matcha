@@ -12,9 +12,11 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
 import { useUser } from '@/hooks/useUser'
+import { cn } from '@/lib/utils'
 import { useMutation } from '@tanstack/react-query'
 import { Trash } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
@@ -29,13 +31,23 @@ export function EditProfileForm() {
   const { toast } = useToast()
   const { user, userProfile, refreshUser, refreshUserProfile } = useUser()
 
+  const [initialSnapshot, setInitialSnapshot] = useState<{
+    formData: any
+    location: Location | null
+    tags: ProfileTag[]
+    pictures: PictureInfo[]
+  }>()
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     biography: '',
     gender: Gender.Male,
-    sexualOrientation: Orientation.Bisexual
+    sexualOrientation: Orientation.Bisexual,
+    min_age: 18,
+    max_age: 100,
+    max_distance_km: 150
   })
 
   const [location, setLocation] = useState<Location | null>(null)
@@ -77,6 +89,29 @@ export function EditProfileForm() {
       newPictures.push({ file: null, preview: '', offset: null })
     }
 
+    const initialFormData = {
+      firstName: user?.first_name || '',
+      lastName: user?.last_name || '',
+      email: user?.email || '',
+      biography: userProfile.bio || '',
+      gender: userProfile.gender,
+      sexualOrientation: userProfile.sexual_orientation,
+      min_age: userProfile.min_age,
+      max_age: userProfile.max_age,
+      max_distance_km: userProfile.max_distance_km
+    }
+
+    const initialLocation = null
+    const initialTags = [...userProfile.tags]
+    const initialPictures = newPictures.map((pic) => ({ ...pic }))
+
+    setInitialSnapshot({
+      formData: initialFormData,
+      location: initialLocation,
+      tags: initialTags,
+      pictures: initialPictures
+    })
+
     setPictures(newPictures)
 
     setFormData({
@@ -85,11 +120,34 @@ export function EditProfileForm() {
       email: user?.email || '',
       biography: userProfile.bio || '',
       gender: userProfile.gender,
-      sexualOrientation: userProfile.sexual_orientation
+      sexualOrientation: userProfile.sexual_orientation,
+      min_age: userProfile.min_age,
+      max_age: userProfile.max_age,
+      max_distance_km: userProfile.max_distance_km
     })
 
     setSelectedTags(userProfile.tags)
   }, [user, userProfile])
+
+  useEffect(() => {
+    if (!initialSnapshot) return
+
+    const isFormDataModified =
+      JSON.stringify(formData) !== JSON.stringify(initialSnapshot.formData)
+    const isLocationModified =
+      JSON.stringify(location) !== JSON.stringify(initialSnapshot.location)
+    const isTagsModified =
+      JSON.stringify(selectedTags) !== JSON.stringify(initialSnapshot.tags)
+    const isPicturesModified =
+      JSON.stringify(pictures) !== JSON.stringify(initialSnapshot.pictures)
+
+    setIsModified(
+      isFormDataModified ||
+        isLocationModified ||
+        isTagsModified ||
+        isPicturesModified
+    )
+  }, [formData, location, selectedTags, pictures, initialSnapshot])
 
   useEffect(() => {
     return () => {
@@ -114,7 +172,10 @@ export function EditProfileForm() {
         bio: formData.biography || null,
         gender: formData.gender,
         sexual_orientation: formData.sexualOrientation,
-        location: location || null
+        location: location || null,
+        min_age: formData.min_age,
+        max_age: formData.max_age,
+        max_distance_km: formData.max_distance_km
       }
 
       await api.v1.updateMe(userData)
@@ -470,6 +531,47 @@ export function EditProfileForm() {
                 Lat: {location.latitude}, Lng: {location.longitude}
               </p>
             )}
+          </div>
+
+          <div>
+            <Label>Preferred Age Range</Label>
+            <Slider
+              value={[formData.min_age, formData.max_age]}
+              min={18}
+              max={99}
+              step={1}
+              onValueChange={(vals) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  min_age: vals[0],
+                  max_age: vals[1]
+                }))
+              }}
+              className="!mt-1 w-full"
+            />
+            <p className="mt-1 text-xs">
+              {formData.min_age} - {formData.max_age} yrs
+            </p>
+          </div>
+
+          <div>
+            <Label className="mb-1">Match Radius (km)</Label>
+            <Slider
+              value={[formData.max_distance_km || 150]}
+              min={0}
+              max={150}
+              step={5}
+              onValueChange={(val) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  max_distance_km: val[0]
+                }))
+              }}
+              className={cn('!mt-1 w-full')}
+            />
+            <p className="mt-1 text-xs">
+              Max Distance: {formData.max_distance_km || '0'} km
+            </p>
           </div>
         </div>
 
