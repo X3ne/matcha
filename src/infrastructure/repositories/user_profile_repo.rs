@@ -222,7 +222,7 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
 
         // exclude profile ids
         if !excluded_profile_ids.is_empty() {
-            query_builder.push(" AND up.id NOT IN (");
+            query_builder.push(" AND up.id <> ALL(");
             query_builder.push_bind(excluded_profile_ids.iter().map(|id| id.as_i64()).collect::<Vec<_>>());
             query_builder.push(")");
         }
