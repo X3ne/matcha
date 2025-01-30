@@ -12,8 +12,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useQuery } from '@tanstack/react-query'
 
 interface TagSelectorProps {
-  selectedTags: string[]
-  onToggleTag: (tag: string) => void
+  selectedTags: ProfileTag[]
+  onToggleTag: (tag: ProfileTag) => void
 }
 
 export default function TagSelector({
@@ -45,17 +45,17 @@ export default function TagSelector({
         </DialogHeader>
         <ScrollArea className="mt-4 max-h-[60vh]">
           <div className="flex flex-wrap gap-2 p-4">
-            {tags?.map(({ id, name }) => (
+            {tags?.map((tag) => (
               <div
-                key={id}
+                key={tag.id}
                 className={`inline-flex cursor-pointer items-center rounded-full border px-5 py-2 text-xs font-normal ${
-                  selectedTags.includes(name)
+                  selectedTags.some((t) => t.id === tag.id)
                     ? 'border-white/20 bg-black/80 text-white'
                     : 'border-black/20 bg-white text-black'
                 }`}
-                onClick={() => onToggleTag(name)}
+                onClick={() => onToggleTag(tag)}
               >
-                {name}
+                {tag.name}
               </div>
             ))}
           </div>
