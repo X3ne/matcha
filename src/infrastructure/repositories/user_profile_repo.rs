@@ -583,8 +583,6 @@ impl UserProfileRepository<Postgres> for PgUserProfileRepository {
         let mut query_builder =
             QueryBuilder::<Postgres>::new("INSERT INTO join_user_profile_tag (id, user_profile_id, profile_tag_id) ");
 
-        query_builder.push("VALUES ");
-
         query_builder.push_values(tag_ids.iter(), |mut b, tag_id| {
             let join_id = Snowflake::new();
             b.push_bind(join_id.as_i64())
