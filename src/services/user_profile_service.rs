@@ -200,9 +200,10 @@ impl UserProfileService for UserProfileServiceImpl {
     async fn add_like(&self, profile: &UserProfile, liked_profile_id: Snowflake) -> Result<(), UserProfileError> {
         let mut tx = self.pool.begin().await?;
 
-        if profile.avatar_hash.is_none() {
-            return Err(UserProfileError::AvatarNotSet);
-        }
+        // TODO: re-enable this check
+        // if profile.avatar_hash.is_none() {
+        //     return Err(UserProfileError::AvatarNotSet);
+        // }
 
         let liked_profile = PgUserProfileRepository::get_by_id(&mut *tx, liked_profile_id).await?;
 

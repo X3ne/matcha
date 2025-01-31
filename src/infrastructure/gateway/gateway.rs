@@ -11,7 +11,7 @@ use tokio::sync::mpsc;
 use crate::infrastructure::gateway::events::GatewayEvent;
 use crate::shared::types::snowflake::Snowflake;
 
-type Clients = Arc<Mutex<HashMap<Snowflake, Vec<Arc<mpsc::Sender<String>>>>>>;
+type Clients = Arc<Mutex<HashMap<Snowflake, Vec<mpsc::Sender<String>>>>>;
 
 #[derive(Clone)]
 pub struct Gateway {
@@ -27,10 +27,11 @@ impl Gateway {
 
     pub async fn register_client(&self, user_id: Snowflake) -> impl Stream<Item = Result<Bytes, Error>> {
         let (tx, mut rx) = mpsc::channel::<String>(100);
-        let tx = Arc::new(tx);
 
         let mut clients = self.clients.lock().unwrap();
         clients.entry(user_id).or_insert_with(Vec::new).push(tx.clone());
+
+        tracing::info!("Client connected to gateway: {}", user_id);
 
         stream::unfold(rx, |mut rx| async move {
             match rx.recv().await {
@@ -44,16 +45,26 @@ impl Gateway {
         let mut clients = self.clients.lock().unwrap();
 
         if let Some(senders) = clients.get_mut(user_id) {
-            let json_event = serde_json::to_string(event).unwrap();
+            let json_event = match serde_json::to_string(event) {
+                Ok(json) => json,
+                Err(err) => {
+                    tracing::error!("Error serializing event: {:?}", err);
+                    return;
+                }
+            };
 
-            senders.retain(|sender| {
-                let sender_clone = Arc::clone(sender);
+            let mut still_alive = Vec::new();
+
+            for sender in senders.iter() {
+                let sender_clone = sender.clone();
                 let event_clone = json_event.clone();
 
-                tokio::spawn(async move { sender_clone.send(event_clone).await.is_ok() });
+                if sender_clone.send(event_clone).await.is_ok() {
+                    still_alive.push(sender_clone);
+                }
+            }
 
-                true
-            });
+            *senders = still_alive;
         }
     }
 }
