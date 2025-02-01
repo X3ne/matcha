@@ -354,7 +354,7 @@ export default function OnboardingPage() {
                         key={tag.id}
                         className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[8px] font-normal text-white"
                       >
-                        {tag.name}
+                        {tag.name.split('_')[0]}
                       </span>
                     ))}
                   </div>

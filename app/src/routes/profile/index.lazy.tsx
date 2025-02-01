@@ -93,10 +93,10 @@ function Profile() {
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow md:max-w-xl">
+      <Card className="w-full max-w-md shadow-none sm:shadow md:max-w-xl">
         <CardContent className="space-y-8 p-6">
-          <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between md:space-x-10">
-            <div className="flex flex-col items-center md:flex-row md:items-center md:space-x-4">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between md:space-x-10">
+            <div className="flex flex-col md:flex-row md:items-center md:space-x-4">
               <Avatar className="h-20 w-20 border">
                 <AvatarImage
                   className="object-cover"
@@ -223,7 +223,7 @@ function Profile() {
                   key={tag.id}
                   className="inline-flex items-center rounded-full border border-white/20 bg-black/80 px-2.5 py-1 text-[8px] font-normal text-white"
                 >
-                  {tag.name}
+                  {tag.name.split('_')[0]}
                 </div>
               ))}
             </div>

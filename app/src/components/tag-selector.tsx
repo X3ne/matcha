@@ -55,7 +55,7 @@ export default function TagSelector({
                 }`}
                 onClick={() => onToggleTag(tag)}
               >
-                {tag.name}
+                {tag.name.split('_')[0]}
               </div>
             ))}
           </div>

@@ -100,7 +100,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-white">
+    <nav className="bg-white shadow">
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-8 py-4 sm:px-6">
         <div className="flex gap-2">
           <FaRegHeart className="self-center text-primary" size={23} />

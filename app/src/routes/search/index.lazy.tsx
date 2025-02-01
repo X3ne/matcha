@@ -168,13 +168,13 @@ function Search() {
           }}
           defaultValue={UserProfileSortBy.Distance}
         >
-          <SelectTrigger className="w-fit gap-3">
+          <SelectTrigger className="w-fit gap-3 bg-white">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             <SelectItem value={UserProfileSortBy.Distance}>Distance</SelectItem>
             <SelectItem value={UserProfileSortBy.Age}>Age</SelectItem>
-            <SelectItem value={UserProfileSortBy.Rating}>Rating</SelectItem>
+            <SelectItem value={UserProfileSortBy.FameRating}>Rating</SelectItem>
             <SelectItem value={UserProfileSortBy.Tags}>Tags</SelectItem>
           </SelectContent>
         </Select>
@@ -270,7 +270,7 @@ function Search() {
                         key={tag.id}
                         className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[8px] font-normal text-white"
                       >
-                        {tag.name}
+                        {tag.name.split('_')[0]}
                       </span>
                     ))}
                   </div>
@@ -360,7 +360,7 @@ function Search() {
                         key={tag.id}
                         className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[8px] font-normal text-white"
                       >
-                        {tag.name}
+                        {tag.name.split('_')[0]}
                       </span>
                     ))}
                   </div>
@@ -523,13 +523,13 @@ function UserCard({ user }: { user: UserProfile }) {
         </div>
 
         <div className="mt-2 flex flex-wrap gap-1 px-4 pb-4">
-          {user.tags.slice(0, 2).map((tag) => (
+          {user.tags.slice(0, 3).map((tag) => (
             <Badge
               key={tag.id}
               variant="secondary"
               className="rounded-full border border-white/20 bg-black/80 py-1 text-[6px] font-normal text-white hover:bg-black/80"
             >
-              {tag.name}
+              {tag.name.split('_')[0]}
             </Badge>
           ))}
         </div>

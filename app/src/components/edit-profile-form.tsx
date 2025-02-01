@@ -513,9 +513,9 @@ export function EditProfileForm() {
               {selectedTags.map((tag) => (
                 <span
                   key={tag.id}
-                  className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[10px] font-normal text-white"
+                  className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-black/80 px-2 py-1 text-[8px] font-normal text-white"
                 >
-                  {tag.name} {/* Change from tag to tag.name */}
+                  {tag.name.split('_')[0]} {/* Change from tag to tag.name */}
                 </span>
               ))}
             </div>
