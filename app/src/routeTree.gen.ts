@@ -17,7 +17,17 @@ import { Route as rootRoute } from './routes/__root'
 // Create Virtual Routes
 
 const IndexLazyImport = createFileRoute('/')()
+const SearchIndexLazyImport = createFileRoute('/search/')()
+const ResetPasswordIndexLazyImport = createFileRoute('/reset-password/')()
+const RegisterIndexLazyImport = createFileRoute('/register/')()
+const ProfileIndexLazyImport = createFileRoute('/profile/')()
+const OnboardingIndexLazyImport = createFileRoute('/onboarding/')()
+const MessagesIndexLazyImport = createFileRoute('/messages/')()
+const LoginIndexLazyImport = createFileRoute('/login/')()
 const ErrorIndexLazyImport = createFileRoute('/error/')()
+const ProfileIdLazyImport = createFileRoute('/profile/$id')()
+const MessagesIdLazyImport = createFileRoute('/messages/$id')()
+const ActivationTokenLazyImport = createFileRoute('/activation/$token')()
 
 // Create/Update Routes
 
@@ -27,11 +37,81 @@ const IndexLazyRoute = IndexLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 
+const SearchIndexLazyRoute = SearchIndexLazyImport.update({
+  id: '/search/',
+  path: '/search/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/search/index.lazy').then((d) => d.Route))
+
+const ResetPasswordIndexLazyRoute = ResetPasswordIndexLazyImport.update({
+  id: '/reset-password/',
+  path: '/reset-password/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/reset-password/index.lazy').then((d) => d.Route),
+)
+
+const RegisterIndexLazyRoute = RegisterIndexLazyImport.update({
+  id: '/register/',
+  path: '/register/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/register/index.lazy').then((d) => d.Route),
+)
+
+const ProfileIndexLazyRoute = ProfileIndexLazyImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/profile/index.lazy').then((d) => d.Route))
+
+const OnboardingIndexLazyRoute = OnboardingIndexLazyImport.update({
+  id: '/onboarding/',
+  path: '/onboarding/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/onboarding/index.lazy').then((d) => d.Route),
+)
+
+const MessagesIndexLazyRoute = MessagesIndexLazyImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/messages/index.lazy').then((d) => d.Route),
+)
+
+const LoginIndexLazyRoute = LoginIndexLazyImport.update({
+  id: '/login/',
+  path: '/login/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/login/index.lazy').then((d) => d.Route))
+
 const ErrorIndexLazyRoute = ErrorIndexLazyImport.update({
   id: '/error/',
   path: '/error/',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/error/index.lazy').then((d) => d.Route))
+
+const ProfileIdLazyRoute = ProfileIdLazyImport.update({
+  id: '/profile/$id',
+  path: '/profile/$id',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/profile/$id.lazy').then((d) => d.Route))
+
+const MessagesIdLazyRoute = MessagesIdLazyImport.update({
+  id: '/messages/$id',
+  path: '/messages/$id',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/messages/$id.lazy').then((d) => d.Route))
+
+const ActivationTokenLazyRoute = ActivationTokenLazyImport.update({
+  id: '/activation/$token',
+  path: '/activation/$token',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/activation/$token.lazy').then((d) => d.Route),
+)
 
 // Populate the FileRoutesByPath interface
 
@@ -44,11 +124,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyImport
       parentRoute: typeof rootRoute
     }
+    '/activation/$token': {
+      id: '/activation/$token'
+      path: '/activation/$token'
+      fullPath: '/activation/$token'
+      preLoaderRoute: typeof ActivationTokenLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/messages/$id': {
+      id: '/messages/$id'
+      path: '/messages/$id'
+      fullPath: '/messages/$id'
+      preLoaderRoute: typeof MessagesIdLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/profile/$id': {
+      id: '/profile/$id'
+      path: '/profile/$id'
+      fullPath: '/profile/$id'
+      preLoaderRoute: typeof ProfileIdLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/error/': {
       id: '/error/'
       path: '/error'
       fullPath: '/error'
       preLoaderRoute: typeof ErrorIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/login/': {
+      id: '/login/'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/messages/': {
+      id: '/messages/'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/onboarding/': {
+      id: '/onboarding/'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/profile/': {
+      id: '/profile/'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/register/': {
+      id: '/register/'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/reset-password/': {
+      id: '/reset-password/'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/search/': {
+      id: '/search/'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchIndexLazyImport
       parentRoute: typeof rootRoute
     }
   }
@@ -58,37 +208,124 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
+  '/activation/$token': typeof ActivationTokenLazyRoute
+  '/messages/$id': typeof MessagesIdLazyRoute
+  '/profile/$id': typeof ProfileIdLazyRoute
   '/error': typeof ErrorIndexLazyRoute
+  '/login': typeof LoginIndexLazyRoute
+  '/messages': typeof MessagesIndexLazyRoute
+  '/onboarding': typeof OnboardingIndexLazyRoute
+  '/profile': typeof ProfileIndexLazyRoute
+  '/register': typeof RegisterIndexLazyRoute
+  '/reset-password': typeof ResetPasswordIndexLazyRoute
+  '/search': typeof SearchIndexLazyRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
+  '/activation/$token': typeof ActivationTokenLazyRoute
+  '/messages/$id': typeof MessagesIdLazyRoute
+  '/profile/$id': typeof ProfileIdLazyRoute
   '/error': typeof ErrorIndexLazyRoute
+  '/login': typeof LoginIndexLazyRoute
+  '/messages': typeof MessagesIndexLazyRoute
+  '/onboarding': typeof OnboardingIndexLazyRoute
+  '/profile': typeof ProfileIndexLazyRoute
+  '/register': typeof RegisterIndexLazyRoute
+  '/reset-password': typeof ResetPasswordIndexLazyRoute
+  '/search': typeof SearchIndexLazyRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexLazyRoute
+  '/activation/$token': typeof ActivationTokenLazyRoute
+  '/messages/$id': typeof MessagesIdLazyRoute
+  '/profile/$id': typeof ProfileIdLazyRoute
   '/error/': typeof ErrorIndexLazyRoute
+  '/login/': typeof LoginIndexLazyRoute
+  '/messages/': typeof MessagesIndexLazyRoute
+  '/onboarding/': typeof OnboardingIndexLazyRoute
+  '/profile/': typeof ProfileIndexLazyRoute
+  '/register/': typeof RegisterIndexLazyRoute
+  '/reset-password/': typeof ResetPasswordIndexLazyRoute
+  '/search/': typeof SearchIndexLazyRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/error'
+  fullPaths:
+    | '/'
+    | '/activation/$token'
+    | '/messages/$id'
+    | '/profile/$id'
+    | '/error'
+    | '/login'
+    | '/messages'
+    | '/onboarding'
+    | '/profile'
+    | '/register'
+    | '/reset-password'
+    | '/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/error'
-  id: '__root__' | '/' | '/error/'
+  to:
+    | '/'
+    | '/activation/$token'
+    | '/messages/$id'
+    | '/profile/$id'
+    | '/error'
+    | '/login'
+    | '/messages'
+    | '/onboarding'
+    | '/profile'
+    | '/register'
+    | '/reset-password'
+    | '/search'
+  id:
+    | '__root__'
+    | '/'
+    | '/activation/$token'
+    | '/messages/$id'
+    | '/profile/$id'
+    | '/error/'
+    | '/login/'
+    | '/messages/'
+    | '/onboarding/'
+    | '/profile/'
+    | '/register/'
+    | '/reset-password/'
+    | '/search/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
+  ActivationTokenLazyRoute: typeof ActivationTokenLazyRoute
+  MessagesIdLazyRoute: typeof MessagesIdLazyRoute
+  ProfileIdLazyRoute: typeof ProfileIdLazyRoute
   ErrorIndexLazyRoute: typeof ErrorIndexLazyRoute
+  LoginIndexLazyRoute: typeof LoginIndexLazyRoute
+  MessagesIndexLazyRoute: typeof MessagesIndexLazyRoute
+  OnboardingIndexLazyRoute: typeof OnboardingIndexLazyRoute
+  ProfileIndexLazyRoute: typeof ProfileIndexLazyRoute
+  RegisterIndexLazyRoute: typeof RegisterIndexLazyRoute
+  ResetPasswordIndexLazyRoute: typeof ResetPasswordIndexLazyRoute
+  SearchIndexLazyRoute: typeof SearchIndexLazyRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
+  ActivationTokenLazyRoute: ActivationTokenLazyRoute,
+  MessagesIdLazyRoute: MessagesIdLazyRoute,
+  ProfileIdLazyRoute: ProfileIdLazyRoute,
   ErrorIndexLazyRoute: ErrorIndexLazyRoute,
+  LoginIndexLazyRoute: LoginIndexLazyRoute,
+  MessagesIndexLazyRoute: MessagesIndexLazyRoute,
+  OnboardingIndexLazyRoute: OnboardingIndexLazyRoute,
+  ProfileIndexLazyRoute: ProfileIndexLazyRoute,
+  RegisterIndexLazyRoute: RegisterIndexLazyRoute,
+  ResetPasswordIndexLazyRoute: ResetPasswordIndexLazyRoute,
+  SearchIndexLazyRoute: SearchIndexLazyRoute,
 }
 
 export const routeTree = rootRoute
@@ -102,14 +339,54 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/error/"
+        "/activation/$token",
+        "/messages/$id",
+        "/profile/$id",
+        "/error/",
+        "/login/",
+        "/messages/",
+        "/onboarding/",
+        "/profile/",
+        "/register/",
+        "/reset-password/",
+        "/search/"
       ]
     },
     "/": {
       "filePath": "index.lazy.tsx"
     },
+    "/activation/$token": {
+      "filePath": "activation/$token.lazy.tsx"
+    },
+    "/messages/$id": {
+      "filePath": "messages/$id.lazy.tsx"
+    },
+    "/profile/$id": {
+      "filePath": "profile/$id.lazy.tsx"
+    },
     "/error/": {
       "filePath": "error/index.lazy.tsx"
+    },
+    "/login/": {
+      "filePath": "login/index.lazy.tsx"
+    },
+    "/messages/": {
+      "filePath": "messages/index.lazy.tsx"
+    },
+    "/onboarding/": {
+      "filePath": "onboarding/index.lazy.tsx"
+    },
+    "/profile/": {
+      "filePath": "profile/index.lazy.tsx"
+    },
+    "/register/": {
+      "filePath": "register/index.lazy.tsx"
+    },
+    "/reset-password/": {
+      "filePath": "reset-password/index.lazy.tsx"
+    },
+    "/search/": {
+      "filePath": "search/index.lazy.tsx"
     }
   }
 }

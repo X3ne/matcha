@@ -2,5 +2,7 @@
   "semi": false,
   "singleQuote": true,
   "tabWidth": 2,
-  "endOfLine": "lf"
+  "endOfLine": "lf",
+  "trailingComma": "none",
+  "plugins": ["prettier-plugin-tailwindcss"]
 }

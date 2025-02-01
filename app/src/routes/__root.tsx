@@ -1,25 +1,26 @@
 import api from '@/api'
+import { Layout } from '@/components/layout/layout' // Updated import path
 import { Toaster } from '@/components/ui/toaster'
 import { useUser } from '@/hooks/useUser'
 import { useQuery } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
-  createRootRoute,
   Outlet,
+  createRootRoute,
   useLocation,
   useNavigate
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { useEffect } from 'react'
 
-const AllowedRoutes = ['/auth/login', '/']
+const AllowedRoutes = ['/login', '/register', '/reset-password']
 
 export const Route = createRootRoute({
   component: Root
 })
 
 function Root() {
-  const { user, isUserLoading } = useUser()
+  const { user, userProfile, isProfileLoading, isUserLoading } = useUser()
   const navigation = useNavigate()
   const location = useLocation()
 
@@ -42,35 +43,46 @@ function Root() {
 
   useEffect(() => {
     if (isError && location.pathname !== '/error') {
-      navigation({
-        to: '/error'
-      })
+      navigation({ to: '/error' })
     } else if (!isError && location.pathname === '/error') {
-      navigation({
-        to: '/'
-      })
+      navigation({ to: '/' })
     }
   }, [location, isError, navigation])
 
-  // useEffect(() => {
-  //   if (isError || isUserLoading) return
-  //   if (!user) {
-  //     if (!AllowedRoutes.includes(location.pathname)) {
-  //       navigation({
-  //         to: '/auth/login'
-  //       })
-  //     }
-  //   }
-  // }, [user, isUserLoading, location, isError, navigation])
+  useEffect(() => {
+    if (isError || isUserLoading) return
+
+    const isActivationRoute = location.pathname.startsWith('/activation/')
+
+    if (!user) {
+      if (!AllowedRoutes.includes(location.pathname) && !isActivationRoute) {
+        navigation({ to: '/login' })
+      }
+    } else {
+      if (AllowedRoutes.includes(location.pathname)) {
+        navigation({ to: '/search' })
+      }
+    }
+  }, [user, isUserLoading, location.pathname, isError, navigation])
+
+  useEffect(() => {
+    if (isProfileLoading || isUserLoading) return
+
+    if (user && !userProfile) {
+      if (location.pathname !== '/onboarding') {
+        navigation({ to: '/onboarding' })
+      }
+    }
+  }, [user, userProfile, isProfileLoading, isUserLoading, location, navigation])
 
   return (
-    <>
-      <div className="w-screen min-h-dvh">
+    <Layout>
+      <div className="mx-auto w-full">
         <Outlet />
       </div>
       <TanStackRouterDevtools />
       <ReactQueryDevtools initialIsOpen={false} />
       <Toaster />
-    </>
+    </Layout>
   )
 }

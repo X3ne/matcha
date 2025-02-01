@@ -1,33 +1,48 @@
+import api, { User, UserProfile } from '@/api'
 import { useToast } from '@/components/ui/use-toast'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createContext } from 'react'
-import api, { User } from '@/api'
 
-export const UserContext = createContext({
-  user: undefined as unknown as User | undefined,
+interface UserContextType {
+  user: User | undefined
+  userProfile: UserProfile | undefined
+  isUserLoading: boolean
+  isProfileLoading: boolean
+  logout: () => void
+  refreshUser: () => void
+  refreshUserProfile: () => void
+}
+
+export const UserContext = createContext<UserContextType>({
+  user: undefined,
+  userProfile: undefined,
   isUserLoading: true,
-  logout: () => {}
+  isProfileLoading: true,
+  logout: () => {},
+  refreshUser: () => {},
+  refreshUserProfile: () => {}
 })
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast()
+  const queryClient = useQueryClient()
 
   const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: ['user'],
     retry: false,
+    queryFn: async () => (await api.v1.getMe({ credentials: 'include' })).data
+  })
+
+  const { data: userProfile, isLoading: isProfileLoading } = useQuery({
+    queryKey: ['userProfile'],
+    retry: false,
     queryFn: async () =>
-      (
-        await api.v1.getMe({
-          credentials: 'include'
-        })
-      ).data
+      (await api.v1.getMyProfile({ credentials: 'include' })).data,
+    enabled: !!user
   })
 
   const { mutate: logout } = useMutation({
-    mutationFn: async () =>
-      await api.v1.logout({
-        credentials: 'include'
-      }),
+    mutationFn: async () => await api.v1.logout({ credentials: 'include' }),
     onSuccess: () => {
       toast({
         title: 'Logged out',
@@ -48,8 +63,26 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   })
 
+  const refreshUser = () => {
+    queryClient.invalidateQueries({ queryKey: ['user'] })
+  }
+
+  const refreshUserProfile = () => {
+    queryClient.invalidateQueries({ queryKey: ['userProfile'] })
+  }
+
   return (
-    <UserContext.Provider value={{ user, logout, isUserLoading }}>
+    <UserContext.Provider
+      value={{
+        user,
+        isUserLoading,
+        userProfile,
+        isProfileLoading,
+        logout,
+        refreshUser,
+        refreshUserProfile
+      }}
+    >
       {children}
     </UserContext.Provider>
   )
