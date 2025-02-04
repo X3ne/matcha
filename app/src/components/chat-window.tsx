@@ -25,12 +25,13 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
     queryFn: async () =>
       (
         await api.v1.getChannelMessages(channelId, {
-          limit: 50,
+          limit: 500,
           offset: 0,
           sort_by: MessageSortBy.SentAt,
           sort_order: SortOrder.Asc
         })
       ).data as Message[],
+    staleTime: 0,
     enabled: !!channelId
   })
 
@@ -61,7 +62,14 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
       })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['channelMessages', channelId])
+      queryClient.invalidateQueries({
+        queryKey: ['channelMessages', channelId],
+        exact: true
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['lastMessage', channelId],
+        exact: true
+      })
     },
     onError: (error) => {
       console.error(error)
@@ -86,7 +94,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
     if (!newMessage.trim()) return
 
     const tempId = Date.now().toString()
-    const now = new Date().toISOString()
+    const now = new Date().toISOString().replace('Z', '000')
 
     setLocalMessages((prev) => [
       ...prev,
@@ -95,7 +103,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
         content: newMessage,
         sent_at: now,
         author: {
-          id: user?.id,
+          id: userProfile?.id,
           name: user?.username,
           avatar: userProfile?.avatar_url
         }
@@ -155,6 +163,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
         <div className="space-y-4 px-4 pt-4">
           {localMessages.map((message: Message) => {
             const isCurrentUser = message.author?.id === userProfile?.id
+
             return (
               <div
                 key={message.id}
@@ -177,7 +186,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                       isCurrentUser ? 'ml-auto' : 'mr-auto'
                     }`}
                   >
-                    {new Date(message.sent_at).toLocaleTimeString([], {
+                    {new Date(message.sent_at + 'Z').toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}

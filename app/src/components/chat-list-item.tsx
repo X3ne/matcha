@@ -18,16 +18,15 @@ export function ChatListItem({ channel }: { channel: Channel }) {
   const avatarUrl = api.baseUrl + participant?.avatar
 
   const { data: messages } = useQuery({
-    queryKey: ['channelMessages', channel.id],
+    queryKey: ['lastMessage', channel.id],
     queryFn: async () =>
       (
         await api.v1.getChannelMessages(channel.id, {
           limit: 1,
-          offset: 0,
           sort_by: MessageSortBy.SentAt,
-          sort_order: SortOrder.Asc
+          sort_order: SortOrder.Desc
         })
-      ).data as Message[],
+      ).data,
     enabled: !!channel.id
   })
 
@@ -61,7 +60,7 @@ export function ChatListItem({ channel }: { channel: Channel }) {
 
       <span className="whitespace-nowrap text-xs text-muted-foreground">
         {messages?.[0]?.sent_at
-          ? new Date(messages[0].sent_at).toLocaleTimeString([], {
+          ? new Date(messages[0].sent_at + 'Z').toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit'
             })
