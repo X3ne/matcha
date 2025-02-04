@@ -2,6 +2,7 @@ import api from '@/api'
 import { Layout } from '@/components/layout/layout' // Updated import path
 import { Toaster } from '@/components/ui/toaster'
 import { useUser } from '@/hooks/useUser'
+import { GatewayProvider } from '@/providers/gatewayEventsProvider'
 import { useQuery } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
@@ -76,13 +77,15 @@ function Root() {
   }, [user, userProfile, isProfileLoading, isUserLoading, location, navigation])
 
   return (
-    <Layout>
-      <div className="mx-auto w-full">
-        <Outlet />
-      </div>
-      <TanStackRouterDevtools />
-      <ReactQueryDevtools initialIsOpen={false} />
-      <Toaster />
-    </Layout>
+    <GatewayProvider>
+      <Layout>
+        <div className="mx-auto w-full">
+          <Outlet />
+        </div>
+        <TanStackRouterDevtools />
+        <ReactQueryDevtools initialIsOpen={false} />
+        <Toaster />
+      </Layout>
+    </GatewayProvider>
   )
 }

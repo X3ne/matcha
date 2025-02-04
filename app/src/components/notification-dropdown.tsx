@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useGatewayEvents } from '@/hooks/useGatewayEvents'
 import {
   Bell,
   Heart,
@@ -15,53 +16,19 @@ import {
   ThumbsUp,
   ThumbsDown
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type Notification = {
   id: string
-  type: 'like' | 'view' | 'message' | 'match' | 'unlike'
+  type: 'like' | 'view' | 'message' | 'match' | 'unlike' | 'system'
   content: string
   read: boolean
   timestamp: string
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'like',
-    content: 'John Doe liked your profile',
-    read: false,
-    timestamp: '2023-04-20T10:30:00Z'
-  },
-  {
-    id: '2',
-    type: 'view',
-    content: 'Emma Doe viewed your profile',
-    read: false,
-    timestamp: '2023-04-19T15:45:00Z'
-  },
-  {
-    id: '3',
-    type: 'message',
-    content: 'You have a new message from Sarah',
-    read: true,
-    timestamp: '2023-04-18T09:15:00Z'
-  },
-  {
-    id: '4',
-    type: 'match',
-    content: 'You and Emily are a match!',
-    read: false,
-    timestamp: '2023-04-17T14:20:00Z'
-  },
-  {
-    id: '5',
-    type: 'unlike',
-    content: 'Mike unliked your profile',
-    read: true,
-    timestamp: '2023-04-16T11:10:00Z'
-  }
-]
+function generateUniqueId(): string {
+  return crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
+}
 
 const NotificationIcon = ({ type }: { type: Notification['type'] }) => {
   switch (type) {
@@ -75,18 +42,102 @@ const NotificationIcon = ({ type }: { type: Notification['type'] }) => {
       return <ThumbsUp className="h-4 w-4 text-purple-500" />
     case 'unlike':
       return <ThumbsDown className="h-4 w-4 text-yellow-500" />
+    case 'system':
+      return <Bell className="h-4 w-4 text-gray-500" />
   }
 }
 
 export function NotificationDropdown() {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(mockNotifications)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+
+  const { events } = useGatewayEvents()
+
+  useEffect(() => {
+    console.log('SSE events:', events)
+    if (events.length === 0) return
+
+    const latestEvent = events[events.length - 1]
+
+    let newItem: Notification | null = null
+    const now = new Date().toISOString()
+
+    switch (latestEvent.op) {
+      case 'LikeReceived':
+        newItem = {
+          id: generateUniqueId(),
+          type: 'like',
+          content: `${latestEvent.data.username} liked your profile`,
+          read: false,
+          timestamp: now
+        }
+        break
+
+      case 'ProfileViewed':
+        newItem = {
+          id: generateUniqueId(),
+          type: 'view',
+          content: `${latestEvent.data.username} viewed your profile`,
+          read: false,
+          timestamp: now
+        }
+        break
+
+      case 'MessageReceived':
+        newItem = {
+          id: generateUniqueId(),
+          type: 'message',
+          content: `New message from ${latestEvent.data.sender_username}`,
+          read: false,
+          timestamp: now
+        }
+        break
+
+      case 'NewMatch':
+        newItem = {
+          id: generateUniqueId(),
+          type: 'match',
+          content: `You and ${latestEvent.data.username} are a match!`,
+          read: false,
+          timestamp: now
+        }
+        break
+
+      case 'MatchRemoved':
+        newItem = {
+          id: generateUniqueId(),
+          type: 'unlike',
+          content: `${latestEvent.data.username} removed the match`,
+          read: false,
+          timestamp: now
+        }
+        break
+
+      case 'SystemNotification':
+        newItem = {
+          id: generateUniqueId(),
+          type: 'system',
+          content: latestEvent.data.message,
+          read: false,
+          timestamp: now
+        }
+        break
+
+      default:
+        // Unknown event: skip or handle
+        console.warn('Unhandled SSE event:', latestEvent)
+        break
+    }
+
+    if (newItem) {
+      setNotifications((prev) => [newItem!, ...prev])
+    }
+  }, [events])
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
   const markAsRead = (id: string) => {
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, read: true } : n))
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     )
   }
 
@@ -110,7 +161,9 @@ export function NotificationDropdown() {
             notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`flex items-start p-3 hover:bg-gray-100 ${notification.read ? 'opacity-50' : ''}`}
+                className={`flex items-start p-3 hover:bg-gray-100 ${
+                  notification.read ? 'opacity-50' : ''
+                }`}
                 onClick={() => markAsRead(notification.id)}
               >
                 <div className="mr-3 flex-shrink-0">
