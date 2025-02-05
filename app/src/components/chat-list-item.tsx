@@ -42,14 +42,13 @@ export function ChatListItem({ channel }: { channel: Channel }) {
       }}
     >
       <Avatar className="h-10 w-10">
-        {avatarUrl ? (
+        {participant?.avatar ? (
           <AvatarImage src={avatarUrl} alt={participant?.name || 'Channel'} />
         ) : (
           <AvatarFallback>{(participant?.name || 'C')[0]}</AvatarFallback>
         )}
       </Avatar>
-
-      <div className="min-w-0 flex-1">
+      <div className="hidden min-w-0 flex-1 sm:block">
         <p className="truncate font-medium">
           {participant?.name.split(' ')[0]}
         </p>
@@ -58,7 +57,7 @@ export function ChatListItem({ channel }: { channel: Channel }) {
         </p>
       </div>
 
-      <span className="whitespace-nowrap text-xs text-muted-foreground">
+      <span className="hidden whitespace-nowrap text-xs text-muted-foreground sm:flex">
         {messages?.[0]?.sent_at
           ? new Date(messages[0].sent_at + 'Z').toLocaleTimeString([], {
               hour: '2-digit',

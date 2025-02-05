@@ -46,7 +46,8 @@ export default function OnboardingPage() {
   useEffect(() => {
     console.log('userProfile', userProfile)
     if (userProfile) {
-      navigate({ to: '/search' })
+      // navigate({ to: '/search' })
+      window.location.href = '/search'
     }
   }, [userProfile, navigate])
 

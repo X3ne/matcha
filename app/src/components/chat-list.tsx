@@ -31,7 +31,9 @@ export function ChatList() {
 
   return (
     <div className="flex h-full min-w-min flex-col sm:min-w-[18rem]">
-      <h2 className="border-b p-4 text-2xl font-medium">Messages</h2>
+      <h2 className="hidden border-b p-4 text-2xl font-medium sm:flex">
+        Messages
+      </h2>
       <ScrollArea className="h-full flex-1">
         {channels.map((channel) => (
           <ChatListItem key={channel.id} channel={channel} />

@@ -183,7 +183,9 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                   </div>
                   <p
                     className={`mt-1 w-fit text-[8px] opacity-70 ${
-                      isCurrentUser ? 'ml-auto' : 'mr-auto'
+                      isCurrentUser
+                        ? 'ml-auto -translate-x-1'
+                        : 'mr-auto translate-x-1'
                     }`}
                   >
                     {new Date(message.sent_at + 'Z').toLocaleTimeString([], {
