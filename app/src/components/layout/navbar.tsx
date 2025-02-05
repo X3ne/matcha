@@ -21,11 +21,11 @@ import { FaRegHeart } from 'react-icons/fa'
 const Navbar = () => {
   const navigate = useNavigate()
 
-  const { user, logout } = useContext(UserContext)
+  const { user, isUserLoading, logout } = useContext(UserContext)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   const handleCloseSheet = () => {
-    setIsSheetOpen(false) // Close the sheet
+    setIsSheetOpen(false)
   }
 
   const desktopLoggedInLinks = (
@@ -109,9 +109,9 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {user ? desktopLoggedInLinks : desktopGuestLinks}
+        {!isUserLoading && (user ? desktopLoggedInLinks : desktopGuestLinks)}
 
-        {user && (
+        {!isUserLoading && user && (
           <div className="hidden items-center gap-4 md:flex">
             <div className="flex gap-0.5">
               <Button
@@ -148,34 +148,37 @@ const Navbar = () => {
               </SheetHeader>
 
               <div className="mt-8 flex h-full flex-col gap-4">
-                {user ? mobileLoggedInLinks : mobileGuestLinks}
-
-                {user && (
-                  <div className="mb-10 mt-auto flex flex-col gap-4">
-                    <Button
-                      className="relative rounded p-2 hover:bg-gray-200"
-                      aria-label="Messages"
-                      onClick={handleMailClick}
-                    >
-                      <Mail size={20} /> Messages
-                    </Button>
-                    <Button
-                      className="relative p-2 text-left hover:bg-gray-200"
-                      aria-label="Notifications"
-                      onClick={handleCloseSheet}
-                    >
-                      <Bell size={20} /> Notifications
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        logout()
-                        handleCloseSheet()
-                      }}
-                      className="w-full"
-                    >
-                      Logout
-                    </Button>
-                  </div>
+                {!isUserLoading && (
+                  <>
+                    {user ? mobileLoggedInLinks : mobileGuestLinks}
+                    {user && (
+                      <div className="mb-10 mt-auto flex flex-col gap-4">
+                        <Button
+                          className="relative rounded p-2 hover:bg-gray-200"
+                          aria-label="Messages"
+                          onClick={handleMailClick}
+                        >
+                          <Mail size={20} /> Messages
+                        </Button>
+                        <Button
+                          className="relative p-2 text-left hover:bg-gray-200"
+                          aria-label="Notifications"
+                          onClick={handleCloseSheet}
+                        >
+                          <Bell size={20} /> Notifications
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            logout()
+                            handleCloseSheet()
+                          }}
+                          className="w-full"
+                        >
+                          Logout
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </SheetContent>
