@@ -384,7 +384,7 @@ function Search() {
         <div>Something went wrong. Please try again.</div>
       ) : (
         <>
-          <div className="flex w-full flex-wrap justify-between gap-6">
+          <div className="flex w-full flex-wrap justify-start gap-6">
             {allUsers.map((user) => (
               <UserCard key={user.id} user={user} />
             ))}
