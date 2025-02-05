@@ -1,9 +1,4 @@
-import api, {
-  type Channel,
-  type Message,
-  MessageSortBy,
-  SortOrder
-} from '@/api'
+import api, { type Channel, MessageSortBy, SortOrder } from '@/api'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useUser } from '@/hooks/useUser'
 import { cn } from '@/lib/utils'
@@ -12,6 +7,7 @@ import { Link } from '@tanstack/react-router'
 
 export function ChatListItem({ channel }: { channel: Channel }) {
   const { userProfile } = useUser()
+
   const participant = channel.participants?.filter(
     (participant) => participant.name !== userProfile?.name
   )[0]
@@ -35,7 +31,7 @@ export function ChatListItem({ channel }: { channel: Channel }) {
       to="/messages/$id"
       params={{ id: channel.id }}
       className={cn(
-        'flex cursor-pointer items-center gap-3 border-b p-3 transition-colors hover:bg-accent'
+        'flex cursor-pointer items-center gap-3 border-b p-3 transition-colors hover:bg-accent data-[status=active]:bg-red-100'
       )}
       activeProps={{
         'data-status': 'active'
