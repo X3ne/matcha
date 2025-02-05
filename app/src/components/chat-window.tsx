@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useUser } from '@/hooks/useUser'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { SendHorizontal } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
 
@@ -143,16 +144,18 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
     <div className="flex h-full w-full flex-col">
       <div className="border-b p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            {avatarUrl ? (
-              <AvatarImage
-                src={avatarUrl}
-                alt={participant?.name || 'Channel'}
-              />
-            ) : (
-              <AvatarFallback>{(participant?.name || 'C')[0]}</AvatarFallback>
-            )}
-          </Avatar>
+          <Link to="/profile/$id" params={{ id: channel?.name.split('-')[1] }}>
+            <Avatar className="h-10 w-10">
+              {participant?.avatar ? (
+                <AvatarImage
+                  src={avatarUrl}
+                  alt={participant?.name || 'Channel'}
+                />
+              ) : (
+                <AvatarFallback>{(participant?.name || 'C')[0]}</AvatarFallback>
+              )}
+            </Avatar>
+          </Link>
           <p className="truncate text-[18px] font-medium">
             {participant?.name.split(' ')[0]}
           </p>
